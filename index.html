@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Test Website</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      line-height: 1.6;
+      padding: 2rem;
+    }
+    header {
+      margin-bottom: 1.5rem;
+    }
+    .badge {
+      display: inline-block;
+      background: #00C7B7;
+      color: white;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.9rem;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 1rem;
+      border-radius: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>My Test Website</h1>
+    <p class="badge">Deployed on Netlify</p>
+  </header>
+  <main>
+    <p>This is a sample website for testing. It includes a simple Netlify Function to demonstrate dynamic capabilities.</p>
+    <button id="functionCall">Call Netlify Function</button>
+    <pre id="output">Click the button above to test the function.</pre>
+  </main>
+  <script>
+    document.getElementById('functionCall').addEventListener('click', async () => {
+      const output = document.getElementById('output');
+      output.textContent = 'Loading...';
+      try {
+        const response = await fetch('/.netlify/functions/hello');
+        const data = await response.json();
+        output.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        output.textContent = 'Error: ' + error.message;
+      }
+    });
+  </script>
+</body>
+</html>
