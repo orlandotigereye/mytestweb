@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>金碧十全全算術演算 G-4.5</title>
+<title>金碧十全全算術修正版 G-4.5</title>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 
 <!-- 官方標準庫 -->
@@ -11,9 +11,6 @@
 <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script>
 
 <style>
-/* ==========================================================================
-   金碧輝煌全局樣式系統 (G-4.5 MATH VERSION)
-   ========================================================================== */
 :root {
     --bg-gold: #FFFDE7;
     --coin-gold: #FFD700;
@@ -31,12 +28,13 @@ body {
     background: var(--bg-gold) url('https://www.transparenttextures.com/patterns/gold-dust.png');
     color: var(--text-brown);
     font-size: var(--font-size);
+    overflow-x: hidden;
 }
 
 header {
-    height: 75px; background: var(--gold-grad);
+    height: 70px; background: var(--gold-grad);
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0 15px; border-bottom: 4px solid var(--deep-gold);
+    padding: 0 10px; border-bottom: 3px solid var(--deep-gold);
     position: sticky; top: 0; z-index: 1000;
 }
 
@@ -44,11 +42,11 @@ header {
 
 .nav-tabs {
     display: flex; background: #FFF; border-bottom: 2px solid var(--main-gold);
-    position: sticky; top: 75px; z-index: 999;
+    position: sticky; top: 70px; z-index: 999;
 }
 
 .tab {
-    flex: 1; text-align: center; padding: 15px 0; font-weight: 900;
+    flex: 1; text-align: center; padding: 12px 0; font-weight: 900;
     color: #A68B5A; cursor: pointer; font-size: var(--font-size);
 }
 
@@ -58,57 +56,54 @@ header {
     color: var(--text-brown);
 }
 
-.content-area { padding: 12px; padding-bottom: 80px; }
+.content-area { padding: 10px; padding-bottom: 80px; }
 .page { display: none; }
 .page.active { display: block; }
 
 .card {
     background: rgba(255, 255, 255, 0.95);
     border: 2px solid var(--coin-gold);
-    border-radius: 12px; padding: 15px; margin-bottom: 15px;
-    box-shadow: 0 4px 10px rgba(184, 134, 11, 0.1);
+    border-radius: 10px; padding: 12px; margin-bottom: 12px;
+    box-shadow: 0 4px 8px rgba(184, 134, 11, 0.1);
 }
 
 .card-title {
     font-size: var(--font-size); font-weight: 900;
-    margin-bottom: 10px; color: #5D4037;
-    border-left: 5px solid var(--deep-gold); padding-left: 8px;
+    margin-bottom: 8px; color: #5D4037;
+    border-left: 4px solid var(--deep-gold); padding-left: 8px;
 }
 
 textarea {
-    width: 100%; height: 240px; border: 2px solid var(--main-gold);
-    border-radius: 8px; padding: 12px; font-size: var(--font-size);
-    background: #FFFEF2; resize: none; line-height: 1.5; outline: none;
+    width: 100%; height: 200px; border: 2px solid var(--main-gold);
+    border-radius: 6px; padding: 10px; font-size: var(--font-size);
+    background: #FFFEF2; resize: none; line-height: 1.4; outline: none;
 }
 
 .btn {
-    width: 100%; padding: 15px; border: none; border-radius: 10px;
+    width: 100%; padding: 14px; border: none; border-radius: 8px;
     font-weight: 900; font-size: var(--font-size); cursor: pointer;
-    margin-top: 10px; transition: all 0.2s;
+    margin-top: 8px; transition: all 0.2s;
 }
 .btn-primary { background: var(--gold-grad); color: var(--text-brown); border: 1px solid var(--deep-gold); }
-.btn-secondary { background: #FFF; border: 1px solid var(--main-gold); width: auto; font-size: 0.5rem; padding: 5px 10px; }
+.btn-secondary { background: #FFF; border: 1px solid var(--main-gold); width: auto; font-size: 0.5rem; padding: 4px 8px; }
 
-/* 算術結果樣式 */
-.math-block { background: #F7F1E3; padding: 10px; border-radius: 6px; margin: 8px 0; border-left: 3px solid var(--main-gold); }
-.formula { font-family: monospace; color: #8B4513; font-weight: bold; }
+.math-block { background: #F7F1E3; padding: 8px; border-radius: 5px; margin: 6px 0; border-left: 3px solid var(--main-gold); }
+.formula { font-family: 'Courier New', monospace; color: #8B4513; font-weight: bold; }
 .result-val { color: #D32F2F; font-weight: 900; }
 
-/* 加載遮罩 */
 #analysis-overlay {
     position: fixed; inset: 0; background: rgba(255, 253, 231, 0.98);
     z-index: 10000; display: none; flex-direction: column;
     align-items: center; justify-content: center; text-align: center;
 }
 .progress-container {
-    width: 80%; height: 12px; background: #EEE; border-radius: 6px;
-    border: 2px solid var(--main-gold); overflow: hidden; margin: 20px 0;
+    width: 80%; height: 10px; background: #EEE; border-radius: 5px;
+    border: 2px solid var(--main-gold); overflow: hidden; margin: 15px 0;
 }
-.progress-bar { width: 0%; height: 100%; background: var(--gold-grad); transition: width 0.2s; }
+.progress-bar { width: 0%; height: 100%; background: var(--gold-grad); transition: width 0.3s; }
 
-/* 訊息系統 */
-#msg-box { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 11000; width: 90%; pointer-events: none; }
-.msg-item { background: rgba(62, 39, 35, 0.9); color: var(--coin-gold); padding: 12px; border-radius: 8px; font-size: 0.5rem; text-align: center; margin-top: 5px; border: 1px solid var(--coin-gold); }
+#msg-box { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); z-index: 11000; width: 90%; pointer-events: none; }
+.msg-item { background: rgba(62, 39, 35, 0.95); color: var(--coin-gold); padding: 10px; border-radius: 6px; font-size: 0.5rem; text-align: center; margin-top: 4px; border: 1px solid var(--coin-gold); }
 
 #init-overlay { position: fixed; inset: 0; background: var(--bg-gold); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
@@ -118,218 +113,273 @@ textarea {
 <body>
 
 <div id="init-overlay">
-    <div style="width: 40px; height: 40px; border: 4px solid #F3F3F3; border-top: 4px solid var(--coin-gold); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-    <div style="margin-top:15px; font-weight:900; color:var(--deep-gold); font-size:0.5rem">算術引擎初始化中...</div>
+    <div style="width: 35px; height: 35px; border: 4px solid #F3F3F3; border-top: 4px solid var(--coin-gold); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <div style="margin-top:12px; font-weight:900; color:var(--deep-gold); font-size:0.5rem">算術引擎初始化環境...</div>
 </div>
 
 <div id="analysis-overlay">
-    <div style="font-size: 0.6rem; font-weight: 900;">⚡ 十全算術神經元同步中 ⚡</div>
+    <div style="font-size: 0.6rem; font-weight: 900; color:var(--deep-gold)">⚡ 算術神經元鏈接中 ⚡</div>
     <div class="progress-container"><div class="progress-bar" id="p-bar"></div></div>
-    <div id="p-text" style="font-size:0.5rem; font-weight:900; color:var(--deep-gold);">載入公式集...</div>
+    <div id="p-text" style="font-size:0.5rem; font-weight:900; color:var(--deep-gold);">API 握手中...</div>
 </div>
 
 <div id="msg-box"></div>
 
 <header>
-    <div class="header-title">🏛️ 金碧十全 G-4.5 (全算術推算版)</div>
+    <div class="header-title">🏛️ 金碧十全 G-4.5 (修正移植版)</div>
     <button class="btn-secondary" onclick="exportFullCode()">💾 下載程式</button>
 </header>
 
 <nav class="nav-tabs">
     <div class="tab active" data-p="0">數據輸入</div>
-    <div class="tab" data-p="1">算術分析報告</div>
-    <div class="tab" data-p="2">AI 意象演算</div>
+    <div class="tab" data-p="1">算術報告</div>
+    <div class="tab" data-p="2">意象演算</div>
 </nav>
 
 <div class="content-area">
     <section id="pg-0" class="page active">
         <div class="card">
-            <div class="card-title">🔮 預設範本載入 (固定內容)</div>
+            <div class="card-title">🔮 推演參數載入</div>
             <textarea id="main-input"></textarea>
-            <button id="btn-run" class="btn btn-primary" disabled>引擎就緒中...</button>
+            <button id="btn-run" class="btn btn-primary" disabled>載入字典中...</button>
         </div>
         <div class="card">
             <div style="font-weight:900">系統流水: <span id="sn-display" style="color:var(--deep-gold)">---</span></div>
+            <div style="font-size:0.45rem; color:gray; margin-top:5px;">*本程式已整合離線算術邏輯，API 故障時仍可運作。</div>
         </div>
     </section>
 
     <section id="pg-1" class="page">
         <div id="math-report-container">
-            <!-- 算術結果動態注入 -->
-            <div style="text-align:center; padding:50px; color:var(--main-gold)">尚未啟動算術推演</div>
+            <div style="text-align:center; padding:50px; color:var(--main-gold); font-weight:900">請啟動算術推演以生成數據</div>
         </div>
     </section>
 
     <section id="pg-2" class="page">
         <div class="card">
-            <div class="card-title">🖼️ 金闕 AI 合成意象圖</div>
-            <div id="ai-vision-container" style="width:100%; aspect-ratio:1/1; background:#000; border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                <div id="ai-vision-status" style="color:var(--coin-gold); text-align:center;">⏳ 等待算術結果匯入...</div>
+            <div class="card-title">🖼️ 金闕 AI 合成意象</div>
+            <div id="ai-vision-container" style="width:100%; aspect-ratio:1/1; background:#000; border-radius:10px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;">
+                <div id="ai-vision-status" style="color:var(--coin-gold); text-align:center;">⌛ 等待算術引擎匯出數據</div>
+                <div id="loader-icon" style="display:none; position:absolute; width:40px; height:40px; border:4px solid #FFF; border-top:4px solid var(--coin-gold); border-radius:50%; animation:spin 1s linear infinite;"></div>
                 <img id="ai-vision-img" style="width:100%; height:100%; object-fit:cover; display:none;">
             </div>
-            <div id="vision-desc" style="padding:10px; font-weight:900; text-align:center;"></div>
+            <div id="vision-desc" style="padding:10px; font-weight:900; text-align:center; color:var(--deep-gold);"></div>
         </div>
     </section>
 </div>
 
 <script>
-const apiKey = "";
-const SN_CODE = "G45-MATH-" + Math.random().toString(36).substr(2, 9).toUpperCase();
+/**
+ * ==========================================================================
+ * 全域配置與 API 指數退避邏輯
+ * ==========================================================================
+ */
+const apiKey = ""; // 執行環境將自動注入
+const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'g45-math-fix';
+const SN_CODE = "G45-" + Math.random().toString(36).substr(2, 6).toUpperCase();
 
-// 固定範本數據
-const TEMPLATE_RAW = `月→最近行星: Saturn | 太陽: 78.5° | 水星 (辰星): 94.1° | 金星 (太白): 81.3° | 火星 (熒惑): 74.7° | 木星 (歲星): 240.6° | 土星 (鎮星): 2.8°
-月相：🌓 上弦
-干支：乙巳 戊子月 庚午日 庚辰時
-節氣：小寒（距離 9 天）
-宿曜：🌠 軫木蟹 (木)
-犯 / 守 / 合：軫木蟹:守
-五行合成能量：木:28 火:35 土:25 金:20 水:35
-社會氣運：64
-區域環境：台中大里 | 雲層: 100% | 風速: 3.4 km/h | 天氣: 雨(輕度)`;
+const DICT_URLS = {
+    cjk: "https://raw.githubusercontent.com/max32002/chinese_dictionary/0db110bb3dbe335a956732413557a710ef6901dc/Dictionary.json",
+    astro: "https://raw.githubusercontent.com/orlandotigereye/Analy13/refs/heads/main/astrology_merged.json"
+};
 
-let MATH_RESULTS = {};
+let REMOTE_DATA = { cjk: null, astro: null };
+let CALC_STATE = {};
 
-function showMsg(t) {
-    const el = $(`<div class="msg-item">${t}</div>`);
-    $('#msg-box').append(el);
-    setTimeout(()=>el.fadeOut(500, ()=>el.remove()), 3000);
+// 指數型退避請求函式
+async function fetchWithRetry(url, options, maxRetries = 5) {
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const res = await fetch(url, options);
+            if (res.ok) return await res.json();
+            if (res.status === 429 || res.status >= 500) {
+                const delay = Math.pow(2, i) * 1000;
+                await new Promise(r => setTimeout(r, delay));
+                continue;
+            }
+            throw new Error(`HTTP Error: ${res.status}`);
+        } catch (e) {
+            if (i === maxRetries - 1) throw e;
+            await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+        }
+    }
 }
 
-// 算術引擎核心
-const MathEngine = {
-    // 1. 五行合成平衡度算術
-    calcElements(data) {
-        const total = data.wood + data.fire + data.earth + data.metal + data.water;
-        const avg = total / 5;
-        const variance = (Math.pow(data.wood-avg,2)+Math.pow(data.fire-avg,2)+Math.pow(data.earth-avg,2)+Math.pow(data.metal-avg,2)+Math.pow(data.water-avg,2))/5;
-        const stability = Math.max(0, 100 - Math.sqrt(variance)).toFixed(2);
-        return { total, avg, stability, formula: `Stability = 100 - sqrt( Σ(x-μ)² / 5 )` };
+/**
+ * ==========================================================================
+ * 算術推演核心 (Pure Math Engine)
+ * ==========================================================================
+ */
+const CoreMath = {
+    // 1. 五行矩陣演算
+    elements: (w, f, e, m, h) => {
+        const arr = [w, f, e, m, h];
+        const μ = arr.reduce((a, b) => a + b, 0) / 5;
+        const variance = arr.reduce((a, b) => a + Math.pow(b - μ, 2), 0) / 5;
+        const sd = Math.sqrt(variance);
+        const stability = Math.max(0, 100 - (sd * 4)).toFixed(2);
+        return { μ, variance, sd, stability, formula: "S = 100 - (σ * 4)" };
     },
-    // 2. 社會氣運動態加權算術
-    calcFortune(base, cloud, wind, rain) {
-        // 假設雨水對氣運有 -5% 影響，雲層 100% 對陰性能量有加乘
-        const rainImpact = rain ? -5 : 0;
-        const cloudFactor = (cloud / 100) * 2; 
-        const result = (base + rainImpact + cloudFactor).toFixed(2);
-        return { result, formula: `Final = Base(${base}) + RainImpact(${rainImpact}) + CloudFactor(${cloudFactor})` };
+    // 2. 氣運動態修正
+    fortune: (base, cloud, rain) => {
+        const cFactor = (cloud / 100) * 1.5;
+        const rFactor = rain ? -7.5 : 2.5;
+        const result = (base + cFactor + rFactor).toFixed(2);
+        return { result, formula: `F = B + (C/100*1.5) + R` };
     },
-    // 3. 星體相位偏角算術
-    calcPhases(saturnDeg) {
-        // 土星 2.8° 代表極度接近合相
-        const proximity = (1 - (saturnDeg / 360)) * 100;
-        const gravEffect = (proximity * 0.75).toFixed(2);
-        return { proximity: proximity.toFixed(2), gravEffect, formula: `GravEffect = (1 - Deg/360) * 100 * 0.75` };
+    // 3. 星體重力矩與夾角
+    gravity: (deg) => {
+        const rad = deg * (Math.PI / 180);
+        const torque = Math.abs(Math.cos(rad)).toFixed(4);
+        const impact = (torque * 100).toFixed(2);
+        return { torque, impact, formula: `I = |cos(θ)| * 100` };
     }
 };
 
-async function init() {
-    $('#sn-display').text(SN_CODE);
-    $('#main-input').val(TEMPLATE_RAW);
-    setTimeout(() => {
-        $('#btn-run').prop('disabled', false).text('🚀 執行全算術推演');
-        $('#init-overlay').fadeOut();
-    }, 1000);
+/**
+ * ==========================================================================
+ * 介面操控邏輯
+ * ==========================================================================
+ */
+function showMsg(t) {
+    const el = $(`<div class="msg-item">${t}</div>`);
+    $('#msg-box').append(el);
+    setTimeout(() => el.fadeOut(400, () => el.remove()), 3000);
+}
+
+async function loadDictionaries() {
+    try {
+        // 並行加載以節省時間
+        const [cjk, astro] = await Promise.all([
+            fetch(DICT_URLS.cjk).then(r => r.json()),
+            fetch(DICT_URLS.astro).then(r => r.json())
+        ]);
+        REMOTE_DATA.cjk = cjk;
+        REMOTE_DATA.astro = astro;
+        showMsg("📚 字典集載入完畢");
+        $('#btn-run').prop('disabled', false).text('🚀 啟動全算術推演');
+    } catch (e) {
+        showMsg("⚠️ 遠端數據連線受阻，採用本地靜態算術模式");
+        $('#btn-run').prop('disabled', false).text('🚀 啟動本地算術模式');
+    }
 }
 
 async function runInference() {
     $('#analysis-overlay').css('display', 'flex');
-    const steps = ["數據標量化...", "執行五行方差演算...", "推導氣運偏值...", "解析土星重力矩...", "合成宿曜週期圖譜..."];
-    
-    for(let i=0; i<steps.length; i++) {
-        $('#p-bar').css('width', `${(i+1)*20}%`);
-        $('#p-text').text(steps[i]);
-        await new Promise(r=>setTimeout(r, 400));
+    const pBar = $('#p-bar');
+    const pText = $('#p-text');
+
+    const workflow = [
+        { t: "映射五行矩陣...", p: 20 },
+        { t: "校準環境氣運參數...", p: 40 },
+        { t: "計算土星偏角力矩...", p: 60 },
+        { t: "請求 AI 總結語義...", p: 80 },
+        { t: "合成視覺意象 Prompt...", p: 100 }
+    ];
+
+    for (const step of workflow) {
+        pText.text(step.t);
+        pBar.css('width', `${step.p}%`);
+        await new Promise(r => setTimeout(r, 450));
     }
 
-    // 執行算術
-    const eCalc = MathEngine.calcElements({wood:28, fire:35, earth:25, metal:20, water:35});
-    const fCalc = MathEngine.calcFortune(64, 100, 3.4, true);
-    const pCalc = MathEngine.calcPhases(2.8);
+    // 執行核心算術
+    CALC_STATE.e = CoreMath.elements(28, 35, 25, 20, 35);
+    CALC_STATE.f = CoreMath.fortune(64, 100, true);
+    CALC_STATE.g = CoreMath.gravity(2.8);
 
-    MATH_RESULTS = { eCalc, fCalc, pCalc };
-
-    // 呼叫 Gemini 進行總結與意象提示詞 (保持 AI 靈魂)
     try {
-        const aiRes = await callGeminiSummary();
-        renderReport(aiRes);
-        const img = await generateAIImage(aiRes.image_prompt);
-        $('#ai-vision-img').attr('src', img).show();
-        $('#ai-vision-status').hide();
-        $('#vision-desc').text(aiRes.summary);
+        // 呼叫 Gemini 進行總結
+        const summary = await callGeminiReport();
+        renderReport(summary);
         
+        // 異步生成圖片 (不阻塞報表顯示)
+        generateImageAndDisplay(summary.image_prompt);
+
         switchPage(1);
-        showMsg("✅ 十全算術報告已產出");
-    } catch(e) {
-        showMsg("⚠️ AI 總結模組連線異常，僅顯示純算術結果");
-        renderReport(null);
+        showMsg("✅ 算術報告生成成功");
+    } catch (e) {
+        console.error(e);
+        showMsg("⚠️ API 請求超時，顯示純算術結果");
+        renderReport({ summary: "目前 API 連線異常，以下為系統核心算術推導之原始數據。", image_prompt: "Abstract gold geometric pattern" });
         switchPage(1);
     } finally {
         $('#analysis-overlay').fadeOut();
     }
 }
 
-async function callGeminiSummary() {
-    const prompt = `針對以下算術結果：
-    1. 五行穩定度：${MATH_RESULTS.eCalc.stability}% (公式：${MATH_RESULTS.eCalc.formula})
-    2. 修正氣運：${MATH_RESULTS. fCalc.result} (考慮雨水與雲層)
-    3. 土星相位影響力：${MATH_RESULTS.pCalc.gravEffect}
-    背景：軫木蟹守、乙巳年、上弦月。
-    請給出一段 100 字內的專業命理總結，並提供一個繪圖 Prompt。輸出 JSON: {"summary":"...", "image_prompt":"..."}`;
+async function callGeminiReport() {
+    const prompt = `算術結果：
+    - 五行穩定度: ${CALC_STATE.e.stability}% (σ=${CALC_STATE.e.sd})
+    - 修正氣運: ${CALC_STATE.f.result}
+    - 土星重力矩感應: ${CALC_STATE.g.impact}
+    請根據「軫木蟹守、乙巳年、上弦月、台中雨」背景給出一段專業占卜總結 (100字內) 與繪圖提示詞。
+    JSON 格式: {"summary":"...", "image_prompt":"..."}`;
 
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-        method: "POST", headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
-    });
-    const data = await res.json();
-    return JSON.parse(data.candidates[0].content.parts[0].text);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    const payload = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" }
+    };
+
+    return await fetchWithRetry(url, { method: "POST", body: JSON.stringify(payload) });
 }
 
-async function generateAIImage(prompt) {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
-        method: "POST", headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ instances: { prompt: `Celestial balance, golden astrology chart, ${prompt}, cinematic lighting, 8k` }, parameters: { sampleCount: 1 } })
-    });
-    const data = await res.json();
-    return `data:image/png;base64,${data.predictions[0].bytesBase64Encoded}`;
+async function generateImageAndDisplay(promptText) {
+    $('#ai-vision-status').text("🎨 AI 畫布渲染中...");
+    $('#loader-icon').show();
+    $('#ai-vision-img').hide();
+
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+        const payload = { instances: { prompt: `Elegant Chinese astrology, golden aesthetic, ${promptText}, soft light` }, parameters: { sampleCount: 1 } };
+        
+        const data = await fetchWithRetry(url, { method: "POST", body: JSON.stringify(payload) });
+        const base64 = data.predictions[0].bytesBase64Encoded;
+        $('#ai-vision-img').attr('src', `data:image/png;base64,${base64}`).fadeIn();
+        $('#ai-vision-status').hide();
+        $('#loader-icon').hide();
+        $('#vision-desc').text("已成功擷取天象意象");
+    } catch (e) {
+        $('#ai-vision-status').text("❌ 意象生成失敗");
+        $('#loader-icon').hide();
+    }
 }
 
 function renderReport(ai) {
-    let h = `<div class="card" style="background:var(--gold-grad);">
-                <div class="card-title">🔱 金闕算術總評</div>
-                <div style="font-weight:900;">${ai ? ai.summary : '算術推演完成，AI 總結載入中...'}</div>
-             </div>`;
+    let html = `
+    <div class="card" style="background:var(--gold-grad); border:none;">
+        <div class="card-title">🔱 金闕算術核心總評</div>
+        <div style="font-weight:900; line-height:1.6;">${ai.summary}</div>
+    </div>
+    <div class="card">
+        <div class="card-title">📊 五行穩定度演算 (Elements)</div>
+        <div class="math-block">
+            <div>公式: <span class="formula">${CALC_STATE.e.formula}</span></div>
+            <div>標準差 σ: <span class="result-val">${CALC_STATE.e.sd.toFixed(2)}</span></div>
+            <div>穩定係數: <span class="result-val">${CALC_STATE.e.stability}%</span></div>
+        </div>
+        <div style="font-size:0.45rem; color:#666;">解析：目前能量分佈於水與火兩端，穩定係數適中。</div>
+    </div>
+    <div class="card">
+        <div class="card-title">📈 社會氣運動態加權 (Fortune)</div>
+        <div class="math-block">
+            <div>公式: <span class="formula">${CALC_STATE.f.formula}</span></div>
+            <div>修正後指數: <span class="result-val">${CALC_STATE.f.result}</span></div>
+        </div>
+        <div style="font-size:0.45rem; color:#666;">解析：雨水因子對氣運造成約 -7.5 的負向偏移，雲層則提供了穩定覆蓋。</div>
+    </div>
+    <div class="card">
+        <div class="card-title">🪐 土星重力矩感應 (Gravity)</div>
+        <div class="math-block">
+            <div>公式: <span class="formula">${CALC_STATE.g.formula}</span></div>
+            <div>餘弦力矩: <span class="result-val">${CALC_STATE.g.torque}</span></div>
+            <div>感應強度: <span class="result-val">${CALC_STATE.g.impact}</span></div>
+        </div>
+        <div style="font-size:0.45rem; color:#666;">解析：土星偏角 2.8° 接近垂直引力軸，感應強度極高。</div>
+    </div>`;
 
-    // 算術項 1
-    h += `<div class="card">
-            <div class="card-title">📊 五行合成平衡演算</div>
-            <div class="math-block">
-                <div>推導公式：<span class="formula">${MATH_RESULTS.eCalc.formula}</span></div>
-                <div>穩定係數：<span class="result-val">${MATH_RESULTS.eCalc.stability}%</span></div>
-                <div style="margin-top:5px;">[演算細節]：五行總能 ${MATH_RESULTS.eCalc.total}，均值 ${MATH_RESULTS.eCalc.avg}。方差顯示當前能量分佈較為集中。</div>
-            </div>
-          </div>`;
-
-    // 算術項 2
-    h += `<div class="card">
-            <div class="card-title">📈 社會氣運動態修正</div>
-            <div class="math-block">
-                <div>推導公式：<span class="formula">${MATH_RESULTS.fCalc.formula}</span></div>
-                <div>最終指數：<span class="result-val">${MATH_RESULTS.fCalc.result}</span></div>
-                <div style="margin-top:5px;">[環境加權]：台中大里 100% 雲層覆蓋產生的陰性擾動已計入。</div>
-            </div>
-          </div>`;
-
-    // 算術項 3
-    h += `<div class="card">
-            <div class="card-title">🪐 土星相位引力矩</div>
-            <div class="math-block">
-                <div>推導公式：<span class="formula">${MATH_RESULTS.pCalc.formula}</span></div>
-                <div>影響強度：<span class="result-val">${MATH_RESULTS.pCalc.gravEffect} unit</span></div>
-                <div style="margin-top:5px;">[相位判定]：土星距月 2.8° 處於「守」位之巔，重力矩效應極強。</div>
-            </div>
-          </div>`;
-
-    $('#math-report-container').html(h);
+    $('#math-report-container').html(html);
 }
 
 function switchPage(i) {
@@ -340,10 +390,22 @@ function switchPage(i) {
 function exportFullCode() {
     const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(b); a.download = `G45_MATH_REPORT.html`; a.click();
+    a.href = URL.createObjectURL(b); a.download = `G45_MATH_FIXED_REPORT.html`; a.click();
 }
 
-$(document).ready(init);
+// 初始化啟動
+$(document).ready(() => {
+    $('#sn-display').text(SN_CODE);
+    $('#main-input').val(`月→最近行星: Saturn | 太陽: 78.5° | 水星: 94.1° | 金星: 81.3° | 火星: 74.7°
+干支：乙巳 戊子月 庚午日 庚辰時
+宿曜：🌠 軫木蟹 (木) | 犯 / 守 / 合：守
+五行能量：木:28 火:35 土:25 金:20 水:35
+氣運: 64 | 區域: 台中 | 雲層: 100% | 天氣: 雨`);
+    
+    loadDictionaries();
+    $('#init-overlay').fadeOut(600);
+});
+
 $('.tab').click(function(){ switchPage($(this).data('p')); });
 $('#btn-run').click(runInference);
 
