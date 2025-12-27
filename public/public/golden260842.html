@@ -13,7 +13,7 @@
 --coin-gold:#FFD700;
 --main-gold:#D4AF37;
 --deep-gold:#B8860B;
---gold-grad:linear-gradient(135deg,#FFD700 0%,#FFF176 50%,#DAA520 100%);
+--gold-grad:linear-gradient(135deg, #FFD700 0%, #FFF176 50%, #DAA520 100%);
 --font-size:0.5rem;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -23,111 +23,172 @@ background:var(--bg-gold) url('https://www.transparenttextures.com/patterns/gold
 color:#3E2723;font-size:var(--font-size);line-height:1.6;overflow-x:hidden;
 }
 header{
-height:75px;background:var(--gold-grad);display:flex;justify-content:space-between;
-align-items:center;padding:0 15px;border-bottom:5px solid var(--deep-gold);
-position:sticky;top:0;z-index:1000;box-shadow:0 5px 15px rgba(184,134,11,.3);
+height:70px;background:var(--gold-grad);display:flex;justify-content:space-between;
+align-items:center;padding:0 15px;border-bottom:4px solid var(--deep-gold);
+position:sticky;top:0;z-index:1000;box-shadow:0 4px 10px rgba(184,134,11,.3);
 }
-.nav-tabs{display:flex;background:#FFF;border-bottom:2px solid var(--main-gold);position:sticky;top:75px;z-index:999}
-.tab{flex:1;text-align:center;padding:15px 0;font-weight:900;color:#A68B5A;cursor:pointer;border-right:1px solid #F0F0F0;font-size:var(--font-size)}
-.tab.active{background:rgba(255,215,0,.2);border-bottom:5px solid var(--deep-gold);color:#3E2723}
-.content-area{padding:15px;padding-bottom:100px}
+.nav-tabs{display:flex;background:#FFF;border-bottom:2px solid var(--main-gold);position:sticky;top:70px;z-index:999;overflow-x:auto}
+.tab{flex:1;min-width:70px;text-align:center;padding:12px 0;font-weight:900;color:#A68B5A;cursor:pointer;font-size:var(--font-size);transition:all 0.3s}
+.tab.active{background:rgba(255,215,0,.2);border-bottom:4px solid var(--deep-gold);color:#3E2723}
+.content-area{padding:12px;padding-bottom:80px}
 .page{display:none}.page.active{display:block}
-.card{background:rgba(255,255,255,.98);border:2.5px solid var(--coin-gold);border-radius:15px;padding:20px;margin-bottom:20px;box-shadow:0 8px 20px rgba(184,134,11,.1)}
-.card-title{font-size:0.5rem;font-weight:900;margin-bottom:15px;color:#5D4037;border-left:8px solid var(--deep-gold);padding-left:12px}
-textarea{width:100%;height:220px;border:2.5px solid var(--main-gold);border-radius:10px;padding:12px;font-size:0.5rem;background:#FFFEF2;resize:none;color:#3E2723}
-.btn{width:100%;padding:18px;border:none;border-radius:12px;font-weight:900;font-size:0.5rem;cursor:pointer;margin-top:12px}
-.btn-primary{background:var(--gold-grad);color:#3E2723;border:1px solid var(--deep-gold);box-shadow:0 5px 0 #B8860B}
-.btn-secondary{background:#FFF;border:2.5px solid var(--main-gold);color:var(--main-gold)}
-.diag-item{margin-bottom:12px}
+.card{background:rgba(255,255,255,0.95);border:2px solid var(--coin-gold);border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 6px 15px rgba(184,134,11,0.1)}
+.card-title{font-size:0.5rem;font-weight:900;margin-bottom:10px;color:#5D4037;border-left:6px solid var(--deep-gold);padding-left:10px}
+textarea{width:100%;height:150px;border:2px solid var(--main-gold);border-radius:8px;padding:10px;font-size:0.5rem;background:#FFFEF2;resize:none;color:#3E2723}
+.btn{width:100%;padding:15px;border:none;border-radius:10px;font-weight:900;font-size:0.5rem;cursor:pointer;margin-top:10px}
+.btn-primary{background:var(--gold-grad);color:#3E2723;border:1px solid var(--deep-gold);box-shadow:0 4px 0 #B8860B}
+.btn-secondary{background:#FFF;border:2px solid var(--main-gold);color:var(--main-gold)}
+.diag-item{margin-bottom:10px}
 .diag-label{font-size:0.5rem;font-weight:900;display:flex;justify-content:space-between}
-.diag-bar{height:12px;background:#EEE;border-radius:6px;overflow:hidden;margin-top:5px;border:1px solid #DDD}
-.diag-fill{height:100%;width:0%;background:var(--gold-grad);transition:width .8s ease}
-.art-viewport{width:100%;min-height:320px;background:#111;border-radius:12px;margin-top:15px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:4px solid var(--main-gold)}
+.diag-bar{height:10px;background:#EEE;border-radius:5px;overflow:hidden;margin-top:4px;border:1px solid #DDD}
+.diag-fill{height:100%;width:0%;background:var(--gold-grad);transition:width 0.5s ease}
+.art-viewport{width:100%;min-height:280px;background:#FFF9C4;border-radius:10px;margin-top:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:3px solid var(--main-gold)}
 .art-viewport img{width:100%;height:auto;display:block}
-.loading-txt{color:var(--coin-gold);font-size:0.5rem;font-weight:bold;animation:pulse 1.5s infinite}
-@keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
 #overlay{position:fixed;inset:0;background:var(--bg-gold);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.spinner{width:60px;height:60px;border:8px solid #F3F3F3;border-top:8px solid var(--coin-gold);border-radius:50%;animation:spin 1s linear infinite}
+.spinner{width:50px;height:50px;border:6px solid #F3F3F3;border-top:6px solid var(--coin-gold);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-#msg-box{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:5000;width:90%;pointer-events:none}
-.msg-item{background:#3E2723;color:var(--coin-gold);padding:12px 20px;border-radius:20px;font-size:0.5rem;text-align:center;margin-top:10px;border:2px solid var(--coin-gold);box-shadow:0 4px 10px rgba(0,0,0,.3)}
-#d3-stage{width:100%;height:400px;background:#0A0A0A;border-radius:12px;border:3px solid var(--coin-gold)}
+#msg-box{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:5000;width:90%;pointer-events:none}
+.msg-item{background:#3E2723;color:var(--coin-gold);padding:10px 15px;border-radius:15px;font-size:0.5rem;text-align:center;margin-top:8px;border:2px solid var(--coin-gold);box-shadow:0 4px 8px rgba(0,0,0,0.2)}
+#d3-stage{width:100%;height:350px;background:radial-gradient(circle, #FFFDE7 0%, #FFF9C4 100%);border-radius:10px;border:2px solid var(--coin-gold)}
+.logic-row{display:flex;justify-content:space-between;border-bottom:1px solid #F0F0F0;padding:8px 0}
+.logic-val{font-weight:900;color:var(--deep-gold)}
 </style>
 </head>
 <body>
-<div id="overlay"><div class="spinner"></div><div style="margin-top:25px;font-weight:900;font-size:0.5rem;color:var(--deep-gold)">連線至天象核心...</div><div id="boot-status" style="margin-top:10px;font-size:0.5rem">驗證遠端 Master 分支...</div></div>
+<div id="overlay">
+    <div class="spinner"></div>
+    <div style="margin-top:20px;font-weight:900;font-size:0.5rem;color:var(--deep-gold)">系統初始化中...</div>
+    <div id="boot-status" style="margin-top:8px;font-size:0.5rem">連線至 Master 分支</div>
+</div>
+
 <div id="msg-box"></div>
-<header><div style="font-weight:900;font-size:0.5rem">🔱 G-4.5 MEGA MONITOR</div><button class="btn-secondary" style="width:auto;margin:0;padding:8px 15px;font-size:0.5rem" onclick="exportDoc()">💾 下載程式碼</button></header>
+
+<header>
+    <div style="font-weight:900;font-size:0.5rem">🔱 G-4.5 MEGA MONITOR</div>
+    <button class="btn-secondary" style="width:auto;margin:0;padding:5px 10px;font-size:0.5rem" onclick="exportCode()">💾 下載程式碼</button>
+</header>
+
 <nav class="nav-tabs">
-<div class="tab active" data-p="0">啟動</div><div class="tab" data-p="1">分析</div><div class="tab" data-p="2">能量</div><div class="tab" data-p="3">意象</div><div class="tab" data-p="4">決策</div>
+    <div class="tab active" data-p="0">啟動儀表</div>
+    <div class="tab" data-p="1">星象邏輯</div>
+    <div class="tab" data-p="2">能量流動</div>
+    <div class="tab" data-p="3">意象渲染</div>
+    <div class="tab" data-p="4">決策建議</div>
 </nav>
+
 <div class="content-area">
-<section id="pg-0" class="page active">
-<div class="card"><div class="card-title">📡 資源鏈結狀態</div>
-<div class="diag-item" id="d-cjk"><div class="diag-label"><span>CJK 字典 (Master)</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
-<div class="diag-item" id="d-ast"><div class="diag-label"><span>星象大數據庫</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+    <!-- Page 0: Input & Status -->
+    <section id="pg-0" class="page active">
+        <div class="card">
+            <div class="card-title">📡 核心資源狀態</div>
+            <div class="diag-item" id="d-cjk"><div class="diag-label"><span>CJK 字典</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+            <div class="diag-item" id="d-ast"><div class="diag-label"><span>星象大數據</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+        </div>
+        <div class="card">
+            <div class="card-title">⌨️ 觀測樣本輸入</div>
+            <textarea id="main-input">乙巳年 戊子月 己巳日
+觀測緯度：25.03, 121.56
+目前情境：商業決策與人事安排</textarea>
+            <div id="run-mon" style="display:none;margin-top:15px;border-top:1px dashed var(--main-gold);padding-top:15px">
+                <div class="diag-item" id="d-gemini"><div class="diag-label"><span>Gemini 2.5 核心</span><span class="v">佇列中</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+                <div class="diag-item" id="d-imagen"><div class="diag-label"><span>Imagen 4.0 意象</span><span class="v">佇列中</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+            </div>
+            <button id="btn-run" class="btn btn-primary" disabled>資源載入中...</button>
+        </div>
+    </section>
+
+    <!-- Page 1: Logic -->
+    <section id="pg-1" class="page"></section>
+
+    <!-- Page 2: Energy -->
+    <section id="pg-2" class="page">
+        <div class="card"><div class="card-title">🌀 五行能量流動場</div><div id="d3-stage"></div></div>
+        <div id="energy-list"></div>
+    </section>
+
+    <!-- Page 3: Art -->
+    <section id="pg-3" class="page"></section>
+
+    <!-- Page 4: Decision -->
+    <section id="pg-4" class="page"></section>
 </div>
-<div class="card"><div class="card-title">⌨️ 觀測樣本輸入</div>
-<textarea id="main-input">乙巳年 戊子月 己巳日 觀測樣本：
-月相：上弦 | 太陽 73.7° | 宿曜：軫木蟹 (木)
-五行分佈：木:28 火:33 土:25 金:20 水:35</textarea>
-<div id="run-mon" style="display:none;margin-top:20px;border-top:2px dashed var(--main-gold);padding-top:20px">
-<div class="diag-item" id="d-gemini"><div class="diag-label"><span>Gemini 2.5 邏輯</span><span class="v">佇列中</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
-<div class="diag-item" id="d-imagen"><div class="diag-label"><span>Imagen 4.0 意象</span><span class="v">佇列中</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
-</div>
-<button id="btn-run" class="btn btn-primary" disabled>載入中...</button>
-</div>
-</section>
-<section id="pg-1" class="page"></section>
-<section id="pg-2" class="page">
-<div class="card"><div class="card-title">🌀 五行能量流動場</div><div id="d3-stage"></div></div>
-<div id="energy-list"></div>
-</section>
-<section id="pg-3" class="page"></section>
-<section id="pg-4" class="page"></section>
-</div>
+
 <script>
-const apiKey = ""; // 必須為空，由環境注入
-let DB_CJK=[];let DB_AST=null;let APP_STATE=null;
-const URL_CJK="https://raw.githubusercontent.com/max32002/chinese_dictionary/master/Dictionary.json";
-const URL_AST="https://raw.githubusercontent.com/orlandotigereye/Analy13/refs/heads/main/astrology_merged.json";
+const apiKey = ""; // 由環境注入
+let DB_CJK = [];
+let DB_AST = null;
+let APP_STATE = null;
 
-function log(t){const m=$(`<div class="msg-item">${t}</div>`);$('#msg-box').append(m);setTimeout(()=>m.fadeOut(500,()=>m.remove()),4000)}
-function setD(id,p,v,e=false){const i=$('#'+id);i.find('.diag-fill').css('width',p+'%');i.find('.v').text(v).css('color',e?'#FF5252':'')}
+// 遠端資源路徑
+const URL_CJK = "https://raw.githubusercontent.com/max32002/chinese_dictionary/master/Dictionary.json";
+const URL_AST = "https://raw.githubusercontent.com/orlandotigereye/Analy13/refs/heads/main/astrology_merged.json";
 
-async function boot(){
-try{
-setD('d-cjk',20,'下載中');setD('d-ast',20,'下載中');
-const [cjkRes, astRes]=await Promise.all([
-    fetch(URL_CJK).then(r=>r.json()),
-    fetch(URL_AST).then(r=>r.json())
-]);
-DB_CJK = Array.isArray(cjkRes) ? cjkRes : (cjkRes.values || []);
-DB_AST = astRes; 
-setD('d-cjk', 100, '就緒');setD('d-ast', 100, '就緒');
-$('#btn-run').prop('disabled',false).text('🚀 啟動演算');
-$('#overlay').fadeOut(600);
-}catch(e){log("連線失敗，請檢查網路");setD('d-cjk',0,'錯誤',true)}
+function showMsg(t){
+    const m = $(`<div class="msg-item">${t}</div>`);
+    $('#msg-box').append(m);
+    setTimeout(() => m.fadeOut(500, () => m.remove()), 4000);
 }
 
-function getStrokes(s){
-let total=0;const chars=s.replace(/[^\u4e00-\u9fa5]/g,'');
-for(let c of chars){const f=DB_CJK.find(d=>d.word===c);total+=f?parseInt(f.stroke_count):8}
-return total||10;
+function updateStatus(id, p, v, err=false){
+    const target = $('#'+id);
+    target.find('.diag-fill').css('width', p+'%');
+    target.find('.v').text(v).css('color', err ? '#FF5252' : '');
 }
 
-async function apiCall(prompt){
+// 啟動資源載入
+async function initSystem(){
+    try {
+        updateStatus('d-cjk', 20, '下載中...');
+        updateStatus('d-ast', 20, '下載中...');
+        
+        const [cRes, aRes] = await Promise.all([
+            fetch(URL_CJK).then(r => r.json()),
+            fetch(URL_AST).then(r => r.json())
+        ]);
+
+        DB_CJK = Array.isArray(cRes) ? cRes : (cRes.values || []);
+        DB_AST = aRes;
+
+        updateStatus('d-cjk', 100, '就緒');
+        updateStatus('d-ast', 100, '就緒');
+        $('#btn-run').prop('disabled', false).text('🚀 啟動連線分析');
+        $('#overlay').fadeOut(600);
+        showMsg("天象核心資源連線成功");
+    } catch (e) {
+        updateStatus('d-cjk', 0, '失敗', true);
+        showMsg("資源載入失敗，請檢查網路連線");
+    }
+}
+
+// 筆劃計算
+function calcStrokes(text){
+    let count = 0;
+    const chars = text.replace(/[^\u4e00-\u9fa5]/g, '');
+    for(let c of chars){
+        const f = DB_CJK.find(i => i.word === c);
+        count += f ? parseInt(f.stroke_count) : 8;
+    }
+    return count || 10;
+}
+
+// API 連線（含指數退避重試）
+async function callGemini(prompt){
     let retry = 0;
     const delays = [1000, 2000, 4000, 8000, 16000];
+    const payload = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" }
+    };
+
     while(retry < 5){
-        try{
+        try {
             const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                method: "POST", headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(payload)
             });
             if(!r.ok) throw new Error(r.status);
-            return await r.json();
-        } catch(e){
+            const data = await r.json();
+            return JSON.parse(data.candidates[0].content.parts[0].text);
+        } catch (e) {
             if(retry === 4) throw e;
             await new Promise(res => setTimeout(res, delays[retry]));
             retry++;
@@ -135,81 +196,129 @@ async function apiCall(prompt){
     }
 }
 
-async function start(){
-const input=$('#main-input').val().trim();
-$('#run-mon').fadeIn();setD('d-gemini',20,'數據封裝中');
-const strokes=getStrokes(input);
-const prompt=`分析樣本：${input}。筆劃權重：${strokes}。回傳 JSON：
-{"brief":"天機摘要","logic":[{"t":"維度","c":"內容"}],"elements":{"wood":0.2,"fire":0.2,"earth":0.2,"metal":0.2,"water":0.2},"advice":{"do":"宜","no":"忌","final":"結論"},"arts":[{"p":"AI Art Prompt","l":"圖名"}]}`;
+async function startAnalysis(){
+    const input = $('#main-input').val();
+    if(!input) return showMsg("請輸入觀測樣本");
 
-try{
-setD('d-gemini',50,'Gemini 運算中');
-const d = await apiCall(prompt);
-let txt = d.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim();
-APP_STATE = JSON.parse(txt);
-setD('d-gemini',100,'演算完成');
-render();log("數據封裝完成，啟動意象渲染...");
-$('[data-p=1]').click();
-}catch(e){setD('d-gemini',0,'API 拒絕連線 (403/Key Error)',true);log("請確認環境 API Key 已注入");}
+    $('#run-mon').slideDown();
+    updateStatus('d-gemini', 30, '分析中');
+    
+    const strokes = calcStrokes(input);
+    const systemPrompt = `你是一個精密的天象與五行分析儀。請根據輸入內容與筆劃權重(${strokes})進行深度運算。
+    必須回傳 JSON 格式，結構如下：
+    {
+      "summary": "一句話總結天機",
+      "analysis": [{"label": "維度名稱", "content": "詳細內容"}],
+      "elements": {"wood": 0.2, "fire": 0.2, "earth": 0.2, "metal": 0.2, "water": 0.2},
+      "decisions": {"do": "建議執行的行動", "dont": "應該規避的風險", "verdict": "最終決斷"},
+      "arts": [{"prompt": "用於 Imagen 4.0 的英文提示詞", "title": "圖名"}]
+    }`;
+
+    try {
+        APP_STATE = await callGemini(`樣本資料：${input}\n${systemPrompt}`);
+        updateStatus('d-gemini', 100, '完成');
+        showMsg("天機解碼完成，啟動意象繪製");
+        renderAll();
+        $('[data-p=1]').click();
+    } catch (e) {
+        updateStatus('d-gemini', 0, '連線錯誤', true);
+        showMsg("Gemini API 呼叫失敗，請檢查 API Key 或權限");
+    }
 }
 
-function render(){
-let h1=`<div class="card"><div class="card-title">🔮 天機摘要</div><p style="font-weight:900">${APP_STATE.brief}</p></div>`;
-APP_STATE.logic.forEach(l=>h1+=`<div class="card"><div class="card-title">${l.t}</div><p>${l.c}</p></div>`);
-$('#pg-1').html(h1);
-let h2=`<div class="card"><table style="width:100%">`;
-const dict={wood:"木",fire:"火",earth:"土",metal:"金",water:"水"};
-Object.entries(APP_STATE.elements).forEach(([k,v])=>{
-h2+=`<tr><td style="color:var(--deep-gold);font-weight:900;padding:8px">${dict[k]}能量</td><td>${(v*100).toFixed(2)}%</td></tr>`;
-});
-$('#energy-list').html(h2+`</table></div>`);
-$('#pg-4').html(`<div class="card" style="background:var(--gold-grad);text-align:center;padding:40px"><div style="font-size:0.7rem;font-weight:900">「${APP_STATE.advice.final}」</div></div><div class="card"><div class="card-title">✅ 宜</div><p>${APP_STATE.advice.do}</p></div><div class="card"><div class="card-title">❌ 忌</div><p>${APP_STATE.advice.no}</p></div>`);
-renderArts();
+function renderAll(){
+    // Render Logic Page
+    let h1 = `<div class="card"><div class="card-title">🔮 天機總覽</div><p style="font-weight:900">${APP_STATE.summary}</p></div>`;
+    APP_STATE.analysis.forEach(a => {
+        h1 += `<div class="card"><div class="card-title">${a.label}</div><p>${a.content}</p></div>`;
+    });
+    $('#pg-1').html(h1);
+
+    // Render Energy Page
+    let h2 = `<div class="card"><div class="card-title">📊 能量組成</div>`;
+    const names = {wood:"木", fire:"火", earth:"土", metal:"金", water:"水"};
+    Object.entries(APP_STATE.elements).forEach(([k,v]) => {
+        h2 += `<div class="logic-row"><span>${names[k]}能量</span><span class="logic-val">${(v*100).toFixed(1)}%</span></div>`;
+    });
+    $('#energy-list').html(h2 + `</div>`);
+
+    // Render Decision Page
+    $('#pg-4').html(`
+        <div class="card" style="background:var(--gold-grad); border:none; text-align:center">
+            <div style="font-size:0.7rem; font-weight:900; color:#3E2723">結論：${APP_STATE.verdict}</div>
+        </div>
+        <div class="card"><div class="card-title">✅ 宜</div><p>${APP_STATE.decisions.do}</p></div>
+        <div class="card"><div class="card-title">❌ 忌</div><p>${APP_STATE.decisions.dont}</p></div>
+    `);
+
+    renderArts();
 }
 
 async function renderArts(){
-let h='';setD('d-imagen',10,'渲染佇列中');
-for(let i=0;i<APP_STATE.arts.length;i++){
-const it=APP_STATE.arts[i];const bid=`art-${i}`;
-h+=`<div class="card"><div class="card-title">${it.l}</div><div class="art-viewport" id="${bid}"><div class="loading-txt">Imagen 4.0 渲染中...</div></div></div>`;
-(async()=>{
-try{
-const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`,{
-method:"POST",body:JSON.stringify({instances:{prompt:it.p},parameters:{sampleCount:1}})
-});
-const d=await r.json();const b64=d.predictions[0].bytesBase64Encoded;
-$(`#${bid}`).html(`<img src="data:image/png;base64,${b64}">`);
-setD('d-imagen',100,'渲染完成');
-}catch(e){$(`#${bid}`).html('<div class="loading-txt" style="color:#FF5252">渲染受限</div>')}
-})();
-}
-$('#pg-3').html(h);
+    let h = '';
+    updateStatus('d-imagen', 10, '佇列中');
+    APP_STATE.arts.forEach((art, idx) => {
+        const id = `art-box-${idx}`;
+        h += `<div class="card"><div class="card-title">${art.title}</div><div class="art-viewport" id="${id}"><div style="font-size:0.5rem">Imagen 渲染中...</div></div></div>`;
+        
+        // 異步渲染
+        (async () => {
+            try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`, {
+                    method: "POST", body: JSON.stringify({ instances: { prompt: art.prompt }, parameters: { sampleCount: 1 } })
+                });
+                const d = await r.json();
+                const b64 = d.predictions[0].bytesBase64Encoded;
+                $(`#${id}`).html(`<img src="data:image/png;base64,${b64}">`);
+                updateStatus('d-imagen', 100, '完成');
+            } catch (e) {
+                $(`#${id}`).html('<div style="color:#FF5252">渲染受限 (可能含敏感詞)</div>');
+            }
+        })();
+    });
+    $('#pg-3').html(h);
 }
 
 function runD3(){
-const el=d3.select("#d3-stage");el.selectAll("*").remove();
-const w=$("#d3-stage").width(),h=400;const svg=el.append("svg").attr("width",w).attr("height",h);
-const colors={wood:"#4CAF50",fire:"#FF5252",earth:"#FBC02D",metal:"#E0E0E0",water:"#2196F3"};
-const nodes=Object.entries(APP_STATE.elements).map(([k,v])=>({id:k,name:({wood:"木",fire:"火",earth:"土",metal:"金",water:"水"})[k],r:40+(v*120),color:colors[k]}));
-const sim=d3.forceSimulation(nodes).force("center",d3.forceCenter(w/2,h/2)).force("collide",d3.forceCollide().radius(d=>d.r+10)).force("charge",d3.forceManyBody().strength(-300));
-const g=svg.selectAll("g").data(nodes).enter().append("g");
-g.append("circle").attr("r",d=>d.r).attr("fill",d=>d.color).attr("stroke","#FFD700").attr("stroke-width",3);
-g.append("text").text(d=>d.name).attr("text-anchor","middle").attr("dy",".35em").style("font-weight","900").style("fill","#FFF").style("font-size","0.6rem");
-sim.on("tick",()=>g.attr("transform",d=>`translate(${d.x},${d.y})`));
+    const el = d3.select("#d3-stage"); el.selectAll("*").remove();
+    const w = $("#d3-stage").width(), h = 350;
+    const svg = el.append("svg").attr("width", w).attr("height", h);
+    
+    const colors = {wood:"#4CAF50", fire:"#FF5252", earth:"#FBC02D", metal:"#BDBDBD", water:"#2196F3"};
+    const nodes = Object.entries(APP_STATE.elements).map(([k,v]) => ({
+        id: k, name: ({wood:"木", fire:"火", earth:"土", metal:"金", water:"水"})[k],
+        r: 30 + (v * 100), color: colors[k]
+    }));
+
+    const sim = d3.forceSimulation(nodes)
+        .force("center", d3.forceCenter(w/2, h/2))
+        .force("collide", d3.forceCollide().radius(d => d.r + 10))
+        .force("charge", d3.forceManyBody().strength(-200));
+
+    const g = svg.selectAll("g").data(nodes).enter().append("g");
+    g.append("circle").attr("r", d => d.r).attr("fill", d => d.color).attr("stroke", "#D4AF37").attr("stroke-width", 3);
+    g.append("text").text(d => d.name).attr("text-anchor", "middle").attr("dy", ".35em").style("font-weight","900").style("fill","#FFF").style("font-size","0.6rem");
+
+    sim.on("tick", () => g.attr("transform", d => `translate(${d.x},${d.y})`));
 }
 
-function exportDoc(){
-const b=new Blob([document.documentElement.outerHTML],{type:"text/html"});
-const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download="G45_MEGA_REPAIR.html";a.click();
+function exportCode(){
+    const b = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b); a.download = `G45_MEGA_EXPORT_${Date.now()}.html`;
+    a.click();
 }
 
-$(document).ready(()=>{
-boot();
-$('.tab').click(function(){
-const p=$(this).data('p');$('.tab,.page').removeClass('active');$(this).addClass('active');$(`#pg-${p}`).addClass('active');
-if(p==2 && APP_STATE) setTimeout(runD3,50);
-});
-$('#btn-run').click(start);
+$(document).ready(() => {
+    initSystem();
+    $('.tab').click(function(){
+        const p = $(this).data('p');
+        $('.tab, .page').removeClass('active');
+        $(this).addClass('active');
+        $(`#pg-${p}`).addClass('active');
+        if(p == 2 && APP_STATE) setTimeout(runD3, 100);
+    });
+    $('#btn-run').click(startAnalysis);
 });
 </script>
 </body>
