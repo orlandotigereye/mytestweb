@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>金碧天象 G-4.5 MEGA MONITOR</title>
+    <title>金碧天象 G-4.5 HEX ULTIMATE</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- 引入官方標準庫 -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -27,319 +27,317 @@
             color: #3E2723;
             font-size: var(--font-size); 
             overflow-x: hidden; width: 100vw;
-            line-height: 1.8;
+            line-height: 1.6;
         }
 
-        /* 金碧輝煌導航 */
         header {
-            height: 75px; background: var(--gold-grad);
+            height: 70px; background: var(--gold-grad);
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 15px; border-bottom: 5px solid var(--deep-gold);
+            padding: 0 15px; border-bottom: 4px solid var(--deep-gold);
             position: sticky; top: 0; z-index: 1000;
-            box-shadow: 0 4px 15px rgba(184, 134, 11, 0.4);
+            box-shadow: 0 4px 10px rgba(184, 134, 11, 0.3);
         }
 
-        .logo-text { font-size: 0.6rem; font-weight: 900; color: #3E2723; }
+        .logo { font-size: 0.6rem; font-weight: 900; color: #3E2723; text-shadow: 1px 1px 0px #FFF; }
 
         .nav-tabs {
             display: flex; background: #FFF; border-bottom: 2px solid var(--main-gold);
-            position: sticky; top: 75px; z-index: 999;
+            position: sticky; top: 70px; z-index: 999;
         }
         .tab {
-            flex: 1; text-align: center; padding: 18px 0;
+            flex: 1; text-align: center; padding: 15px 0;
             font-size: 0.5rem; font-weight: 900; color: #A68B5A; cursor: pointer;
-            transition: 0.3s; border-right: 1px solid #F0F0F0;
+            transition: 0.3s;
         }
         .tab.active {
-            color: #3E2723; background: rgba(255, 215, 0, 0.25);
-            border-bottom: 6px solid var(--deep-gold);
+            color: #3E2723; background: rgba(255, 215, 0, 0.2);
+            border-bottom: 4px solid var(--deep-gold);
         }
 
-        .content-area { padding: 15px; padding-bottom: 100px; }
+        .content { padding: 15px; padding-bottom: 80px; }
         .page { display: none; }
         .page.active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .card {
-            background: rgba(255, 255, 255, 0.98); border: 2.5px solid var(--coin-gold);
-            border-radius: 15px; padding: 20px; margin-bottom: 22px;
-            box-shadow: 0 8px 20px rgba(184, 134, 11, 0.2);
+            background: rgba(255, 255, 255, 0.95); border: 2px solid var(--coin-gold);
+            border-radius: 12px; padding: 18px; margin-bottom: 15px;
+            box-shadow: 0 4px 8px rgba(184, 134, 11, 0.1);
         }
         .card-title {
-            font-size: 0.55rem; font-weight: 900; margin-bottom: 15px;
-            color: #5D4037; border-left: 10px solid var(--deep-gold); padding-left: 12px;
+            font-size: 0.52rem; font-weight: 900; margin-bottom: 12px;
+            color: #5D4037; border-left: 6px solid var(--deep-gold); padding-left: 10px;
         }
 
         textarea {
-            width: 100%; height: 240px; border: 2.5px solid var(--main-gold);
-            border-radius: 10px; padding: 15px; font-size: 0.5rem;
-            background: #FFFEF2; resize: none; color: #3E2723;
+            width: 100%; height: 180px; border: 2px solid var(--main-gold);
+            border-radius: 8px; padding: 12px; font-size: 0.5rem;
+            color: #3E2723; resize: none; background: #FFFEF9;
         }
 
         .btn {
-            width: 100%; padding: 18px; border: none; border-radius: 12px;
-            font-weight: 900; font-size: 0.52rem; cursor: pointer; margin-top: 12px;
+            width: 100%; padding: 15px; border: none; border-radius: 8px;
+            font-weight: 900; font-size: 0.5rem; cursor: pointer; margin-top: 10px;
+            transition: transform 0.1s;
         }
-        .btn-primary { background: var(--gold-grad); color: #3E2723; border: 1.5px solid var(--deep-gold); box-shadow: 0 5px 0 #B8860B; }
-        .btn-secondary { background: #FFF; border: 2.5px solid var(--main-gold); color: var(--main-gold); }
+        .btn:active { transform: scale(0.98); }
+        .btn-gold { background: var(--gold-grad); color: #3E2723; border: 1px solid var(--deep-gold); box-shadow: 0 4px 0 #B8860B; }
+        .btn-outline { background: #FFF; border: 2px solid var(--main-gold); color: var(--main-gold); }
 
-        /* 診斷條 */
-        .diag-item { margin-bottom: 15px; }
-        .diag-label { font-size: 0.5rem; font-weight: 900; display: flex; justify-content: space-between; }
-        .diag-bar { height: 14px; background: #EEE; border-radius: 7px; overflow: hidden; margin-top: 6px; border: 1px solid #DDD; }
-        .diag-fill { height: 100%; width: 0%; background: var(--gold-grad); transition: width 0.8s ease; }
+        .status-bar { display: flex; flex-direction: column; gap: 8px; }
+        .stat-row { display: flex; justify-content: space-between; align-items: center; }
+        .progress-bg { flex: 1; height: 10px; background: #E0E0E0; border-radius: 5px; margin: 0 10px; overflow: hidden; border: 1px solid #CCC; }
+        .progress-fill { width: 0%; height: 100%; background: var(--gold-grad); transition: width 0.5s; }
 
-        /* 意象圖 */
-        .art-box { width: 100%; min-height: 300px; background: #111; border-radius: 12px; margin-top: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 4px solid var(--main-gold); }
-        .art-box img { width: 100%; height: auto; display: block; }
-        .loading-text { color: var(--coin-gold); font-size: 0.5rem; font-weight: bold; text-align: center; }
+        #d3-stage { width: 100%; height: 350px; background: #0A0A0A; border-radius: 10px; border: 3px solid var(--coin-gold); }
 
-        #overlay {
+        #toast-box { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 85%; pointer-events: none; }
+        .toast { background: rgba(62, 39, 35, 0.95); color: var(--coin-gold); padding: 10px 20px; border-radius: 20px; font-size: 0.5rem; text-align: center; margin-top: 10px; border: 1px solid var(--coin-gold); font-weight: 900; }
+
+        #loader {
             position: fixed; inset: 0; background: var(--bg-gold);
-            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-        .spinner { width: 60px; height: 60px; border: 8px solid #F3F3F3; border-top: 8px solid var(--coin-gold); border-radius: 50%; animation: spin 1s linear infinite; }
+        .loader-spin { width: 50px; height: 50px; border: 6px solid #F3F3F3; border-top: 6px solid var(--coin-gold); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        #msg-box { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 5000; width: 90%; pointer-events: none; }
-        .msg-item { background: #3E2723; color: var(--coin-gold); padding: 12px 20px; border-radius: 20px; font-size: 0.5rem; text-align: center; margin-top: 10px; border: 2px solid var(--coin-gold); }
-
-        #d3-stage { width: 100%; height: 400px; background: #0A0A0A; border-radius: 12px; border: 3px solid var(--coin-gold); }
+        .img-container { width: 100%; min-height: 250px; background: #111; border-radius: 10px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--main-gold); margin-top: 10px; }
+        .img-container img { width: 100%; height: auto; border-radius: 8px; }
+        .img-label { color: var(--coin-gold); font-size: 0.5rem; }
     </style>
 </head>
 <body>
 
-<div id="overlay">
-    <div class="spinner"></div>
-    <div style="margin-top:25px; font-weight:900; font-size:0.6rem; color:var(--deep-gold);">天象系統安全連線中</div>
-    <div id="load-status" style="margin-top:10px; font-size:0.5rem;">正在驗證 API 憑證...</div>
+<div id="loader">
+    <div class="loader-spin"></div>
+    <div style="margin-top:20px; font-weight:900; color:var(--deep-gold); font-size:0.6rem;">16進位校準中...</div>
 </div>
 
-<div id="msg-box"></div>
+<div id="toast-box"></div>
 
 <header>
-    <div class="logo-text">🔱 G-4.5 MEGA ULTIMATE</div>
-    <button class="btn-secondary" style="width:auto; margin:0; padding:8px 15px; font-size:0.5rem;" onclick="downloadCode()">💾 下載源碼</button>
+    <div class="logo">🔱 G-4.5 HEX CORE</div>
+    <button class="btn-outline" style="width:auto; padding:8px 15px; margin:0;" onclick="downloadCode()">💾 下載</button>
 </header>
 
 <nav class="nav-tabs">
-    <div class="tab active" data-pg="0">啟動</div>
-    <div class="tab" data-pg="1">分析</div>
-    <div class="tab" data-pg="2">能量</div>
-    <div class="tab" data-pg="3">意象</div>
-    <div class="tab" data-pg="4">決策</div>
+    <div class="tab active" data-target="pg-home">觀測</div>
+    <div class="tab" data-target="pg-logic">邏輯</div>
+    <div class="tab" data-target="pg-energy">能量</div>
+    <div class="tab" data-target="pg-art">意象</div>
+    <div class="tab" data-target="pg-result">決斷</div>
 </nav>
 
-<div class="content-area">
-    <section id="pg-0" class="page active">
+<div class="content">
+    <section id="pg-home" class="page active">
         <div class="card">
-            <div class="card-title">📡 雲端連線診斷</div>
-            <div class="diag-item" id="diag-api"><div class="diag-label"><span>API 授權金鑰</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
-            <div class="diag-item" id="diag-cjk"><div class="diag-label"><span>中文字典資源</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
-            <div class="diag-item" id="diag-ast"><div class="diag-label"><span>星象數據矩陣</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">⌨️ 輸入觀測樣本</div>
-            <textarea id="main-input">乙巳年 戊子月 己巳日 癸酉時 觀測：
-月相：上弦 | 太陽 73.7° | 宿曜：軫木蟹 (木)
-五行分佈：木:28 火:33 土:25 金:20 水:35</textarea>
-            
-            <div id="process-monitor" style="display:none; margin-top:20px; border-top:2px dashed var(--main-gold); padding-top:20px;">
-                <div class="diag-item" id="diag-gemini"><div class="diag-label"><span>Gemini 邏輯封裝</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
-                <div class="diag-item" id="diag-imagen"><div class="diag-label"><span>Imagen 意象渲染</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+            <div class="card-title">📡 系統連結狀態 (HEX API)</div>
+            <div class="status-bar">
+                <div class="stat-row" id="st-api"><span>密鑰解碼</span><div class="progress-bg"><div class="progress-fill"></div></div><span class="val">待機</span></div>
+                <div class="stat-row" id="st-cjk"><span>漢字字典</span><div class="progress-bg"><div class="progress-fill"></div></div><span class="val">待機</span></div>
+                <div class="stat-row" id="st-ast"><span>星象矩陣</span><div class="progress-bg"><div class="progress-fill"></div></div><span class="val">待機</span></div>
             </div>
-            <button id="btn-go" class="btn btn-primary" disabled>載入資源中...</button>
+        </div>
+
+        <div class="card">
+            <div class="card-title">⌨️ 輸入觀測原始碼</div>
+            <textarea id="txt-input">乙巳年 戊子月 己巳日 癸酉時
+觀測定位：北緯 25.03, 東經 121.56
+核心意圖：求測事業動能與財祿流轉</textarea>
+            <button id="btn-run" class="btn btn-gold" disabled>初始化資源中...</button>
         </div>
     </section>
 
-    <section id="pg-1" class="page"></section>
-    <section id="pg-2" class="page">
-        <div class="card"><div class="card-title">🌀 五行能量流動場</div><div id="d3-stage"></div></div>
-        <div id="energy-stats"></div>
+    <section id="pg-logic" class="page"></section>
+    
+    <section id="pg-energy" class="page">
+        <div class="card"><div class="card-title">🌀 五行能量分布矩陣</div><div id="d3-stage"></div></div>
+        <div id="energy-list"></div>
     </section>
-    <section id="pg-3" class="page"></section>
-    <section id="pg-4" class="page"></section>
+
+    <section id="pg-art" class="page"></section>
+
+    <section id="pg-result" class="page"></section>
 </div>
 
 <script>
-let API_KEY = "";
-// 使用具備 master 的穩定路徑
-const API_URL = "https://orlandotigereye.github.io/mytestweb/config/api.js";
-const CJK_URL = "https://raw.githubusercontent.com/max32002/chinese_dictionary/master/Dictionary.json";
-const AST_URL = "https://raw.githubusercontent.com/orlandotigereye/Analy13/refs/heads/main/astrology_merged.json";
+/**
+ * G-4.5 HEX CORE ENCRYPTION VERSION
+ * 字體大小: 0.5rem 固定
+ */
+let DECODED_API_KEY = "";
+const ENDPOINT_API = "https://orlandotigereye.github.io/mytestweb/config/api.js";
+const ENDPOINT_CJK = "https://raw.githubusercontent.com/max32002/chinese_dictionary/master/Dictionary.json";
+const ENDPOINT_AST = "https://raw.githubusercontent.com/orlandotigereye/Analy13/refs/heads/main/astrology_merged.json";
 
-let DB_CJK = null, DB_AST = null, STATE = null;
+let CJK_DATA = null, AST_DATA = null, FINAL_DATA = null;
 
 function msg(t) {
-    const $m = $(`<div class="msg-item">${t}</div>`);
-    $('#msg-box').append($m);
-    setTimeout(() => $m.fadeOut(500, () => $m.remove()), 4000);
+    const $e = $(`<div class="toast">${t}</div>`);
+    $('#toast-box').append($e);
+    setTimeout(() => $e.fadeOut(400, () => $e.remove()), 4000);
 }
 
-function updateDiag(id, per, txt, err=false) {
-    const $i = $('#' + id);
-    $i.find('.diag-fill').css('width', per + '%');
-    $i.find('.v').text(txt).css('color', err ? '#FF5252' : '');
+function updateStat(id, p, txt, isErr = false) {
+    const $r = $(`#${id}`);
+    $r.find('.progress-fill').css('width', p + '%');
+    $r.find('.val').text(txt).css('color', isErr ? '#F44336' : '#3E2723');
 }
 
-function decodeHex(h) {
+// 16 進位解碼邏輯
+function hexToUtf8(h) {
     let s = "";
     for (let i = 0; i < h.length; i += 2) s += String.fromCharCode(parseInt(h.substr(i, 2), 16));
     return s;
 }
 
-async function boot() {
+async function init() {
     try {
-        const akRes = await fetch(API_URL);
-        const akTxt = await akRes.text();
-        const m = akTxt.match(/["']([a-fA-F0-9]+)["']/);
-        if(m) {
-            API_KEY = decodeHex(m[1]);
-            updateDiag('diag-api', 100, '就緒');
+        updateStat('st-api', 30, '解析中');
+        const resK = await fetch(ENDPOINT_API);
+        const rawK = await resK.text();
+        const hexMatch = rawK.match(/["']([a-fA-F0-9]+)["']/);
+        if(hexMatch) {
+            DECODED_API_KEY = hexToUtf8(hexMatch[1]);
+            updateStat('st-api', 100, '解碼成功');
         }
 
-        updateDiag('diag-cjk', 20, '下載中');
-        updateDiag('diag-ast', 20, '下載中');
+        updateStat('st-cjk', 20, '下載中');
+        updateStat('st-ast', 20, '下載中');
 
-        const [c, a] = await Promise.all([
-            fetch(CJK_URL).then(r => r.json()),
-            fetch(AST_URL).then(r => r.json())
+        const [cjk, ast] = await Promise.all([
+            fetch(ENDPOINT_CJK).then(r => r.json()),
+            fetch(ENDPOINT_AST).then(r => r.json())
         ]);
 
-        DB_CJK = c; updateDiag('diag-cjk', 100, '就緒');
-        DB_AST = a; updateDiag('diag-ast', 100, '就緒');
+        CJK_DATA = cjk; updateStat('st-cjk', 100, '就緒');
+        AST_DATA = ast; updateStat('st-ast', 100, '就緒');
 
-        $('#btn-go').prop('disabled', false).text('🚀 啟動全天象精算');
-        $('#overlay').fadeOut(800);
+        $('#btn-run').prop('disabled', false).text('🚀 啟動 HEX 天象精算');
+        $('#loader').fadeOut(600);
     } catch(e) {
-        msg("資源連線異常，請檢查網路或分支路徑");
-        console.error(e);
+        msg("資源初始化失敗，請檢查網路或 main 分支路徑。");
+        updateStat('st-api', 0, '中斷', true);
     }
 }
 
-function getStrokes(str) {
-    let count = 0;
-    const clean = str.replace(/[^\u4e00-\u9fa5]/g, '');
-    for(let char of clean) {
-        const f = DB_CJK.find(d => d.word === char);
-        count += f ? parseInt(f.stroke_count) : 8;
+function calcStrokes(txt) {
+    let s = 0;
+    const chars = txt.replace(/[^\u4e00-\u9fa5]/g, '');
+    for(let c of chars) {
+        const item = CJK_DATA.find(d => d.word === c);
+        s += item ? parseInt(item.stroke_count) : 10;
     }
-    return count || 10;
+    return s || 15;
 }
 
-async function run() {
-    const input = $('#main-input').val().trim();
-    if(!API_KEY) return msg("API Key 未正確解析");
+async function execute() {
+    const input = $('#txt-input').val().trim();
+    if(!DECODED_API_KEY) return msg("錯誤：未偵測到 HEX API 密鑰");
 
-    $('#process-monitor').fadeIn();
-    updateDiag('diag-gemini', 20, '封裝數據');
-    
-    const strokes = getStrokes(input);
-    const prompt = `觀測資料：${input}。能量權重筆劃：${strokes}。
-    請分析天象與五行，回傳 JSON (嚴格禁止包含 markdown 標籤)：
+    msg("正在封裝天象邏輯...");
+    const weight = calcStrokes(input);
+
+    const prompt = `觀測資料: "${input}"。權重筆劃: ${weight}。
+    請依天象運算回傳 JSON 格式 (不可包含 Markdown 標記)：
     {
-      "brief": "一句話總覽天機",
-      "logic": [{"t": "維度標題", "c": "分析內容，需豐富具意象"}],
-      "elements": {"wood": 0.2, "fire": 0.3, "earth": 0.2, "metal": 0.15, "water": 0.15},
-      "render": [{"p": "Detailed AI Art Prompt", "l": "意象圖名"}],
-      "guide": {"do": "宜", "no": "忌", "final": "核心斷語"}
+      "summary": "核心斷語",
+      "analysis": [{"title": "項目", "desc": "解析內容"}],
+      "elements": {"wood": 0.2, "fire": 0.2, "earth": 0.2, "metal": 0.2, "water": 0.2},
+      "visuals": [{"prompt": "AI Art Prompt", "label": "意象景致"}],
+      "decisions": {"do": "宜", "dont": "忌", "core": "定論"}
     }`;
 
     try {
-        updateDiag('diag-gemini', 60, '雲端運算');
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${DECODED_API_KEY}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
         
-        const data = await res.json();
-        let raw = data.candidates[0].content.parts[0].text;
-        // 關鍵修復：剝離可能的 Markdown 標籤
-        raw = raw.replace(/```json/g, '').replace(/```/g, '').trim();
-        STATE = JSON.parse(raw);
+        const json = await res.json();
+        let clean = json.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
+        FINAL_DATA = JSON.parse(clean);
         
-        updateDiag('diag-gemini', 100, '運算完成');
-        renderUI();
-        msg("邏輯分析完畢，開始渲染意象圖...");
-        $('[data-pg=1]').click();
-    } catch(e) {
-        updateDiag('diag-gemini', 0, '失敗', true);
-        msg("Gemini 封裝失敗: " + e.message);
+        renderResults();
+        msg("精算完成，請查閱各分頁。");
+        $('[data-target=pg-logic]').click();
+    } catch (e) {
+        msg("精算失敗: " + e.message);
     }
 }
 
-function renderUI() {
-    // P1
-    let h1 = `<div class="card"><div class="card-title">🔮 天機摘要</div><p style="font-size:0.55rem; font-weight:900;">${STATE.brief}</p></div>`;
-    STATE.logic.forEach(l => h1 += `<div class="card"><div class="card-title">${l.t}</div><p>${l.c}</p></div>`);
-    $('#pg-1').html(h1);
-
-    // P2 數據
-    let h2 = `<div class="card"><table style="width:100%; font-size:0.5rem;">`;
-    const dict = {wood:"木", fire:"火", earth:"土", metal:"金", water:"水"};
-    Object.entries(STATE.elements).forEach(([k,v]) => {
-        h2 += `<tr><td style="color:var(--deep-gold); font-weight:900; padding:8px;">${dict[k]}能量</td><td>${(v*100).toFixed(2)}%</td></tr>`;
+function renderResults() {
+    // 邏輯頁
+    let hLogic = `<div class="card"><div class="card-title">🔮 天機摘要</div><p style="font-size:0.55rem; font-weight:bold;">${FINAL_DATA.summary}</p></div>`;
+    FINAL_DATA.analysis.forEach(a => {
+        hLogic += `<div class="card"><div class="card-title">${a.title}</div><p>${a.desc}</p></div>`;
     });
-    $('#energy-stats').html(h2 + `</table></div>`);
+    $('#pg-logic').html(hLogic);
 
-    // P4 決策
-    $('#pg-4').html(`
-        <div class="card" style="background:var(--gold-grad); border:4px solid #3E2723; padding:40px; text-align:center;">
-            <div style="font-size:0.7rem; font-weight:900; color:#3E2723;">「${STATE.guide.final}」</div>
+    // 能量列表
+    let hEng = `<div class="card"><table style="width:100%;">`;
+    const labels = {wood:"木(仁)", fire:"火(禮)", earth:"土(信)", metal:"金(義)", water:"水(智)"};
+    Object.entries(FINAL_DATA.elements).forEach(([k,v]) => {
+        hEng += `<tr><td style="font-weight:900; padding:8px;">${labels[k]}</td><td style="text-align:right;">${(v*100).toFixed(1)}%</td></tr>`;
+    });
+    $('#energy-list').html(hEng + `</table></div>`);
+
+    // 決策頁
+    $('#pg-result').html(`
+        <div class="card" style="background:var(--gold-grad); text-align:center; padding:30px;">
+            <div style="font-size:0.65rem; font-weight:900; color:#3E2723;">${FINAL_DATA.decisions.core}</div>
         </div>
-        <div class="card"><div class="card-title">✅ 趨吉指南</div><p style="color:#2E7D32; font-weight:900;">宜：${STATE.guide.do}</p></div>
-        <div class="card"><div class="card-title">❌ 避凶禁忌</div><p style="color:#C62828; font-weight:900;">忌：${STATE.guide.no}</p></div>
+        <div class="card"><div class="card-title">🌟 宜</div><p style="color:#1B5E20; font-weight:900;">${FINAL_DATA.decisions.do}</p></div>
+        <div class="card"><div class="card-title">⚠️ 忌</div><p style="color:#B71C1C; font-weight:900;">${FINAL_DATA.decisions.dont}</p></div>
     `);
 
     renderArt();
 }
 
 async function renderArt() {
-    let h = "";
-    updateDiag('diag-imagen', 10, '佇列中');
-    for(let i=0; i<STATE.render.length; i++) {
-        const item = STATE.render[i];
-        const bid = `art-${i}`;
-        h += `<div class="card"><div class="card-title">${item.l}</div><div class="art-box" id="${bid}"><div class="loading-text">Imagen 4.0 生成中...</div></div></div>`;
+    let hArt = "";
+    for(let i=0; i<FINAL_DATA.visuals.length; i++){
+        const v = FINAL_DATA.visuals[i];
+        const cid = `img-box-${i}`;
+        hArt += `<div class="card"><div class="card-title">${v.label}</div><div class="img-container" id="${cid}"><span class="img-label">Imagen 4.0 渲染中...</span></div></div>`;
         
         (async () => {
             try {
-                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${API_KEY}`, {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${DECODED_API_KEY}`, {
                     method: "POST",
-                    body: JSON.stringify({ instances: { prompt: item.p }, parameters: { sampleCount: 1 } })
+                    body: JSON.stringify({ instances: { prompt: v.prompt }, parameters: { sampleCount: 1 } })
                 });
                 const d = await r.json();
                 const b64 = d.predictions[0].bytesBase64Encoded;
-                $(`#${bid}`).html(`<img src="data:image/png;base64,${b64}">`);
-                updateDiag('diag-imagen', 100, '完成');
+                $(`#${cid}`).html(`<img src="data:image/png;base64,${b64}">`);
             } catch(e) {
-                $(`#${bid}`).html('<div class="loading-text" style="color:red;">渲染失敗</div>');
+                $(`#${cid}`).html('<span class="img-label" style="color:#F44336;">意象渲染逾時</span>');
             }
         })();
     }
-    $('#pg-3').html(h);
+    $('#pg-art').html(hArt);
 }
 
-function runD3Force() {
+function drawForce() {
     const el = d3.select("#d3-stage");
     el.selectAll("*").remove();
-    const w = $('#d3-stage').width(), h = 400;
+    const w = $('#d3-stage').width(), h = 350;
     const svg = el.append("svg").attr("width", w).attr("height", h);
     
-    const colors = {wood:"#4CAF50", fire:"#FF5252", earth:"#FBC02D", metal:"#E0E0E0", water:"#2196F3"};
-    const nodes = Object.entries(STATE.elements).map(([k,v]) => ({
-        id: k, name: {wood:"木", fire:"火", earth:"土", metal:"金", water:"水"}[k], r: 40 + (v * 120), color: colors[k]
+    const colors = {wood:"#4CAF50", fire:"#FF5252", earth:"#FBC02D", metal:"#BDBDBD", water:"#2196F3"};
+    const names = {wood:"木", fire:"火", earth:"土", metal:"金", water:"水"};
+    const nodes = Object.entries(FINAL_DATA.elements).map(([k,v]) => ({
+        id: k, name: names[k], r: 35 + (v * 100), color: colors[k]
     }));
 
     const sim = d3.forceSimulation(nodes)
         .force("center", d3.forceCenter(w/2, h/2))
         .force("collide", d3.forceCollide().radius(d => d.r + 10))
-        .force("charge", d3.forceManyBody().strength(-300));
+        .force("charge", d3.forceManyBody().strength(-200));
 
     const g = svg.selectAll("g").data(nodes).enter().append("g");
-    g.append("circle").attr("r", d => d.r).attr("fill", d => d.color).attr("stroke", "#FFD700").attr("stroke-width", 3);
+    g.append("circle").attr("r", d => d.r).attr("fill", d => d.color).attr("stroke", "#FFD700").attr("stroke-width", 2);
     g.append("text").text(d => d.name).attr("text-anchor", "middle").attr("dy", ".35em").style("font-weight", "900").style("fill", "#FFF").style("font-size", "0.6rem");
 
     sim.on("tick", () => g.attr("transform", d => `translate(${d.x},${d.y})`));
@@ -349,20 +347,19 @@ function downloadCode() {
     const blob = new Blob([document.documentElement.outerHTML], {type: "text/html"});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = "G45_MEGA_STABLE_FIX.html";
+    a.download = "G45_HEX_CORE_EXPORT.html";
     a.click();
 }
 
 $(document).ready(() => {
-    boot();
+    init();
     $('.tab').click(function() {
-        const p = $(this).data('pg');
         $('.tab, .page').removeClass('active');
         $(this).addClass('active');
-        $(`#pg-${p}`).addClass('active');
-        if(p == 2 && STATE) setTimeout(runD3Force, 50);
+        $(`#${$(this).data('target')}`).addClass('active');
+        if($(this).data('target') === 'pg-energy' && FINAL_DATA) setTimeout(drawForce, 50);
     });
-    $('#btn-go').click(run);
+    $('#btn-run').click(execute);
 });
 </script>
 </body>
