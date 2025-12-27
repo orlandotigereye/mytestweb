@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>金碧天象 G-4.5 MEGA ULTIMATE FULL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 引入官方標準庫 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script>
+    <style>
+        :root {
+            --bg-gold: #FFFDE7;
+            --coin-gold: #FFD700;
+            --main-gold: #D4AF37;
+            --deep-gold: #B8860B;
+            --light-gold: #FFF9C4;
+            --gold-grad: linear-gradient(135deg, #FFD700 0%, #FFF176 50%, #DAA520 100%);
+            --font-size: 0.5rem; /* 嚴格遵守 0.5rem 指令 */
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'PingFang TC', 'Noto Sans TC', sans-serif;
+            margin: 0; padding: 0; 
+            background: var(--bg-gold) url('https://www.transparenttextures.com/patterns/gold-dust.png'); 
+            color: #3E2723;
+            font-size: var(--font-size); 
+            overflow-x: hidden; width: 100vw;
+            line-height: 1.7;
+        }
+
+        /* 金碧輝煌頂部導航 */
+        header {
+            height: 75px; background: var(--gold-grad);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; border-bottom: 5px solid var(--deep-gold);
+            position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 5px 15px rgba(184, 134, 11, 0.4);
+        }
+
+        .logo-text { font-size: 0.65rem; font-weight: 900; color: #3E2723; text-shadow: 1px 1px 2px #FFF; }
+
+        .nav-tabs {
+            display: flex; background: #FFF; border-bottom: 3px solid var(--main-gold);
+            position: sticky; top: 75px; z-index: 999;
+        }
+        .tab {
+            flex: 1; text-align: center; padding: 18px 0;
+            font-size: 0.5rem; font-weight: 900; color: #A68B5A; cursor: pointer;
+            transition: all 0.3s; border-right: 1px solid #EEE;
+        }
+        .tab.active {
+            color: #3E2723; background: rgba(255, 215, 0, 0.35);
+            border-bottom: 6px solid var(--deep-gold);
+        }
+
+        .content-area { padding: 15px; padding-bottom: 100px; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeInUp 0.5s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 卡片設計 */
+        .card {
+            background: rgba(255, 255, 255, 0.98); border: 3px solid var(--coin-gold);
+            border-radius: 18px; padding: 22px; margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(184, 134, 11, 0.25);
+            position: relative; overflow: hidden;
+        }
+        .card-title {
+            font-size: 0.55rem; font-weight: 900; margin-bottom: 18px;
+            color: #5D4037; border-left: 10px solid var(--deep-gold); padding-left: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        textarea {
+            width: 100%; height: 260px; border: 3px solid var(--main-gold);
+            border-radius: 12px; padding: 18px; font-size: 0.5rem;
+            color: #3E2723; resize: none; background: #FFFEF2;
+        }
+
+        .btn {
+            width: 100%; padding: 20px; border: none; border-radius: 15px;
+            font-weight: 900; font-size: 0.55rem; cursor: pointer; margin-top: 15px;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-primary { background: var(--gold-grad); color: #3E2723; border: 1px solid var(--deep-gold); box-shadow: 0 6px 0 #B8860B; }
+        .btn-secondary { background: #FFF; border: 3px solid var(--main-gold); color: var(--main-gold); }
+
+        /* 進度條 */
+        .diag-item { margin-bottom: 18px; }
+        .diag-label { font-size: 0.5rem; font-weight: 900; color: #795548; display: flex; justify-content: space-between; }
+        .diag-bar { width: 100%; height: 16px; background: #EEE; border-radius: 8px; overflow: hidden; margin-top: 8px; border: 1.5px solid #DDD; }
+        .diag-fill { width: 0%; height: 100%; background: var(--gold-grad); transition: width 0.6s ease; }
+
+        /* 意象圖顯示 */
+        .art-viewport { width: 100%; margin-top: 18px; border-radius: 15px; overflow: hidden; background: #000; position: relative; min-height: 350px; display: flex; align-items: center; justify-content: center; border: 4px solid var(--main-gold); }
+        .art-viewport img { width: 100%; height: auto; display: block; }
+        .art-loading-txt { color: var(--coin-gold); font-size: 0.5rem; padding: 40px; text-align: center; font-weight: bold; }
+
+        #overlay {
+            position: fixed; inset: 0; background: rgba(255, 253, 231, 0.99);
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spinner { width: 80px; height: 80px; border: 10px solid #F3F3F3; border-top: 10px solid var(--coin-gold); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #toast-container { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); z-index: 5000; width: 90%; pointer-events: none; }
+        .toast-msg { background: #3E2723; color: var(--coin-gold); padding: 16px 28px; border-radius: 35px; font-size: 0.5rem; text-align: center; margin-top: 15px; border: 2.5px solid var(--coin-gold); font-weight: bold; }
+
+        #d3-stage { width: 100%; height: 450px; background: #050505; border-radius: 15px; border: 4px solid var(--coin-gold); }
+    </style>
+</head>
+<body>
+
+<div id="overlay">
+    <div class="spinner"></div>
+    <div style="margin-top:35px; font-weight:900; color:var(--deep-gold); font-size:0.65rem;">金碧天象 核心初始化</div>
+    <div id="overlay-status" style="font-size:0.5rem; color:#8D6E63; margin-top:15px;">同步遠端資源中...</div>
+</div>
+
+<div id="toast-container"></div>
+
+<header>
+    <div class="logo-text">🔱 G-4.5 MEGA MONITOR FULL</div>
+    <button class="btn btn-secondary" style="width:auto; padding:10px 22px; font-size:0.5rem; margin:0;" onclick="doExport()">💾 下載程式碼</button>
+</header>
+
+<nav class="nav-tabs">
+    <div class="tab active" data-idx="0">⚡ 啟動</div>
+    <div class="tab" data-idx="1">📖 分析</div>
+    <div class="tab" data-idx="2">🔥 能量</div>
+    <div class="tab" data-idx="3">🌌 意象</div>
+    <div class="tab" data-idx="4">⚖️ 決策</div>
+</nav>
+
+<div class="content-area">
+    <section id="pg-0" class="page active">
+        <div class="card">
+            <div class="card-title">📡 資源鏈結狀態</div>
+            <div class="diag-item" id="mon-api"><div class="diag-label"><span>API 密鑰</span><span class="diag-val">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+            <div class="diag-item" id="mon-cjk"><div class="diag-label"><span>CJK 字典 (Master)</span><span class="diag-val">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+            <div class="diag-item" id="mon-ast"><div class="diag-label"><span>星象大數據</span><span class="diag-val">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">⌨️ 觀測樣本輸入</div>
+            <textarea id="main-input">月→最近行星: Saturn | 太陽: 73.7° | 水星: 89.6°
+月相：上弦
+干支：乙巳 戊子月 己巳日 癸酉時
+宿曜：軫木蟹 (木)
+五行合成能量：木:28 火:33 土:25 金:20 水:35</textarea>
+            
+            <div id="run-monitor" style="display:none; margin-top:20px; border-top:3px dashed var(--main-gold); padding-top:20px;">
+                <div class="diag-item" id="mon-gemini"><div class="diag-label"><span>Gemini 2.5 邏輯算力</span><span class="diag-val">佇列中</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+                <div class="diag-item" id="mon-imagen"><div class="diag-label"><span>Imagen 4.0 意象渲染</span><span class="diag-val">佇列中</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+            </div>
+            <button class="btn btn-primary" id="btn-execute" disabled>等待資源...</button>
+        </div>
+    </section>
+
+    <section id="pg-1" class="page"></section>
+    
+    <section id="pg-2" class="page">
+        <div class="card"><div class="card-title">🌀 五行能量流動場</div><div id="d3-stage"></div></div>
+        <div id="energy-info"></div>
+    </section>
+
+    <section id="pg-3" class="page"></section>
+    <section id="pg-4" class="page"></section>
+</div>
+
+<script>
+/**
+ * G-4.5 MEGA CORE 邏輯修復版
+ */
+let API_KEY = "";
+// 使用驗證過的 Master 路徑
+const URL_API = "https://orlandotigereye.github.io/mytestweb/config/api.js";
+const URL_CJK = "https://raw.githubusercontent.com/max32002/chinese_dictionary/master/Dictionary.json";
+const URL_AST = "https://raw.githubusercontent.com/orlandotigereye/Analy13/refs/heads/main/astrology_merged.json";
+
+let DB_CJK = null, DB_AST = null, APP_STATE = null;
+
+function setMon(id, per, txt, err = false) {
+    const $box = $(`#${id}`);
+    $box.find('.diag-fill').css('width', per + '%');
+    const $val = $box.find('.diag-val').text(txt);
+    if(err) $val.css('color', '#FF5252');
+}
+
+function showToast(m) {
+    const $t = $(`<div class="toast-msg">${m}</div>`);
+    $('#toast-container').append($t);
+    setTimeout(() => $t.fadeOut(600, () => $t.remove()), 4500);
+}
+
+function decodeHex(hex) {
+    let s = "";
+    for (let i = 0; i < hex.length; i += 2) s += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    return s;
+}
+
+// 核心初始化
+async function bootstrap() {
+    try {
+        setMon('mon-api', 30, '同步中');
+        const rK = await fetch(URL_API);
+        const tK = await rK.text();
+        const m = tK.match(/["']([a-fA-F0-9]+)["']/);
+        if(m) {
+            API_KEY = decodeHex(m[1]);
+            setMon('mon-api', 100, '完成');
+        }
+
+        setMon('mon-cjk', 10, '下載中');
+        setMon('mon-ast', 10, '下載中');
+
+        const [cjkRes, astRes] = await Promise.all([
+            fetch(URL_CJK).then(r => r.json()),
+            fetch(URL_AST).then(r => r.json())
+        ]);
+
+        DB_CJK = cjkRes; setMon('mon-cjk', 100, '完成');
+        DB_AST = astRes; setMon('mon-ast', 100, '完成');
+
+        $('#btn-execute').prop('disabled', false).text('🚀 啟動全天象演算');
+        $('#overlay').fadeOut(800);
+    } catch(e) {
+        console.error(e);
+        showToast("資源連線失敗，請檢查網路。");
+        setMon('mon-cjk', 0, '連線失敗', true);
+        setMon('mon-ast', 0, '連線失敗', true);
+    }
+}
+
+function getStrokes(str) {
+    let total = 0;
+    const clean = str.replace(/[^\u4e00-\u9fa5]/g, '');
+    for(let char of clean) {
+        const item = DB_CJK.find(d => d.word === char);
+        total += item ? parseInt(item.stroke_count) : 8;
+    }
+    return total || 15;
+}
+
+async function runAnalysis() {
+    const input = $('#main-input').val().trim();
+    if(!API_KEY) return showToast("API 密鑰缺失");
+
+    $('#run-monitor').fadeIn();
+    setMon('mon-gemini', 20, '封裝數據');
+    const strokeVal = getStrokes(input);
+
+    const prompt = `觀測樣本: "${input}"。漢字筆劃能級: ${strokeVal}。
+    請根據星象與五行規律進行深度預測，回傳 JSON：
+    {
+      "brief": "一句話總結天機",
+      "logic": [{"title": "分析維度", "content": "詳細洞察內容，不少於50字"}],
+      "elements": {"wood": 0.25, "fire": 0.3, "earth": 0.2, "metal": 0.15, "water": 0.1},
+      "images": [{"prompt": "Detailed cinematic AI Art Prompt for Imagen 4.0", "label": "意象景觀"}],
+      "advice": {"do": "宜做事項", "no": "忌諱事項", "final": "核心決策斷語"}
+    }`;
+
+    try {
+        setMon('mon-gemini', 50, '傳送雲端');
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
+        });
+        
+        setMon('mon-gemini', 90, '解析規律');
+        const jsonRes = await res.json();
+        APP_STATE = JSON.parse(jsonRes.candidates[0].content.parts[0].text);
+        
+        setMon('mon-gemini', 100, '運算完成');
+        buildAllPages();
+        showToast("分析完成，意象圖渲染中...");
+        $('.tab').eq(1).click();
+    } catch (e) { 
+        showToast("雲端通訊異常: " + e.message); 
+        setMon('mon-gemini', 0, '失敗', true);
+    }
+}
+
+function buildAllPages() {
+    // P1 分析
+    let h1 = `<div class="card"><div class="card-title">🔮 天機總覽</div><p style="font-size:0.55rem; font-weight:900;">${APP_STATE.brief}</p></div>`;
+    APP_STATE.logic.forEach(l => h1 += `<div class="card"><div class="card-title">${l.title}</div><p>${l.content}</p></div>`);
+    $('#pg-1').html(h1);
+
+    // P2 能量
+    let h2 = `<div class="card"><table style="width:100%; font-size:0.5rem;">`;
+    const names = {wood:"木", fire:"火", earth:"土", metal:"金", water:"水"};
+    Object.entries(APP_STATE.elements).forEach(([k,v]) => {
+        h2 += `<tr><td style="color:var(--deep-gold); font-weight:900; padding:10px;">${names[k]}能量</td><td>${(v*100).toFixed(2)}%</td></tr>`;
+    });
+    $('#energy-info').html(h2 + `</table></div>`);
+
+    // P4 決策
+    $('#pg-4').html(`
+        <div class="card" style="background:var(--gold-grad); border:4px solid #3E2723; padding:45px; text-align:center;">
+            <div style="font-size:0.75rem; font-weight:900; color:#3E2723;">「${APP_STATE.advice.final}」</div>
+        </div>
+        <div class="card"><div class="card-title">✅ 趨吉指南</div><p style="color:#2E7D32; font-weight:900;">宜：${APP_STATE.advice.do}</p></div>
+        <div class="card"><div class="card-title">❌ 避凶禁忌</div><p style="color:#C62828; font-weight:900;">忌：${APP_STATE.advice.no}</p></div>
+    `);
+
+    renderVisuals();
+}
+
+async function renderVisuals() {
+    let h = "";
+    setMon('mon-imagen', 10, '啟動渲染');
+    for (let i = 0; i < APP_STATE.images.length; i++) {
+        const img = APP_STATE.images[i];
+        const bid = `img-box-${i}`;
+        h += `<div class="card"><div class="card-title">${img.label}</div><div class="art-viewport" id="${bid}"><div class="art-loading-txt">雲端意象生成中...</div></div></div>`;
+        
+        (async () => {
+            try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${API_KEY}`, {
+                    method: "POST",
+                    body: JSON.stringify({ instances: { prompt: img.prompt }, parameters: { sampleCount: 1 } })
+                });
+                const d = await r.json();
+                const b64 = d.predictions[0].bytesBase64Encoded;
+                $(`#${bid}`).html(`<img src="data:image/png;base64,${b64}">`);
+                setMon('mon-imagen', 100, '渲染完成');
+            } catch(e) {
+                $(`#${bid}`).html('<div class="art-loading-txt" style="color:red;">渲染失敗</div>');
+            }
+        })();
+    }
+    $('#pg-3').html(h);
+}
+
+function runD3Force() {
+    const el = d3.select("#d3-stage");
+    el.selectAll("*").remove();
+    const w = $('#d3-stage').width(), h = 450;
+    const svg = el.append("svg").attr("width", w).attr("height", h);
+    
+    const colors = {wood:"#4CAF50", fire:"#FF5252", earth:"#FBC02D", metal:"#E0E0E0", water:"#2196F3"};
+    const names = {wood:"木", fire:"火", earth:"土", metal:"金", water:"水"};
+    const nodes = Object.entries(APP_STATE.elements).map(([k,v]) => ({
+        id: k, name: names[k], r: 40 + (v * 120), color: colors[k]
+    }));
+
+    const sim = d3.forceSimulation(nodes)
+        .force("center", d3.forceCenter(w/2, h/2))
+        .force("collide", d3.forceCollide().radius(d => d.r + 15))
+        .force("charge", d3.forceManyBody().strength(-350));
+
+    const g = svg.selectAll("g").data(nodes).enter().append("g");
+    g.append("circle").attr("r", d => d.r).attr("fill", d => d.color).attr("stroke", "#FFD700").attr("stroke-width", 4);
+    g.append("text").text(d => d.name).attr("text-anchor", "middle").attr("dy", ".35em").style("font-weight", "900").style("fill", "#FFF").style("font-size", "0.6rem");
+
+    sim.on("tick", () => g.attr("transform", d => `translate(${d.x},${d.y})`));
+}
+
+function doExport() {
+    const b = new Blob([document.documentElement.outerHTML], {type: "text/html"});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = "G45_MEGA_FIXED.html";
+    a.click();
+}
+
+$(document).ready(() => {
+    bootstrap();
+    $('.tab').click(function() {
+        const i = $(this).data('idx');
+        $('.tab, .page').removeClass('active');
+        $(this).addClass('active');
+        $(`#pg-${i}`).addClass('active');
+        if(i == 2 && APP_STATE) setTimeout(runD3Force, 50);
+    });
+    $('#btn-execute').click(runAnalysis);
+});
+</script>
+</body>
+</html>
+
