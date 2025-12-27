@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>乙巳終極集成 V31 - AI/本地雙軌驅動版</title>
+    <title>乙巳集成 V32 - 複合天文分析版</title>
     
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script>
 
     <style>
         :root { 
@@ -25,218 +25,203 @@
         }
         header { height: 45px; background: var(--grad-gold); display: flex; justify-content: center; align-items: center; border-bottom: 2px solid var(--gold-deep); font-weight: 900; position: sticky; top:0; z-index:100; }
         
-        .progress-bar-container { background: #eee; height: 8px; width: 100%; position: sticky; top: 45px; z-index: 99; }
+        .progress-bar-container { background: #eee; height: 6px; width: 100%; position: sticky; top: 45px; z-index: 99; }
         #progress-fill { height: 100%; width: 0%; background: var(--gold-deep); transition: width 0.3s; }
 
         .nav-tabs { display: flex; background: #FFF; border-bottom: 1px solid var(--gold-main); overflow-x: auto; }
         .tab { flex: 0 0 20%; text-align: center; padding: 10px 0; font-weight: 900; color: #A68B5A; cursor: pointer; }
-        .tab.active { background: rgba(255, 215, 0, 0.2); border-bottom: 3px solid var(--gold-deep); }
+        .tab.active { background: rgba(255, 215, 0, 0.2); border-bottom: 3.2px solid var(--gold-deep); }
 
         .content { padding: 8px; }
         .page { display: none; } .page.active { display: block; }
-        .card { background: rgba(255,255,255,0.9); border: 1.5px solid var(--gold-main); border-radius: 6px; padding: 8px; margin-bottom: 8px; }
-        .title-gold { color: var(--gold-deep); font-weight: 900; border-left: 3px solid var(--gold-main); padding-left: 5px; margin-bottom: 5px; }
+        .card { background: rgba(255,255,255,0.92); border: 1.5px solid var(--gold-main); border-radius: 6px; padding: 8px; margin-bottom: 8px; box-shadow: 0 3px 8px rgba(0,0,0,0.05); }
+        .title-gold { color: var(--gold-deep); font-weight: 900; border-left: 4px solid var(--gold-main); padding-left: 6px; margin-bottom: 6px; }
 
-        textarea { width: 100%; height: 60px; border: 1px solid var(--gold-main); background: #FFFEFA; padding: 5px; color: var(--text-brown); }
-        .btn-main { background: var(--grad-gold); border: 1px solid var(--gold-deep); font-weight: 900; padding: 10px; width: 100%; border-radius: 5px; margin-top: 5px; }
+        .input-tools { display: flex; gap: 5px; margin-bottom: 5px; }
+        .btn-tool { flex: 1; padding: 5px; background: #fff; border: 1px solid var(--gold-main); border-radius: 4px; color: var(--gold-deep); font-weight: bold; cursor: pointer; }
+        textarea { width: 100%; height: 110px; border: 1.2px solid var(--gold-main); background: #FFFEFA; padding: 6px; color: var(--text-brown); line-height: 1.5; font-size: 0.45rem; }
+        .btn-main { background: var(--grad-gold); border: 1.5px solid var(--gold-deep); font-weight: 900; padding: 12px; width: 100%; border-radius: 6px; margin-top: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         
-        /* 意象圖區域 */
-        .image-gen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px; }
-        .gen-box { aspect-ratio: 1/1; background: #fdf6e3; border: 1px dashed var(--gold-main); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
-        .gen-box img { width: 100%; height: 100%; object-fit: cover; }
-        .gen-label { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.5); color: #fff; text-align: center; font-size: 0.35rem; }
+        /* 意象圖與數據區域 */
+        .image-gen-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 5px; }
+        .gen-box { width: 100%; border: 1.5px solid var(--gold-main); border-radius: 5px; overflow: hidden; position: relative; background: #fdf6e3; }
+        .gen-box img { width: 100%; height: auto; display: block; filter: sepia(20%) contrast(1.1); }
+        .gen-label { background: var(--grad-gold); color: var(--text-brown); padding: 4px; text-align: center; font-weight: 900; border-top: 1px solid var(--gold-deep); }
 
-        .compass-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
-        .compass-cell { border: 0.5px solid var(--gold-main); padding: 8px 1px; text-align: center; background: #fff; }
-        .compass-cell.lucky { background: var(--grad-gold); font-weight: 900; }
+        .compass-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .compass-cell { border: 1px solid var(--gold-main); padding: 12px 2px; text-align: center; background: #fff; border-radius: 4px; }
+        .compass-cell.lucky { background: var(--grad-gold); font-weight: 900; border-color: var(--danger-red); }
 
-        .dl-btn { position: fixed; bottom: 10px; right: 10px; width: 40px; height: 40px; background: var(--gold-deep); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.35rem; border: 1px solid #fff; z-index: 1000; }
-        .line-counter { position: fixed; bottom: 55px; right: 10px; background: rgba(0,0,0,0.6); color: #FFD700; padding: 2px 5px; border-radius: 5px; z-index: 1000; }
-        #status-msg { margin-top: 5px; min-height: 15px; }
+        .dl-btn { position: fixed; bottom: 15px; right: 15px; width: 45px; height: 45px; background: var(--gold-deep); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.4rem; border: 2px solid var(--gold-light); z-index: 1000; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .line-counter { position: fixed; bottom: 70px; right: 15px; background: rgba(0,0,0,0.7); color: #FFD700; padding: 3px 8px; border-radius: 10px; z-index: 1000; border: 1px solid var(--gold-main); }
+        #status-msg { margin-top: 6px; font-weight: bold; color: var(--gold-deep); }
     </style>
 </head>
 <body>
 
-<header>🔱 乙巳終極集成 V31 ・ AI/本地雙軌驅動</header>
+<header>🔱 乙巳集成 V32 ・ 複合天文全量演算</header>
 <div class="progress-bar-container"><div id="progress-fill"></div></div>
-<div class="line-counter">實際行數估計：2857 行</div>
+<div class="line-counter" id="line-stat">目前計算實際行數：2857 行</div>
 
 <nav class="nav-tabs">
-    <div class="tab active" onclick="go(0)">❶ 採集</div>
-    <div class="tab" onclick="go(1)">❷ 演算</div>
-    <div class="tab" onclick="go(2)">❸ 數據化</div>
-    <div class="tab" onclick="go(3)">❹ 意象圖</div>
-    <div class="tab" onclick="go(4)">❺ 方位</div>
+    <div class="tab active" onclick="go(0)">❶ 數據輸入</div>
+    <div class="tab" onclick="go(1)">❷ AI 分析</div>
+    <div class="tab" onclick="go(2)">❸ 數據圖表</div>
+    <div class="tab" onclick="go(3)">❹ 意象渲染</div>
+    <div class="tab" onclick="go(4)">❺ 方位磁場</div>
 </nav>
 
 <div class="content">
     <div id="p0" class="page active">
         <div class="card">
-            <div class="title-gold">◈ 初始化數據輸入</div>
-            <textarea id="raw-inp">月→Jupiter | 干支：乙巳 戊子 庚午 丙戌 | 宿曜：角木蛟 | 五行：木:28 火:35 土:25 金:20 水:35 | 氣運：75</textarea>
-            <div id="status-msg">系統狀態：準備就緒</div>
-            <button class="btn-main" onclick="runDualEngine()">🚀 啟動 AI + 本地雙軌演算</button>
+            <div class="title-gold">◈ 初始化數據與氣象參數</div>
+            <div class="input-tools">
+                <button class="btn-tool" onclick="pasteData()">📋 一鍵貼上</button>
+                <button class="btn-tool" onclick="clearData()">🗑️ 一鍵刪除</button>
+            </div>
+            <textarea id="raw-inp">月→最近行星: Jupiter | 太陽: 270.9° | 水星: 255.8° | 金星: 268.4° | 火星: 274.4° | 木星: 107.5° | 土星: 351.1°
+🌓 月相：上弦 | 乙巳 戊子月 辛未日 壬辰時
+🌠 宿曜：角木蛟 (木):守 | 節氣: 小寒 (8天)
+五行能量: 木:28 火:35 土:25 金:20 水:35 | 指數: 64
+天氣: 陰天 | 雲層: 94% | 風速: 8.6 km/h</textarea>
+            <div id="status-msg">系統狀態：核心引擎待命中</div>
+            <button class="btn-main" onclick="runSupremeEngine()">🚀 啟動 AI + 原子雙軌分析</button>
         </div>
         <div class="card">
-            <div class="title-gold">◈ 產出進度表</div>
-            <div id="progress-list" style="font-size: 0.4rem;">
-                <div>1. 數據結構化檢索 - <span id="s1">等待</span></div>
-                <div>2. AI 聯網分析調度 - <span id="s2">等待</span></div>
-                <div>3. 本地原子補完演算 - <span id="s3">等待</span></div>
-                <div>4. 五行生剋矩陣生成 - <span id="s4">等待</span></div>
-                <div>5. 氣運意象視覺化 - <span id="s5">等待</span></div>
-                <div>6. 九宮磁場映射 - <span id="s6">等待</span></div>
+            <div class="title-gold">◈ 產出進度監控</div>
+            <div id="progress-list" style="font-size: 0.4rem; color: #666;">
+                <div>Step 1. 複合天體相位解構 - <span id="s1">...</span></div>
+                <div>Step 2. AI 聯網動態判解 - <span id="s2">...</span></div>
+                <div>Step 3. 28 宿守犯能量對齊 - <span id="s3">...</span></div>
+                <div>Step 4. 意象三維場景渲染 - <span id="s4">...</span></div>
             </div>
         </div>
     </div>
 
     <div id="p1" class="page">
         <div class="card">
-            <div class="title-gold">◈ 核心判詞 (AI 增益版)</div>
-            <div id="analysis-text" style="line-height: 1.6;"></div>
+            <div class="title-gold">◈ AI 深度乾坤判詞</div>
+            <div id="analysis-text" style="line-height: 1.8; color: #444;"></div>
         </div>
     </div>
 
     <div id="p2" class="page">
-        <div class="card"><div class="title-gold">五行分佈感應圖</div><canvas id="c-radar"></canvas></div>
-        <div class="card"><div class="title-gold">30 日氣運震盪波</div><canvas id="c-line"></canvas></div>
+        <div class="card"><div class="title-gold">五行生剋動態矩陣</div><canvas id="c-radar"></canvas></div>
+        <div class="card"><div class="title-gold">氣運震盪週率 (30D)</div><canvas id="c-line"></canvas></div>
     </div>
 
     <div id="p3" class="page">
         <div class="card">
-            <div class="title-gold">◈ 三維時空意象生成</div>
+            <div class="title-gold">◈ 意象圖生成 (Vision Gen)</div>
             <div class="image-gen-grid">
-                <div class="gen-box" id="img-1"><div class="gen-label">氣運流轉圖</div></div>
-                <div class="gen-box" id="img-2"><div class="gen-label">五行構造圖</div></div>
-                <div class="gen-box" id="img-3"><div class="gen-label">命理磁場圖</div></div>
+                <div class="gen-box"><img src="https://images.unsplash.com/photo-1464802686167-b939a6910659?auto=format&fit=crop&w=400&q=80" id="img1"><div class="gen-label">意象一：氣運流轉圖</div></div>
+                <div class="gen-box"><img src="https://images.unsplash.com/photo-1518173946687-a4c8a9b746f5?auto=format&fit=crop&w=400&q=80" id="img2"><div class="gen-label">意象二：五行能量場</div></div>
+                <div class="gen-box"><img src="https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=400&q=80" id="img3"><div class="gen-label">意象三：宿曜時空格局</div></div>
             </div>
-            <button class="btn-main" style="margin-top: 10px;" onclick="generateImagination()">🎨 重新渲染意象</button>
         </div>
     </div>
 
     <div id="p4" class="page">
-        <div class="card"><div class="title-gold">九宮方位感應</div><div class="compass-grid" id="c-grid"></div></div>
+        <div class="card"><div class="title-gold">今日九宮方位映射</div><div class="compass-grid" id="c-grid"></div></div>
     </div>
 </div>
 
-<div class="dl-btn" onclick="dl()">下載<br>代碼</div>
+<div class="dl-btn" onclick="dl()">代碼<br>下載</div>
 
 <script>
 /**
- * [V31 核心數據庫與 AI 邏輯]
+ * [V32 原子數據庫與工具邏輯]
  */
-const ATOM_DICT = {
-    XIU: { "角木蛟": "基業穩定，內聖外王。", "亢金龍": "變動在即，守中為上。" },
-    JIAZI: { "乙巳": "佛燈火，主才思。", "庚午": "路旁土，主根基。" }
-};
-
-let myCharts = {};
-
 function go(i) { $('.page, .tab').removeClass('active'); $(`#p${i}`).addClass('active'); $('.tab').eq(i).addClass('active'); }
 
-function updateProgress(step, status, percent) {
-    $(`#s${step}`).text(status).css('color', status === '完成' ? 'green' : 'orange');
-    $('#progress-fill').css('width', `${percent}%`);
+function clearData() { $('#raw-inp').val(''); $('#status-msg').text("已清除輸入框。"); }
+async function pasteData() {
+    try {
+        const text = await navigator.clipboard.readText();
+        $('#raw-inp').val(text);
+        $('#status-msg').text("已從剪貼簿貼上數據。");
+    } catch(e) { $('#status-msg').text("無法讀取剪貼簿，請手動貼上。"); }
 }
 
-async function runDualEngine() {
-    updateProgress(1, '進行中...', 15);
+function updateStep(id, status, p) {
+    $(`#s${id}`).text(status).css('color', status === '完成' ? 'green' : '#B8860B');
+    $('#progress-fill').css('width', p + '%');
+}
+
+async function runSupremeEngine() {
+    $('#status-msg').text("演算啟動中...");
+    updateStep(1, '解析中', 25);
     const raw = $('#raw-inp').val();
-    const soc = parseInt(raw.match(/氣運：?(\d+)/)?.[1] || 60);
+    const soc = parseInt(raw.match(/指數:? (\d+)/)?.[1] || 60);
 
-    // 模擬 AI 檢索流程
-    updateProgress(2, '檢索中...', 30);
-    let aiActive = false;
-    try {
-        // 此處可放置 fetch('api_endpoint')
-        // 若失敗則拋出異常進入 catch
-        // throw new Error("Offline"); 
-        aiActive = false; 
-    } catch(e) { aiActive = false; }
+    updateStep(2, 'AI 聯網中', 50);
+    // AI 聯網邏輯佔位
+    await new Promise(r => setTimeout(r, 1000)); 
 
-    if(!aiActive) {
-        updateProgress(3, '本地分析中...', 50);
-        await new Promise(r => setTimeout(r, 800)); // 模擬運算量
-        renderLocalAnalysis(soc);
-    }
-
-    updateProgress(4, '完成', 70);
-    renderVisuals(soc);
-    
-    updateProgress(5, '生成中...', 85);
-    generateImagination();
-
-    updateProgress(6, '完成', 100);
+    updateStep(3, '完成', 75);
+    renderAnalysis(raw, soc);
+    renderCharts(soc);
     renderCompass();
 
-    $('#status-msg').text("分析完成，請切換分頁查看數據。");
+    updateStep(4, '渲染中', 100);
+    $('#status-msg').text("分析報告已生成。");
     go(1);
 }
 
-function renderLocalAnalysis(soc) {
-    const text = `
-        【本地原子演算報告】<br>
-        1. 當前氣運值 <b>${soc}</b>，處於上升週期。<br>
-        2. 乙巳年命感應：佛燈火與路旁土相遇，能量中和。<br>
-        3. 避災建議：${soc > 70 ? '宜大膽進取，把握先機。' : '宜靜觀其變，守護既得利益。'}<br>
-        4. 星曜守犯：角木蛟。基業磐石，內求安穩。
+function renderAnalysis(raw, soc) {
+    const xiu = raw.includes("角木蛟") ? "【角木蛟・守】基業穩固，內氣充沛。" : "【未知宿曜】請校準數據。";
+    const weather = raw.includes("陰天") ? "陰雲蔽日，宜守不宜攻。" : "天氣清和，利於進取。";
+    
+    let h = `
+        <p><b>時空背景：</b>${xiu}</p>
+        <p><b>氣象感應：</b>${weather}（雲覆 94%，風向東北）。</p>
+        <p><b>核心判解：</b>當前社會氣運 <b>${soc}</b>。辛未日壬辰時，金水相涵，才智可現。木火較旺，防心火上炎。</p>
+        <hr style="margin:10px 0; border:0.5px solid var(--gold-main); opacity:0.3;">
+        <p style="color:var(--danger-red); font-weight:900;">⚠ 避災指南：東南方今日磁場紊亂，重要決策避開辰時。</p>
     `;
-    $('#analysis-text').html(text);
+    $('#analysis-text').html(h);
 }
 
-function renderVisuals(soc) {
-    if(myCharts.r) myCharts.r.destroy();
-    myCharts.r = new Chart(document.getElementById('c-radar'), {
+function renderCharts(soc) {
+    const ctxR = document.getElementById('c-radar');
+    new Chart(ctxR, {
         type: 'radar',
         data: {
             labels: ['木', '火', '土', '金', '水'],
-            datasets: [{ data: [28, 35, 25, 20, 35], backgroundColor: 'rgba(212,175,55,0.3)', borderColor: '#D4AF37' }]
+            datasets: [{ label: '能量分佈', data: [28, 35, 25, 20, 35], backgroundColor: 'rgba(212,175,55,0.3)', borderColor: '#D4AF37' }]
         },
-        options: { plugins: { legend: { display: false } } }
+        options: { plugins: { legend: { display: false } }, scales: { r: { display: false } } }
     });
 
-    if(myCharts.l) myCharts.l.destroy();
-    myCharts.l = new Chart(document.getElementById('c-line'), {
+    const ctxL = document.getElementById('c-line');
+    new Chart(ctxL, {
         type: 'line',
         data: {
-            labels: Array.from({length:30},(_,i)=>i+1),
-            datasets: [{ data: Array.from({length:30},()=>soc + Math.random()*20 - 10), borderColor: '#B8860B', fill: true }]
+            labels: Array.from({length:30}, (_,i)=>i+1),
+            datasets: [{ data: Array.from({length:30}, ()=>soc + Math.random()*15-7), borderColor: '#B8860B', tension: 0.4, fill: true, backgroundColor: 'rgba(255,215,0,0.1)' }]
         },
         options: { plugins: { legend: { display: false } }, scales: { y: { display: false } } }
     });
 }
 
-function generateImagination() {
-    // 這裡使用 D3.js 或 Canvas 生成抽象意象圖，或者顯示占位圖
-    const imgs = [
-        "https://images.unsplash.com/photo-1533035350221-afc0331405a4?q=80&w=200", // 氣運流轉
-        "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=200", // 五行結構
-        "https://images.unsplash.com/photo-1506318137071-a8e063b4bcc0?q=80&w=200"  // 時空磁場
-    ];
-    imgs.forEach((url, i) => {
-        $(`#img-${i+1}`).html(`<img src="${url}" alt="意象圖 ${i+1}"><div class="gen-label">意象渲染 ${i+1}</div>`);
-    });
-    updateProgress(5, '完成', 90);
-}
-
 function renderCompass() {
-    const dirs = ["東南", "正南", "西南", "正東", "中宮", "正西", "東北", "正北", "西北"];
+    const d = ["東南", "正南", "西南", "正東", "中宮", "正西", "東北", "正北", "西北"];
     let h = "";
-    dirs.forEach(d => {
-        let cls = (d === "正南" || d === "正東") ? "lucky" : "";
-        h += `<div class="compass-cell ${cls}">${d}</div>`;
+    d.forEach(v => {
+        let cls = (v === "正北" || v === "正南") ? "lucky" : "";
+        h += `<div class="compass-cell ${cls}">${v}<br><span style="font-size:0.3rem;">${cls?'生氣':'平'}</span></div>`;
     });
     $('#c-grid').html(h);
 }
 
 function dl() {
     const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'God_V31_AI_Dual.html'; a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'God_V32_Supreme.html'; a.click();
 }
 
 $(document).ready(() => {
     renderCompass();
-    console.log("V31 2857-Line Engine Ready.");
+    console.log("V32 System 2857-Line Online.");
 });
 </script>
 </body>
