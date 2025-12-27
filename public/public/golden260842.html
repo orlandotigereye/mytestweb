@@ -14,7 +14,7 @@
 --main-gold:#D4AF37;
 --deep-gold:#B8860B;
 --gold-grad:linear-gradient(135deg,#FFD700 0%,#FFF176 50%,#DAA520 100%);
---font-size:.5rem;
+--font-size:0.5rem;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{
@@ -28,43 +28,42 @@ align-items:center;padding:0 15px;border-bottom:5px solid var(--deep-gold);
 position:sticky;top:0;z-index:1000;box-shadow:0 5px 15px rgba(184,134,11,.3);
 }
 .nav-tabs{display:flex;background:#FFF;border-bottom:2px solid var(--main-gold);position:sticky;top:75px;z-index:999}
-.tab{flex:1;text-align:center;padding:15px 0;font-weight:900;color:#A68B5A;cursor:pointer;border-right:1px solid #F0F0F0}
+.tab{flex:1;text-align:center;padding:15px 0;font-weight:900;color:#A68B5A;cursor:pointer;border-right:1px solid #F0F0F0;font-size:var(--font-size)}
 .tab.active{background:rgba(255,215,0,.2);border-bottom:5px solid var(--deep-gold);color:#3E2723}
 .content-area{padding:15px;padding-bottom:100px}
 .page{display:none}.page.active{display:block}
 .card{background:rgba(255,255,255,.98);border:2.5px solid var(--coin-gold);border-radius:15px;padding:20px;margin-bottom:20px;box-shadow:0 8px 20px rgba(184,134,11,.1)}
-.card-title{font-size:.55rem;font-weight:900;margin-bottom:15px;color:#5D4037;border-left:8px solid var(--deep-gold);padding-left:12px}
-textarea{width:100%;height:220px;border:2.5px solid var(--main-gold);border-radius:10px;padding:12px;font-size:.5rem;background:#FFFEF2;resize:none;color:#3E2723}
-.btn{width:100%;padding:18px;border:none;border-radius:12px;font-weight:900;font-size:.52rem;cursor:pointer;margin-top:12px}
+.card-title{font-size:0.5rem;font-weight:900;margin-bottom:15px;color:#5D4037;border-left:8px solid var(--deep-gold);padding-left:12px}
+textarea{width:100%;height:220px;border:2.5px solid var(--main-gold);border-radius:10px;padding:12px;font-size:0.5rem;background:#FFFEF2;resize:none;color:#3E2723}
+.btn{width:100%;padding:18px;border:none;border-radius:12px;font-weight:900;font-size:0.5rem;cursor:pointer;margin-top:12px}
 .btn-primary{background:var(--gold-grad);color:#3E2723;border:1px solid var(--deep-gold);box-shadow:0 5px 0 #B8860B}
 .btn-secondary{background:#FFF;border:2.5px solid var(--main-gold);color:var(--main-gold)}
 .diag-item{margin-bottom:12px}
-.diag-label{font-size:.5rem;font-weight:900;display:flex;justify-content:space-between}
+.diag-label{font-size:0.5rem;font-weight:900;display:flex;justify-content:space-between}
 .diag-bar{height:12px;background:#EEE;border-radius:6px;overflow:hidden;margin-top:5px;border:1px solid #DDD}
 .diag-fill{height:100%;width:0%;background:var(--gold-grad);transition:width .8s ease}
 .art-viewport{width:100%;min-height:320px;background:#111;border-radius:12px;margin-top:15px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:4px solid var(--main-gold)}
 .art-viewport img{width:100%;height:auto;display:block}
-.loading-txt{color:var(--coin-gold);font-size:.5rem;font-weight:bold;animation:pulse 1.5s infinite}
+.loading-txt{color:var(--coin-gold);font-size:0.5rem;font-weight:bold;animation:pulse 1.5s infinite}
 @keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
 #overlay{position:fixed;inset:0;background:var(--bg-gold);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .spinner{width:60px;height:60px;border:8px solid #F3F3F3;border-top:8px solid var(--coin-gold);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 #msg-box{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);z-index:5000;width:90%;pointer-events:none}
-.msg-item{background:#3E2723;color:var(--coin-gold);padding:12px 20px;border-radius:20px;font-size:.5rem;text-align:center;margin-top:10px;border:2px solid var(--coin-gold);box-shadow:0 4px 10px rgba(0,0,0,.3)}
+.msg-item{background:#3E2723;color:var(--coin-gold);padding:12px 20px;border-radius:20px;font-size:0.5rem;text-align:center;margin-top:10px;border:2px solid var(--coin-gold);box-shadow:0 4px 10px rgba(0,0,0,.3)}
 #d3-stage{width:100%;height:400px;background:#0A0A0A;border-radius:12px;border:3px solid var(--coin-gold)}
 </style>
 </head>
 <body>
-<div id="overlay"><div class="spinner"></div><div style="margin-top:25px;font-weight:900;font-size:.6rem;color:var(--deep-gold)">連線至天象核心...</div><div id="boot-status" style="margin-top:10px;font-size:.5rem">驗證遠端 Master 分支...</div></div>
+<div id="overlay"><div class="spinner"></div><div style="margin-top:25px;font-weight:900;font-size:0.5rem;color:var(--deep-gold)">連線至天象核心...</div><div id="boot-status" style="margin-top:10px;font-size:0.5rem">驗證遠端 Master 分支...</div></div>
 <div id="msg-box"></div>
-<header><div style="font-weight:900;font-size:.6rem">🔱 G-4.5 MEGA MONITOR</div><button class="btn-secondary" style="width:auto;margin:0;padding:8px 15px;font-size:.5rem" onclick="exportDoc()">💾 下載程式碼</button></header>
+<header><div style="font-weight:900;font-size:0.5rem">🔱 G-4.5 MEGA MONITOR</div><button class="btn-secondary" style="width:auto;margin:0;padding:8px 15px;font-size:0.5rem" onclick="exportDoc()">💾 下載程式碼</button></header>
 <nav class="nav-tabs">
 <div class="tab active" data-p="0">啟動</div><div class="tab" data-p="1">分析</div><div class="tab" data-p="2">能量</div><div class="tab" data-p="3">意象</div><div class="tab" data-p="4">決策</div>
 </nav>
 <div class="content-area">
 <section id="pg-0" class="page active">
 <div class="card"><div class="card-title">📡 資源鏈結狀態</div>
-<div class="diag-item" id="d-api"><div class="diag-label"><span>API 授權金鑰</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
 <div class="diag-item" id="d-cjk"><div class="diag-label"><span>CJK 字典 (Master)</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
 <div class="diag-item" id="d-ast"><div class="diag-label"><span>星象大數據庫</span><span class="v">等待</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
 </div>
@@ -73,8 +72,8 @@ textarea{width:100%;height:220px;border:2.5px solid var(--main-gold);border-radi
 月相：上弦 | 太陽 73.7° | 宿曜：軫木蟹 (木)
 五行分佈：木:28 火:33 土:25 金:20 水:35</textarea>
 <div id="run-mon" style="display:none;margin-top:20px;border-top:2px dashed var(--main-gold);padding-top:20px">
-<div class="diag-item" id="d-gemini"><div class="diag-label"><span>Gemini 邏輯封裝</span><span class="v">佇列中</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
-<div class="diag-item" id="d-imagen"><div class="diag-label"><span>Imagen 意象渲染</span><span class="v">佇列中</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+<div class="diag-item" id="d-gemini"><div class="diag-label"><span>Gemini 2.5 邏輯</span><span class="v">佇列中</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
+<div class="diag-item" id="d-imagen"><div class="diag-label"><span>Imagen 4.0 意象</span><span class="v">佇列中</span></div><div class="diag-bar"><div class="diag-fill"></div></div></div>
 </div>
 <button id="btn-run" class="btn btn-primary" disabled>載入中...</button>
 </div>
@@ -88,85 +87,83 @@ textarea{width:100%;height:220px;border:2.5px solid var(--main-gold);border-radi
 <section id="pg-4" class="page"></section>
 </div>
 <script>
-let KEY="";let DB_CJK=[];let DB_AST=null;let APP_STATE=null;
-const URL_API="https://orlandotigereye.github.io/mytestweb/config/api.js";
+const apiKey = ""; // 必須為空，由環境注入
+let DB_CJK=[];let DB_AST=null;let APP_STATE=null;
 const URL_CJK="https://raw.githubusercontent.com/max32002/chinese_dictionary/master/Dictionary.json";
 const URL_AST="https://raw.githubusercontent.com/orlandotigereye/Analy13/refs/heads/main/astrology_merged.json";
 
 function log(t){const m=$(`<div class="msg-item">${t}</div>`);$('#msg-box').append(m);setTimeout(()=>m.fadeOut(500,()=>m.remove()),4000)}
 function setD(id,p,v,e=false){const i=$('#'+id);i.find('.diag-fill').css('width',p+'%');i.find('.v').text(v).css('color',e?'#FF5252':'')}
-function hex2str(h){let s='';for(let i=0;i<h.length;i+=2)s+=String.fromCharCode(parseInt(h.substr(i,2),16));return s}
 
 async function boot(){
 try{
-const akR=await fetch(URL_API);const akT=await akR.text();const m=akT.match(/["']([a-fA-F0-9]+)["']/);
-if(m){KEY=hex2str(m[1]);setD('d-api',100,'就緒')}
 setD('d-cjk',20,'下載中');setD('d-ast',20,'下載中');
-
-const [cjkRes, astRes] = await Promise.all([
-    fetch(URL_CJK).then(r => r.json()),
-    fetch(URL_AST).then(r => r.json())
+const [cjkRes, astRes]=await Promise.all([
+    fetch(URL_CJK).then(r=>r.json()),
+    fetch(URL_AST).then(r=>r.json())
 ]);
-
-// 修正：處理 CJK 字典格式，提取數組部分以防止 .find() 錯誤
-if (cjkRes && Array.isArray(cjkRes)) {
-    DB_CJK = cjkRes;
-} else if (cjkRes && cjkRes.values && Array.isArray(cjkRes.values)) {
-    DB_CJK = cjkRes.values;
-} else {
-    DB_CJK = [];
-}
-
+DB_CJK = Array.isArray(cjkRes) ? cjkRes : (cjkRes.values || []);
 DB_AST = astRes; 
-setD('d-cjk', 100, '就緒');
-setD('d-ast', 100, '就緒');
+setD('d-cjk', 100, '就緒');setD('d-ast', 100, '就緒');
 $('#btn-run').prop('disabled',false).text('🚀 啟動演算');
 $('#overlay').fadeOut(600);
-}catch(e){log("連線失敗，請檢查 GitHub 分支權限");setD('d-cjk',0,'連線超時',true)}
+}catch(e){log("連線失敗，請檢查網路");setD('d-cjk',0,'錯誤',true)}
 }
 
 function getStrokes(s){
 let total=0;const chars=s.replace(/[^\u4e00-\u9fa5]/g,'');
-if(!Array.isArray(DB_CJK)) return 10;
 for(let c of chars){const f=DB_CJK.find(d=>d.word===c);total+=f?parseInt(f.stroke_count):8}
 return total||10;
 }
 
+async function apiCall(prompt){
+    let retry = 0;
+    const delays = [1000, 2000, 4000, 8000, 16000];
+    while(retry < 5){
+        try{
+            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                method: "POST", headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            if(!r.ok) throw new Error(r.status);
+            return await r.json();
+        } catch(e){
+            if(retry === 4) throw e;
+            await new Promise(res => setTimeout(res, delays[retry]));
+            retry++;
+        }
+    }
+}
+
 async function start(){
-const input=$('#main-input').val().trim();if(!KEY)return log("金鑰遺失");
+const input=$('#main-input').val().trim();
 $('#run-mon').fadeIn();setD('d-gemini',20,'數據封裝中');
 const strokes=getStrokes(input);
-const prompt=`分析樣本：${input}。筆劃權重：${strokes}。回傳 JSON (嚴禁 Markdown 標記)：
+const prompt=`分析樣本：${input}。筆劃權重：${strokes}。回傳 JSON：
 {"brief":"天機摘要","logic":[{"t":"維度","c":"內容"}],"elements":{"wood":0.2,"fire":0.2,"earth":0.2,"metal":0.2,"water":0.2},"advice":{"do":"宜","no":"忌","final":"結論"},"arts":[{"p":"AI Art Prompt","l":"圖名"}]}`;
 
 try{
-setD('d-gemini',50,'傳送至 Gemini');
-const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${KEY}`,{
-method:"POST",headers:{"Content-Type":"application/json"},
-body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
-});
-const d=await r.json();let txt=d.candidates[0].content.parts[0].text;
-txt=txt.replace(/```json/g,'').replace(/```/g,'').trim(); 
-APP_STATE=JSON.parse(txt);
+setD('d-gemini',50,'Gemini 運算中');
+const d = await apiCall(prompt);
+let txt = d.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim();
+APP_STATE = JSON.parse(txt);
 setD('d-gemini',100,'演算完成');
 render();log("數據封裝完成，啟動意象渲染...");
 $('[data-p=1]').click();
-}catch(e){setD('d-gemini',0,'解析錯誤',true);log("演算卡死："+e.message)}
+}catch(e){setD('d-gemini',0,'API 拒絕連線 (403/Key Error)',true);log("請確認環境 API Key 已注入");}
 }
 
 function render(){
-let h1=`<div class="card"><div class="card-title">🔮 天機摘要</div><p style="font-size:.55rem;font-weight:900">${APP_STATE.brief}</p></div>`;
+let h1=`<div class="card"><div class="card-title">🔮 天機摘要</div><p style="font-weight:900">${APP_STATE.brief}</p></div>`;
 APP_STATE.logic.forEach(l=>h1+=`<div class="card"><div class="card-title">${l.t}</div><p>${l.c}</p></div>`);
 $('#pg-1').html(h1);
-
-let h2=`<div class="card"><table style="width:100%;font-size:.5rem">`;
+let h2=`<div class="card"><table style="width:100%">`;
 const dict={wood:"木",fire:"火",earth:"土",metal:"金",water:"水"};
 Object.entries(APP_STATE.elements).forEach(([k,v])=>{
 h2+=`<tr><td style="color:var(--deep-gold);font-weight:900;padding:8px">${dict[k]}能量</td><td>${(v*100).toFixed(2)}%</td></tr>`;
 });
 $('#energy-list').html(h2+`</table></div>`);
-
-$('#pg-4').html(`<div class="card" style="background:var(--gold-grad);text-align:center;padding:40px"><div style="font-size:.7rem;font-weight:900">「${APP_STATE.advice.final}」</div></div><div class="card"><div class="card-title">✅ 宜</div><p>${APP_STATE.advice.do}</p></div><div class="card"><div class="card-title">❌ 忌</div><p>${APP_STATE.advice.no}</p></div>`);
+$('#pg-4').html(`<div class="card" style="background:var(--gold-grad);text-align:center;padding:40px"><div style="font-size:0.7rem;font-weight:900">「${APP_STATE.advice.final}」</div></div><div class="card"><div class="card-title">✅ 宜</div><p>${APP_STATE.advice.do}</p></div><div class="card"><div class="card-title">❌ 忌</div><p>${APP_STATE.advice.no}</p></div>`);
 renderArts();
 }
 
@@ -177,13 +174,13 @@ const it=APP_STATE.arts[i];const bid=`art-${i}`;
 h+=`<div class="card"><div class="card-title">${it.l}</div><div class="art-viewport" id="${bid}"><div class="loading-txt">Imagen 4.0 渲染中...</div></div></div>`;
 (async()=>{
 try{
-const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${KEY}`,{
+const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`,{
 method:"POST",body:JSON.stringify({instances:{prompt:it.p},parameters:{sampleCount:1}})
 });
 const d=await r.json();const b64=d.predictions[0].bytesBase64Encoded;
 $(`#${bid}`).html(`<img src="data:image/png;base64,${b64}">`);
 setD('d-imagen',100,'渲染完成');
-}catch(e){$(`#${bid}`).html('<div class="loading-txt" style="color:red">渲染超時</div>')}
+}catch(e){$(`#${bid}`).html('<div class="loading-txt" style="color:#FF5252">渲染受限</div>')}
 })();
 }
 $('#pg-3').html(h);
@@ -197,13 +194,13 @@ const nodes=Object.entries(APP_STATE.elements).map(([k,v])=>({id:k,name:({wood:"
 const sim=d3.forceSimulation(nodes).force("center",d3.forceCenter(w/2,h/2)).force("collide",d3.forceCollide().radius(d=>d.r+10)).force("charge",d3.forceManyBody().strength(-300));
 const g=svg.selectAll("g").data(nodes).enter().append("g");
 g.append("circle").attr("r",d=>d.r).attr("fill",d=>d.color).attr("stroke","#FFD700").attr("stroke-width",3);
-g.append("text").text(d=>d.name).attr("text-anchor","middle").attr("dy",".35em").style("font-weight","900").style("fill","#FFF").style("font-size",".6rem");
+g.append("text").text(d=>d.name).attr("text-anchor","middle").attr("dy",".35em").style("font-weight","900").style("fill","#FFF").style("font-size","0.6rem");
 sim.on("tick",()=>g.attr("transform",d=>`translate(${d.x},${d.y})`));
 }
 
 function exportDoc(){
 const b=new Blob([document.documentElement.outerHTML],{type:"text/html"});
-const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download="G45_FIXED_FINAL.html";a.click();
+const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download="G45_MEGA_REPAIR.html";a.click();
 }
 
 $(document).ready(()=>{
