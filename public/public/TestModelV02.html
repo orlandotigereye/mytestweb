@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>TestModel V05 - 外部 core.js</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body { font-family: system-ui; font-size: 13px; padding: 10px; }
+.ok { color: #2ecc71; }
+.fail { color: #e74c3c; }
+button { margin: 6px 0; }
+pre { background:#111;color:#0f0;padding:8px;overflow:auto; }
+</style>
+
+<!-- 引用外部 core.js -->
+<script src="https://orlandotigereye.github.io/mytestweb/public/public/core.js"></script>
+</head>
+<body>
+
+<h3>📦 載入檢查面板</h3>
+
+<div id="status"></div>
+<button onclick="reInit()">🔄 重新初始化</button>
+<pre id="log"></pre>
+
+<script>
+/* =====================================================
+ 渲染模組狀態
+===================================================== */
+function renderStatus() {
+  const box = document.getElementById("status");
+  box.innerHTML = "";
+  Object.entries(Core.modules).forEach(([k,v])=>{
+    const d=document.createElement("div");
+    d.className = v.status ? "ok" : "fail";
+    d.textContent = `${k}: ${v.status ? "OK" : "FAILED"}`;
+    if(v.err) d.textContent += ` (${v.err})`;
+    box.appendChild(d);
+  });
+}
+
+/* =====================================================
+ 重新初始化
+===================================================== */
+async function reInit() {
+  document.getElementById("log").textContent = "初始化中...";
+  await Core.initAll();
+  renderStatus();
+  document.getElementById("log").textContent = JSON.stringify(Core.modules, null, 2);
+}
+
+/* =====================================================
+ 頁面初始執行
+===================================================== */
+reInit();
+</script>
+
+</body>
+</html>
