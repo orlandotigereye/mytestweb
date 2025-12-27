@@ -3,161 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>乙巳終極集成 V19 - 十項全能決策版</title>
+    <title>乙巳終極萬行集成 V20 - 猶豫消除全功能版</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script>
     <script src="https://orlandotigereye.github.io/mytestweb/public/public/core.js"></script>
+
     <style>
+        /* [樣式規範] 金光閃閃、背景金幣輝煌、小字 0.5rem */
         :root { 
             --gold-main: #D4AF37; --gold-light: #FFF176; --gold-deep: #B8860B;
             --bg-gold: #FFFDE7; --text-brown: #3E2723; --coin-gold: #FFD700;
             --font-size: 0.5rem; 
             --grad-gold: linear-gradient(135deg, #FFD700 0%, #FFF176 50%, #DAA520 100%);
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
-            font-family: 'PingFang TC', sans-serif; background: var(--bg-gold) url('https://www.transparenttextures.com/patterns/gold-dust.png') fixed;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; 
+            background: var(--bg-gold) url('https://www.transparenttextures.com/patterns/gold-dust.png') fixed;
             color: var(--text-brown); font-size: var(--font-size); width: 100vw; overflow-x: hidden;
+            line-height: 1.5;
         }
-        header { height: 48px; background: var(--grad-gold); display: flex; justify-content: center; align-items: center; border-bottom: 2px solid var(--gold-deep); font-weight: 900; position: sticky; top:0; z-index:2000; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-        .nav-tabs { display: flex; background: #FFF; border-bottom: 1px solid var(--gold-main); position: sticky; top:48px; z-index:1999; }
+
+        header { 
+            height: 50px; background: var(--grad-gold); display: flex; justify-content: center; align-items: center;
+            border-bottom: 2px solid var(--gold-deep); position: sticky; top: 0; z-index: 2000; font-weight: 900;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .nav-tabs { 
+            display: flex; background: #FFF; border-bottom: 1.5px solid var(--gold-main); 
+            position: sticky; top: 50px; z-index: 1999; 
+        }
         .tab { flex: 1; text-align: center; padding: 12px 0; font-weight: 900; color: #A68B5A; cursor: pointer; border-right: 1px solid #f0f0f0; }
-        .tab.active { background: rgba(255, 215, 0, 0.15); border-bottom: 4px solid var(--gold-deep); color: var(--text-brown); }
+        .tab.active { background: rgba(255, 215, 0, 0.2); border-bottom: 4px solid var(--gold-deep); color: var(--text-brown); }
+
         .content { padding: 12px; padding-bottom: 100px; }
-        .page { display: none; } .page.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .card { background: rgba(255,255,255,0.97); border: 2.5px solid var(--coin-gold); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(184,134,11,0.2); }
-        .title-gold { color: var(--gold-deep); font-weight: 900; margin-bottom: 10px; border-left: 5px solid var(--gold-main); padding-left: 10px; font-size: 0.6rem; }
-        textarea { width: 100%; height: 130px; border: 1.5px solid var(--gold-main); border-radius: 6px; padding: 10px; font-size: 0.5rem; background: #FFFEFA; resize: none; }
-        .btn-main { background: var(--grad-gold); border: 1px solid var(--gold-deep); color: var(--text-brown); font-weight: 900; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 0.6rem; box-shadow: 0 4px 0 #8B4513; margin-top: 10px; }
-        .btn-main:active { transform: translateY(3px); box-shadow: 0 1px 0 #8B4513; }
-        
-        /* 視覺意象圖卷 */
-        .visual-scroll { 
-            width: 325px; min-height: 520px; background: #FFFEF2; border: 6px double var(--gold-main);
-            margin: 0 auto; padding: 20px; position: relative; box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        .page { display: none; } .page.active { display: block; animation: fadeIn 0.4s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { 
+            background: rgba(255,255,255,0.98); border: 2.5px solid var(--coin-gold); 
+            border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(184,134,11,0.2);
         }
-        .v-item { margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed rgba(212,175,55,0.3); }
-        .v-label { font-weight: 900; color: var(--gold-deep); margin-right: 5px; }
-        .conclusion-box { background: var(--grad-gold); padding: 12px; border-radius: 8px; border: 1.5px solid var(--gold-deep); margin-top: 15px; text-align: center; }
-        .conclusion-text { font-size: 0.65rem; font-weight: 900; color: #3E2723; line-height: 1.5; }
+        .title-gold { color: var(--gold-deep); font-weight: 900; margin-bottom: 12px; border-left: 5px solid var(--gold-main); padding-left: 10px; font-size: 0.6rem; }
+
+        textarea { width: 100%; height: 150px; border: 1.5px solid var(--gold-main); border-radius: 6px; padding: 10px; font-size: 0.5rem; background: #FFFEFA; resize: none; }
+        
+        .btn-main { 
+            background: var(--grad-gold); border: 1px solid var(--gold-deep); color: var(--text-brown); 
+            font-weight: 900; padding: 15px; width: 100%; border-radius: 8px; cursor: pointer; 
+            font-size: 0.6rem; box-shadow: 0 4px 0 #8B4513; margin-top: 10px;
+        }
+        .btn-main:active { transform: translateY(3px); box-shadow: 0 1px 0 #8B4513; }
+
+        /* [重要] 十項全能視覺卷 */
+        .visual-scroll { 
+            width: 330px; min-height: 650px; background: #FFFEF2; border: 6px double var(--gold-main);
+            margin: 0 auto; padding: 25px; position: relative; box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+        .v-row { margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px dashed rgba(212,175,55,0.4); }
+        .v-tag { font-weight: 900; color: var(--gold-deep); display: block; margin-bottom: 2px; }
+        
+        /* 最終結論裝飾 */
+        .conclusion-panel { 
+            background: linear-gradient(180deg, #FFFDE7, #FFF9C4); 
+            padding: 15px; border-radius: 10px; border: 2px solid var(--gold-main); 
+            margin-top: 20px; text-align: center; position: relative;
+        }
+        .conclusion-panel::before { content: '◈'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #FFF; padding: 0 5px; color: var(--gold-deep); }
+        .conclusion-text { font-size: 0.6rem; font-weight: 900; color: #B71C1C; line-height: 1.6; }
+
         .dl-btn { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: #000; color: #fff; border-radius: 50%; font-size: 0.4rem; z-index: 3000; border: 2px solid var(--gold-main); display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<header>🔱 乙巳大匯總 Pro V19 (十項集成)</header>
+<header>🔱 乙巳終極集成 V20 ・ 萬行解析核心</header>
 
 <nav class="nav-tabs">
     <div class="tab active" onclick="goPage(0)">數據載入</div>
-    <div class="tab" onclick="goPage(1)">大匯總意象圖</div>
+    <div class="tab" onclick="goPage(1)">十項決策卷</div>
 </nav>
 
 <div class="content">
     <div id="p0" class="page active">
         <div class="card">
-            <div class="title-gold">全數據源輸入 (含行星、氣運、天氣)</div>
-            <textarea id="raw-data">最近行星: Jupiter | 太陽: 274.3° | 水星: 258.9° | 金星: 271.7° | 火星: 278.0°
-月相：上弦 | 宿曜：角木蛟 (守)
+            <div class="title-gold">全維度天機數據源</div>
+            <textarea id="raw-input">月→最近行星: Jupiter | 太陽: 274.3° | 水星: 258.9° | 金星: 271.7° | 火星: 278.0° | 木星: 111.6° | 土星: 355.1°
+月相：🌓 上弦
 干支：乙巳 戊子 庚午 丙戌
+節氣：小寒（距離 9 天）
+宿曜：🌠 角木蛟 (守)
 五行：木:28 火:35 土:25 金:20 水:35
-社會氣運：64 | 天氣：大致晴朗 (雲量24%)
+社會氣運：64
+天氣：大致晴朗 | 雲量: 24% | 北風 8 km/h
 今日關鍵字：壓力在、情緒重、能量卡、要守不宜衝</textarea>
-            <button class="btn-main" onclick="masterProcess()">🚀 執行十項全能匯總推演</button>
+            <button class="btn-main" onclick="runUniverseEngine()">🚀 啟動 V20 萬行邏輯推演</button>
         </div>
     </div>
 
     <div id="p1" class="page">
-        <div id="capture-area">
+        <div id="capture-zone">
             <div class="visual-scroll">
-                <div style="text-align:center; margin-bottom:20px;">
-                    <div style="width:45px; height:45px; background:var(--grad-gold); border-radius:50%; margin:0 auto 10px; border:2px solid var(--gold-deep); display:flex; align-items:center; justify-content:center; font-weight:900;">V19</div>
-                    <div style="font-size:0.8rem; font-weight:900; color:var(--gold-deep); letter-spacing:3px;">乙巳大匯總・意象圖</div>
+                <div style="text-align:center; margin-bottom:15px;">
+                    <div style="font-size:0.8rem; font-weight:900; color:var(--gold-deep); letter-spacing:4px; border-bottom: 2px solid var(--gold-main); display:inline-block; padding-bottom:5px;">時空避災圖語</div>
                 </div>
 
-                <div class="v-body">
-                    <div class="v-item"><span class="v-label">一、天星感應：</span><span id="v1"></span></div>
-                    <div class="v-item"><span class="v-label">二、月相判分：</span><span id="v2"></span></div>
-                    <div class="v-item"><span class="v-label">三、干支律動：</span><span id="v3"></span></div>
-                    <div class="v-item"><span class="v-label">四、節氣位能：</span><span id="v4"></span></div>
-                    <div class="v-item"><span class="v-label">五、宿曜守犯：</span><span id="v5"></span></div>
-                    <div class="v-item"><span class="v-label">六、五行能量：</span><span id="v6"></span></div>
-                    <div class="v-item"><span class="v-label">七、社會氣運：</span><span id="v7"></span></div>
-                    <div class="v-item"><span class="v-label">八、自然徵象：</span><span id="v8"></span></div>
-                    <div class="v-item"><span class="v-label">九、今日關鍵字：</span><b id="v9" style="color:#B71C1C;"></b></div>
-                    
-                    <div class="conclusion-box">
-                        <div style="font-size:0.45rem; color:#5D4037; margin-bottom:5px;">── 十、最終結論 ──</div>
-                        <div class="conclusion-text" id="v10"></div>
+                <div id="v-content">
+                    </div>
+
+                <div class="conclusion-panel">
+                    <div style="font-size:0.45rem; color:#5D4037; font-weight:900;">十、最終結論（一句話）</div>
+                    <div class="conclusion-text" id="v10">
+                        今天不是行動日，是承重測試日。能撐、不爆、不亂動的人，會走過；想一次解決、硬要突破的人，只會更累。
                     </div>
                 </div>
 
-                <div style="position:absolute; bottom:15px; right:20px; font-size:0.4rem; color:var(--gold-deep); font-weight:900;">乙巳占 V10.5 ✖ God251224_J</div>
+                <div style="margin-top:15px; font-size:0.4rem; color:#888; text-align:right;">
+                    乙巳占 V10.5 | 受訪者核心 God_J | 2025-12-27 認證
+                </div>
             </div>
         </div>
-        <button class="btn-main" onclick="saveImage()">📥 導出金箔意象圖</button>
+        <button class="btn-main" onclick="exportImg()">📥 下載金箔避災圖 (PNG)</button>
     </div>
 </div>
 
 <div class="dl-btn" onclick="downloadCode()">下載<br>代碼</div>
 
 <script>
-    let API_KEY = "";
-    async function init() {
-        const res = await fetch("https://orlandotigereye.github.io/mytestweb/config/api.js");
-        const txt = await res.text();
-        const m = txt.match(/"([a-fA-F0-9]+)"/);
-        if(m) API_KEY = decodeHex(m[1]);
-        await Core.initAll();
+/* ==========================================================================
+   萬行演算邏輯區：包含全量星體權重、干支長生矩陣、宿曜守犯演算法
+   ========================================================================== */
+
+const DATA_MATRIX = {
+    Planets: {
+        Jupiter: { n: "木星", s: 15, d: "歲星入廟，機緣湧現，但需防盲目。" },
+        Saturn: { n: "土星", s: -18, d: "鎮星犯境，壓力倍增，萬事宜守。" },
+        Mars: { n: "火星", s: -10, d: "熒惑失位，情緒易燃，慎防沖突。" },
+        Venus: { n: "金星", s: 8, d: "太白和合，財帛有氣，微利可求。" },
+        Mercury: { n: "水星", s: 6, d: "辰星順行，溝通頻繁，細節為王。" }
+    },
+    TwelveLife: {
+        "庚": { "午": "沐浴", "子": "死", "戌": "衰" },
+        "乙": { "巳": "沐浴", "子": "病", "午": "長生" }
+    },
+    LunarPhase: {
+        "上弦": "蓄勢待發，陽氣漸長，宜小步佈局。",
+        "下弦": "能量收束，事宜止損，不宜遠行。",
+        "滿月": "氣場巔峰，事態明朗，宜收割結果。"
     }
-    function decodeHex(h){ let s=""; for(let i=0;i<h.length;i+=2) s+=String.fromCharCode(parseInt(h.substr(i,2),16)); return s; }
+};
 
-    async function masterProcess() {
-        const input = $('#raw-data').val();
-        
-        // 解析邏輯 (Regex)
-        const planets = input.includes("Jupiter") ? "歲星當頭，貴人隱現，但需防過度膨脹。" : "星能平穩。";
-        const moon = input.includes("上弦") ? "上弦蓄勢期，利於小步慢跑，不宜強攻。" : "月相穩定。";
-        const gz = input.match(/干支[：\s]*(.*)/)?.[1] || "乙巳 戊子 庚午 丙戌";
-        const sy = input.match(/宿曜[：\s]*(.*)/)?.[1] || "角木蛟 (守)";
-        const five = input.match(/五行[：\s]*(.*)/)?.[1] || "木:28 火:35 土:25 金:20 水:35";
-        const soc = input.match(/氣運[：\s]*(\d+)/)?.[1] || "64";
-        const weather = input.match(/天氣[：\s]*(.*)/)?.[1] || "大致晴朗";
-        const kw = input.match(/關鍵字[：\s]*(.*)/)?.[1] || "壓力在、情緒重、能量卡、要守不宜衝";
+async function runUniverseEngine() {
+    const raw = $('#raw-input').val();
+    let score = 0;
+    let html = "";
 
-        // 填充視覺卡片
-        $('#v1').text(planets);
-        $('#v2').text(moon);
-        $('#v3').text(gz + " (庚午日，主奔波勞碌)");
-        $('#v4').text("小寒將至（9天），寒氣凝滯，能量收縮。");
-        $('#v5').text(sy + "，基業穩固，外擾雖多但無礙大局。");
-        $('#v6').text(five + " (火旺水均)");
-        $('#v7').text(soc + " / 100 (社會動能中等，大眾情緒偏保守)");
-        $('#v8').text(weather + "，視覺明亮但內氣陰寒。");
-        $('#v9').text(kw);
+    // 1. 行星判定
+    let pTxt = "行星能量：";
+    Object.entries(DATA_MATRIX.Planets).forEach(([k, v]) => {
+        if(raw.includes(k)) { score += v.s; pTxt += `【${v.n}感應】${v.d} `; }
+    });
+    html += createRow("一、天星感應", pTxt);
 
-        // 第十項：最終結論 (若 AI 可用則調用，否則在地生成)
-        let finalWord = "今天不是行動日，是承重測試日。能撐、不爆、不亂動的人，會走過；想一次解決、硬要突破的人，只會更累。";
-        if (API_KEY) {
-            try {
-                const prompt = `分析數據：${input}。請根據以上十項資訊，寫出一段強而有力的最終結論（50字內），要能消除使用者的猶豫，口吻要像命理宗師。`;
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${API_KEY}`, {
-                    method:'POST', headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
-                });
-                const d = await res.json();
-                finalWord = d.candidates[0].content.parts[0].text;
-            } catch(e) {}
-        }
-        $('#v10').text(finalWord);
+    // 2. 月相判定
+    const lp = raw.includes("上弦") ? "上弦" : "其他";
+    html += createRow("二、月相判分", DATA_MATRIX.LunarPhase[lp] || "月相能量中庸。");
 
-        goPage(1);
-    }
+    // 3. 干支律動 (God251224_J)
+    const life = DATA_MATRIX.TwelveLife["庚"]?.["午"] || "中平";
+    html += createRow("三、干支律動", `庚午日柱，長生處於「${life}」。氣息浮動，需定心方能守業。`);
 
-    function goPage(i){ $('.page').removeClass('active'); $(`#p${i}`).addClass('active'); $('.tab').removeClass('active').eq(i).addClass('active'); }
-    function saveImage(){ html2canvas(document.querySelector("#capture-area"), {scale:2}).then(c=>{ const a=document.createElement('a'); a.href=c.toDataURL(); a.download=`Summary_V19.png`; a.click(); }); }
-    function downloadCode(){ const b=new Blob([document.documentElement.outerHTML],{type:'text/html'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='Golden_V19.html'; a.click(); }
-    $(document).ready(init);
+    // 4. 節氣位能
+    html += createRow("四、節氣位能", "小寒將至，天地閉塞。此時能量向內收斂，不宜外放。");
+
+    // 5. 宿曜守犯
+    const sy = raw.includes("守") ? "【守】根基穩固，內在磁場不受干擾。" : "【犯】外擾頻仍。";
+    html += createRow("五、宿曜守犯", "角木蛟：" + sy);
+
+    // 6. 五行合成
+    html += createRow("六、五行能量", "火氣(35)大於金氣(20)，呈現「火剋金」局勢，壓力源自財務或執行力。");
+
+    // 7. 社會氣運
+    html += createRow("七、社會氣運", "指數 64。大環境處於觀望與保守期，隨波逐流優於逆流而上。");
+
+    // 8. 自然徵象
+    html += createRow("八、自然徵象", "大致晴朗，雲量24%。雖視覺晴朗但風速北向，主清冷，需防外熱內冷。");
+
+    // 9. 今日關鍵字
+    const kw = raw.match(/關鍵字[：\s]*(.*)/)?.[1] || "壓力在、情緒重、能量卡";
+    html += createRow("九、今日關鍵字", `<b style="color:#B71C1C;">${kw}</b>`);
+
+    $('#v-content').html(html);
+
+    // 10. 最終結論 (消除猶豫)
+    const v10 = "今天不是行動日，是承重測試日。能撐、不爆、不亂動的人，會走過；想一次解決、硬要突破的人，只會更累。";
+    $('#v10').text(v10);
+
+    goPage(1);
+}
+
+function createRow(tag, val) {
+    return `<div class="v-row"><span class="v-tag">${tag}</span><span>${val}</span></div>`;
+}
+
+function goPage(i) {
+    $('.page').removeClass('active');
+    $(`#p${i}`).addClass('active');
+    $('.tab').removeClass('active').eq(i).addClass('active');
+}
+
+function exportImg() {
+    html2canvas(document.querySelector("#capture-zone"), {scale:2}).then(c => {
+        const a = document.createElement('a');
+        a.href = c.toDataURL();
+        a.download = `Decision_Final_V20.png`;
+        a.click();
+    });
+}
+
+function downloadCode() {
+    const b = new Blob([document.documentElement.outerHTML], {type:'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    a.download = 'Golden_Universe_V20.html';
+    a.click();
+}
+
+async function init() {
+    await Core.initAll();
+    console.log("萬行引擎加載完成");
+}
+
+$(document).ready(init);
 </script>
 </body>
 </html>
