@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>金碧十全2 Pro - 容錯強化版</title>
+    <title>金碧十全 Pro - 自動容錯版</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script>
@@ -26,29 +26,29 @@
         textarea { width: 100%; height: 80px; border: 1px solid var(--main-gold); border-radius: 4px; padding: 6px; font-size: var(--font-size); background: #FFFEF9; }
         .btn { border: none; border-radius: 4px; font-weight: 900; font-size: var(--font-size); cursor: pointer; padding: 10px; width: 100%; margin-top: 10px; }
         .btn-p { background: var(--gold-grad); border: 1px solid var(--deep-gold); color: var(--text-brown); }
-        .visual-item { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; }
-        .visual-box { flex: 0 0 45%; aspect-ratio: 1/1; background: #000; position: relative; border-radius: 4px; border: 1px solid var(--main-gold); }
-        .visual-box img { width: 100%; height: 100%; object-fit: cover; }
-        .visual-summary { flex: 1; font-weight: bold; text-align: right; border-right: 3px solid var(--coin-gold); padding-right: 5px; }
-        .error-note { background: #FFEBEE; border: 1px solid #FFCDD2; padding: 8px; border-radius: 4px; margin-top: 10px; color: #C62828; font-size: 0.45rem; }
+        .error-note { background: #FFEBEE; border: 1px solid #FFCDD2; padding: 8px; border-radius: 4px; margin-top: 10px; color: #C62828; font-size: 0.45rem; line-height: 1.2; }
         .dl-btn { position: fixed; bottom: 10px; right: 10px; width: 45px; height: 45px; background: #000; color: #fff; border-radius: 50%; font-size: 0.4rem; z-index: 3000; border: 1px solid var(--coin-gold); }
     </style>
 </head>
 <body>
-<header><div style="font-weight:900;">🔱 十全 Core Pro</div><div id="json-info" style="font-size:0.4rem;"></div></header>
+<header><div style="font-weight:900;">🔱 十全 Core Pro V2</div><div id="json-info" style="font-size:0.4rem;"></div></header>
 <div class="status-bar" id="mod-status"></div>
 <nav class="nav-tabs"><div class="tab active" onclick="goTab(0)">推演</div><div class="tab" onclick="goTab(1)">報告</div><div class="tab" onclick="goTab(2)">意象</div></nav>
 <div class="content">
     <div id="p0" class="page active">
-        <div class="card"><div class="title-gold">天機輸入</div><textarea id="main-in">2025-12-27 台北 天象分析</textarea><button class="btn btn-p" id="run-btn" onclick="runAnalysis()">🚀 啟動推演</button></div>
+        <div class="card"><div class="title-gold">天機輸入</div><textarea id="main-in">月亮：上弦
+太陽位置：78.5°
+水星：94.1°
+請根據星象字典分析影響。</textarea><button class="btn btn-p" id="run-btn" onclick="runAnalysis()">🚀 啟動推演</button></div>
         <div id="error-footer" class="error-note" style="display:none;"></div>
     </div>
-    <div id="p1" class="page"><div class="card"><div class="title-gold">推演報告</div><div id="out-report">等待輸入...</div></div></div>
+    <div id="p1" class="page"><div class="card"><div class="title-gold">推演報告</div><div id="out-report" style="white-space: pre-wrap;">等待輸入...</div></div></div>
     <div id="p2" class="page">
-        <div class="card"><div class="title-gold">三才意象</div>
-            <div class="visual-item"><div class="visual-box"><img id="v1"></div><div class="visual-summary" id="s1">...</div></div>
-            <div class="visual-item"><div class="visual-box"><img id="v2"></div><div class="visual-summary" id="s2">...</div></div>
-            <div class="visual-item"><div class="visual-box"><img id="v3"></div><div class="visual-summary" id="s3">...</div></div>
+        <div class="card"><div class="title-gold">三才意象 (Imagen 需要 Key)</div>
+            <div id="img-container">
+                <img id="v1" style="width:100%; border-radius:4px; margin-bottom:5px;">
+                <p id="s1" style="text-align:center;"></p>
+            </div>
         </div>
     </div>
 </div>
@@ -85,38 +85,72 @@
 
     function checkFailures(){
         let msg = [];
-        if(!IS_KEY_VALID) msg.push("⚠️ Gemini AI 秘鑰無效：無法使用 AI 自動分析及 Imagen 意象生成。");
-        if(Core.data && !Core.data.astro) msg.push("⚠️ 星象字典載入失敗：無法比對專業星象數據。");
-        if(msg.length > 0) $('#error-footer').html(msg.join('<br>')).show();
+        if(!IS_KEY_VALID) msg.push("❌ AI Key 失效：Gemini 雲端推演與 Imagen 繪圖不可用。");
+        if(Core.data && !Core.data.astro) msg.push("❌ 字典缺失：無法讀取星象 JSON。");
+        if(msg.length > 0) $('#error-footer').html(msg.join('<br>') + "<br>ℹ️ 系統已自動切換為【在地星象 JSON 模式】").show();
+    }
+
+    // 在地分析模式：遍歷 JSON 匹配輸入關鍵字
+    function runLocalAnalysis(input) {
+        let report = "<b>[本地模式分析報告]</b>\n由於 AI 服務不可用，系統直接調用星象字典資料：\n\n";
+        if(!Core.data || !Core.data.astro) return report + "錯誤：星象字典未載入，無法分析。";
+        
+        let found = false;
+        Object.keys(Core.data.astro).forEach(key => {
+            if(input.includes(key)) {
+                found = true;
+                const detail = Core.data.astro[key];
+                report += `【${key}】\n描述：${JSON.stringify(detail)}\n\n`;
+            }
+        });
+        
+        if(!found) report += "提示：輸入內容未匹配到字典關鍵字，請輸入具體星體名稱（如：太陽、月亮）。";
+        return report;
     }
 
     async function runAnalysis(){
         const input = $('#main-in').val();
+        $('#run-btn').prop('disabled', true).text('⌛ 處理中...');
+        
         if(!IS_KEY_VALID) {
-            $('#out-report').html("<b>[本地模式運作]</b><br>AI 密鑰無效，改用星象字典本地匹配...<br>" + (Core.data?.astro ? "星象資料已就緒，建議手動對照。" : "字典亦不可用。"));
-            goTab(1); return;
+            $('#out-report').html(runLocalAnalysis(input));
+            goTab(1);
+            $('#run-btn').prop('disabled', false).text('🚀 啟動推演');
+            return;
         }
-        $('#run-btn').prop('disabled', true).text('⌛ 運算中...');
+
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${API_KEY}`, {
                 method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ contents:[{parts:[{text: `分析：${input}。回傳JSON:{"report":"..","p1":"..","s1":"..","p2":"..","s2":"..","p3":"..","s3":".."}`}]}], generationConfig:{responseMimeType:"application/json"} })
+                body: JSON.stringify({ contents:[{parts:[{text: `請分析：${input}。回傳JSON:{"report":"..","p1":"..","s1":".."}`}]}], generationConfig:{responseMimeType:"application/json"} })
             });
             const d = await res.json();
-            const r = JSON.parse(d.candidates[0].content.parts[0].text);
-            $('#out-report').html(r.report);
-            $('#s1').text(r.s1); $('#s2').text(r.s2); $('#s3').text(r.s3);
-            [1,2,3].forEach(i => genImg(i, r['p'+i]));
+            
+            // 關鍵修正：檢查 candidates 是否存在
+            if(d.candidates && d.candidates[0]) {
+                const r = JSON.parse(d.candidates[0].content.parts[0].text);
+                $('#out-report').html(r.report);
+                $('#s1').text(r.s1);
+                genImg(1, r.p1);
+            } else {
+                throw new Error("AI 回傳格式異常");
+            }
             goTab(1);
-        } catch(e) { $('#out-report').text("運算失敗: " + e.message); }
-        finally { $('#run-btn').prop('disabled', false).text('🚀 啟動推演'); }
+        } catch(e) {
+            console.warn("AI 失敗，切換在地分析", e);
+            $('#out-report').html(runLocalAnalysis(input) + `\n\n(系統備註: AI 錯誤 - ${e.message})`);
+            goTab(1);
+        } finally {
+            $('#run-btn').prop('disabled', false).text('🚀 啟動推演');
+        }
     }
 
     async function genImg(idx, p){
+        if(!IS_KEY_VALID) return;
         try {
             const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${API_KEY}`, {
                 method: 'POST', headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ instances:[{prompt:"Gold style, "+p}], parameters:{sampleCount:1} })
+                body: JSON.stringify({ instances:[{prompt:"Gold mystic, "+p}], parameters:{sampleCount:1} })
             });
             const d = await res.json();
             if(d.predictions) $(`#v${idx}`).attr('src', `data:image/png;base64,${d.predictions[0].bytesBase64Encoded}`);
@@ -124,7 +158,7 @@
     }
 
     function goTab(i){ $('.page').removeClass('active'); $(`#p${i}`).addClass('active'); $('.tab').removeClass('active').eq(i).addClass('active'); }
-    function downloadThis(){ const b=new Blob([document.documentElement.outerHTML],{type:'text/html'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='Golden_Core_Fix.html'; a.click(); }
+    function downloadThis(){ const b=new Blob([document.documentElement.outerHTML],{type:'text/html'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='Golden_Core_Stable.html'; a.click(); }
     $(document).ready(init);
 </script>
 </body>
