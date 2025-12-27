@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>天象測試頁 V1</title>
+<title>天象測試頁 V2</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -20,7 +20,7 @@ textarea { width:100%; height:120px; margin:6px 0; }
 </head>
 <body>
 
-<h2>🌟 天象測試頁</h2>
+<h2>🌟 天象測試頁 V2</h2>
 
 <h3>📦 模組載入狀態</h3>
 <div id="status"></div>
@@ -61,7 +61,11 @@ function renderStatus() {
 ======================== */
 async function reInit() {
   document.getElementById("status").textContent="初始化中...";
-  await Core.initAll();
+  try{
+    await Core.initAll(); // 等待所有模組與 JSON 載入完成
+  }catch(e){
+    console.error("初始化失敗:", e);
+  }
   renderStatus();
   renderJSONSummary();
 }
@@ -72,12 +76,10 @@ async function reInit() {
 function renderJSONSummary() {
   const summary=document.getElementById("jsonSummary");
   summary.innerHTML="";
-  if(Core.data.astro){
-    summary.innerHTML+=`<b>星象資料筆數：</b>${Core.data.astro.length}<br>`;
-  }
-  if(Core.data.cjk){
-    summary.innerHTML+=`<b>CJK 字典筆數：</b>${Core.data.cjk.length}<br>`;
-  }
+  const astroCount = Core.data?.astro?.length || 0;
+  const cjkCount = Core.data?.cjk?.length || 0;
+  summary.innerHTML = `<b>星象資料筆數：</b>${astroCount}<br>`;
+  summary.innerHTML += `<b>CJK 字典筆數：</b>${cjkCount}<br>`;
 }
 
 /* ========================
@@ -86,7 +88,7 @@ function renderJSONSummary() {
 async function startAnalyze() {
   const input=document.getElementById("obsInput").value.trim();
   if(!input){ alert("請輸入觀測內容"); return; }
-  if(!Core.data.astro || !Core.data.cjk){ alert("資料尚未載入完成"); return; }
+  if(!Core.data?.astro || !Core.data?.cjk){ alert("資料尚未載入完成"); return; }
 
   const prompt = `請分析以下內容並以 JSON 格式回傳 (包含 title, content)：\n${input}`;
   const apiKey = window.__apiKey||"YOUR_API_KEY";
