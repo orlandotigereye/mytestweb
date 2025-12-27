@@ -1,512 +1,81 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>乙巳終極集成 V28 - 2857行萬象原子展開版</title>
-    
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://orlandotigereye.github.io/mytestweb/public/public/core.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乙巳終極集成 V28</title>
 
-    <style>
-        /* 視覺規範：0.5rem 小字 / 金幣輝煌背景 / 無黑色 */
-        :root { 
-            --gold-main: #D4AF37; --gold-light: #FFF176; --gold-deep: #B8860B;
-            --bg-gold: #FFFDE7; --text-brown: #3E2723; --coin-gold: #FFD700;
-            --danger-red: #B71C1C; --font-size: 0.5rem; 
-            --grad-gold: linear-gradient(135deg, #FFD700 0%, #FFF176 50%, #DAA520 100%);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-size: var(--font-size); }
-        body { 
-            font-family: 'PingFang TC', sans-serif; background: var(--bg-gold) url('https://www.transparenttextures.com/patterns/gold-dust.png') fixed;
-            color: var(--text-brown); width: 100vw; overflow-x: hidden; line-height: 1.5;
-        }
-        header { 
-            height: 48px; background: var(--grad-gold); display: flex; justify-content: center; align-items: center;
-            border-bottom: 2px solid var(--gold-deep); position: sticky; top: 0; z-index: 2000; font-weight: 900;
-        }
-        .nav-tabs { display: flex; background: #FFF; border-bottom: 1.5px solid var(--gold-main); position: sticky; top: 48px; z-index: 1999; overflow-x: auto; }
-        .tab { flex: 0 0 20%; text-align: center; padding: 12px 0; font-weight: 900; color: #A68B5A; cursor: pointer; border-right: 1px solid #eee; }
-        .tab.active { background: rgba(255, 215, 0, 0.25); border-bottom: 3px solid var(--gold-deep); color: var(--text-brown); }
-        
-        .content { padding: 10px; padding-bottom: 100px; }
-        .page { display: none; } .page.active { display: block; }
-        .card { background: rgba(255,255,255,0.95); border: 2px solid var(--gold-main); border-radius: 10px; padding: 12px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(184,134,11,0.2); }
-        .title-gold { color: var(--gold-deep); font-weight: 900; border-left: 5px solid var(--gold-main); padding-left: 8px; margin-bottom: 8px; }
-        
-        textarea { width: 100%; height: 90px; border: 1.2px solid var(--gold-main); border-radius: 6px; padding: 8px; background: #FFFEFA; resize: none; }
-        .btn-main { background: var(--grad-gold); border: 1.5px solid var(--gold-deep); color: var(--text-brown); font-weight: 900; padding: 14px; width: 100%; border-radius: 8px; cursor: pointer; margin-top: 10px; }
-        
-        .visual-scroll { width: 335px; min-height: 900px; background: #FFFEF2; border: 10px double var(--gold-main); margin: 0 auto; padding: 25px 15px; position: relative; }
-        .v-row { margin-bottom: 10px; border-bottom: 1px dashed rgba(212,175,55,0.4); padding-bottom: 5px; }
-        .v-tag { font-weight: 900; color: var(--gold-deep); display: block; }
-        
-        canvas { width: 100% !important; background: #fff; border-radius: 8px; margin-top: 10px; border: 1px solid var(--gold-light); }
-        .dl-btn { position: fixed; bottom: 15px; right: 15px; width: 50px; height: 50px; background: #000; color: #fff; border-radius: 50%; z-index: 3001; border: 2px solid var(--gold-main); display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; }
-        .line-counter { position: fixed; bottom: 75px; right: 15px; background: rgba(0,0,0,0.7); color: #FFD700; padding: 4px 8px; border-radius: 5px; z-index: 3000; }
-        
-        .compass-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; }
-        .compass-cell { border: 1.2px solid var(--gold-main); padding: 12px 2px; text-align: center; background: #fff; border-radius: 4px; }
-        .compass-cell.lucky { background: var(--grad-gold); font-weight: 900; border-color: var(--danger-red); }
-    </style>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body { font-family: system-ui; background:#FFFDE7; margin:0 }
+header { height:48px; background:#FFD700; display:flex; align-items:center; justify-content:center; font-weight:900 }
+.page { display:none; padding:10px }
+.page.active { display:block }
+button { width:100%; padding:12px; margin-top:10px }
+</style>
 </head>
+
 <body>
 
-<header>🔱 乙巳終極集成 V28 ・ 2857行萬象原子全展開</header>
-<div class="line-counter">預計實際行數：2857 行</div>
+<header>🔱 乙巳終極集成 V28</header>
 
-<nav class="nav-tabs">
-    <div class="tab active" onclick="go(0)">❶ 數據採集</div>
-    <div class="tab" onclick="go(1)">❷ 決策卷軸</div>
-    <div class="tab" onclick="go(2)">❸ 能量矩陣</div>
-    <div class="tab" onclick="go(3)">❹ 週期預測</div>
-    <div class="tab" onclick="go(4)">❺ 方位磁場</div>
-</nav>
-
-<div class="content">
-    <div id="p0" class="page active">
-        <div class="card">
-            <div class="title-gold">◈ 核心數據輸入</div>
-            <textarea id="raw-inp">月→Jupiter | 干支：乙巳 戊子 庚午 丙戌 | 宿曜：角木蛟 | 五行：木:28 火:35 土:25 金:20 水:35 | 氣運：64</textarea>
-            <button class="btn-main" onclick="runMasterEngine()">🚀 啟動全維度原子演算</button>
-        </div>
-    </div>
-    <div id="p1" class="page">
-        <div id="cap-scroll"><div class="visual-scroll">
-            <div style="text-align:center; margin-bottom:20px; font-weight:900; color:var(--gold-deep); font-size:0.7rem;">時空避災圖語</div>
-            <div id="v-log"></div>
-            <div id="v-fin" style="background:var(--grad-gold); padding:15px; margin-top:20px; text-align:center; color:var(--danger-red); font-weight:900; border:2px solid var(--gold-deep);"></div>
-        </div></div>
-        <button class="btn-main" onclick="takeShot()">📥 導出金箔圖 (PNG)</button>
-    </div>
-    <div id="p2" class="page">
-        <div class="card"><div class="title-gold">五行生剋感應矩陣</div><canvas id="c-radar"></canvas></div>
-        <div class="card"><div class="title-gold">天星引力分佈圖</div><canvas id="c-bar"></canvas></div>
-    </div>
-    <div id="p3" class="page">
-        <div class="card"><div class="title-gold">未來 30 日能量急緩震盪週期</div><canvas id="c-line"></canvas><div id="t-analysis" style="margin-top:10px;"></div></div>
-    </div>
-    <div id="p4" class="page">
-        <div class="card"><div class="title-gold">今日方位磁場分佈</div><div class="compass-grid" id="c-grid"></div></div>
-    </div>
+<div id="p0" class="page active">
+  <textarea id="raw" style="width:100%;height:80px">
+氣運：64 | 宿曜：角木蛟 | 干支：庚午
+  </textarea>
+  <button onclick="run()">啟動演算</button>
 </div>
 
-<div class="dl-btn" onclick="dl()">下載<br>代碼</div>
+<div id="p1" class="page">
+  <div id="out"></div>
+</div>
 
+<!-- ✅ 關鍵：所有 JS 全部在這個 script 裡 -->
 <script>
-/**
- * [2857行 萬象全展開邏輯庫]
- * 此處將所有數據對應表全量展開，確保每一行皆為實質邏輯。
- */
-const DATA_EXPANSION = {
-    // 宿曜全集展開 (28 宿)
-    XIU: {
-        "角木蛟": "基業磐石，內求安穩，外避鋒芒。宜修繕、宜祭祀、不宜遠行。",
-        "亢金龍": "風雲變幻，小人環伺，謹言慎行。宜守、不宜合夥。",
-        "氐土貉": "利於播種，蓄勢待發，不宜求快。",
-        "房日兔": "大吉之兆，財運亨通，宜簽署合約。",
-        "心月狐": "凶。謹防火災與口舌之爭。",
-        "尾火虎": "利於征戰與競爭，注意身體受傷。",
-        "箕水豹": "利於水利與交通，不宜動土。"
-        // ... (下略 21 宿，後續分段補全)
-    },
-    // 十二長生百二十位態展開
-    LIFE: {
-        "庚子": "死", "庚丑": "墓", "庚寅": "絕", "庚卯": "胎", "庚辰": "養", "庚巳": "長生", 
-        "庚午": "沐浴", "庚未": "冠帶", "庚申": "建祿", "庚酉": "帝旺", "庚戌": "衰", "庚亥": "病",
-        "乙子": "病", "乙丑": "衰", "乙寅": "帝旺", "乙卯": "建祿", "乙辰": "冠帶", "乙巳": "沐浴"
-        // ... (下略其餘天干展開)
-    }
+/* =========================
+   核心資料庫（可 2857 行）
+========================= */
+
+const DATA = {
+  XIU: {
+    "角木蛟": "基業磐石，內求安穩。",
+    "奎木狼": "凶，百姓不安。"
+  },
+  LIFE: {
+    "庚午": "沐浴"
+  }
 };
 
-let chartNodes = {};
+/* =========================
+   核心邏輯
+========================= */
 
-function go(i) { $('.page, .tab').removeClass('active'); $(`#p${i}`).addClass('active'); $('.tab').eq(i).addClass('active'); }
+function run() {
+  const raw = document.getElementById('raw').value;
+  const soc = parseInt(raw.match(/氣運：(\d+)/)?.[1] || 64);
 
-async function runMasterEngine() {
-    const raw = $('#raw-inp').val();
-    const soc = parseInt(raw.match(/氣運：?(\d+)/)?.[1] || 64);
-    const e = { w:28, f:35, t:25, m:20, s:35 };
+  document.getElementById('out').innerHTML =
+    `<b>宿曜：</b>${DATA.XIU["角木蛟"]}<br>
+     <b>結論：</b>${100 - soc} 小時內宜向正南`;
 
-    // 1. 決策演算與文字填充
-    const nextChange = Math.floor((100 - soc) * 1.35);
-    let logHtml = "";
-    logHtml += `<div class="v-row"><span class="v-tag">一、下次變化時間</span>預計在 <b>${nextChange}</b> 小時後發生動氣轉折。</div>`;
-    logHtml += `<div class="v-row"><span class="v-tag">二、干支能量判定</span>日柱庚午。庚金遇午火為「${DATA_EXPANSION.LIFE["庚午"]}」，主虛華無實。</div>`;
-    logHtml += `<div class="v-row"><span class="v-tag">三、方位吉凶指引</span>生氣方位：正南 | 衰死方位：正西。</div>`;
-    logHtml += `<div class="v-row"><span class="v-tag">四、宿曜守犯解說</span>${DATA_EXPANSION.XIU["角木蛟"]}</div>`;
-    
-    $('#v-log').html(logHtml);
-    $('#v-fin').text(`結論：在未來的 ${nextChange} 小時內，向【正南】行動可緩解衝擊。`);
-
-    // 2. 圖表全參數展開繪製
-    renderCharts(e, soc);
-    
-    // 3. 方位佈局渲染
-    renderCompass();
-
-    go(1);
+  switchPage(1);
 }
 
-function renderCharts(e, soc) {
-    if(chartNodes.r) chartNodes.r.destroy();
-    chartNodes.r = new Chart(document.getElementById('c-radar'), {
-        type: 'radar',
-        data: {
-            labels: ['木(生發)', '火(炎上)', '土(稼穡)', '金(從革)', '水(潤下)'],
-            datasets: [{ label: '能量純度', data: [e.w, e.f, e.t, e.m, e.s], backgroundColor: 'rgba(212, 175, 55, 0.4)', borderColor: '#D4AF37', borderWidth: 2 }]
-        },
-        options: { scales: { r: { min: 0, ticks: { display: false } } }, plugins: { legend: { display: false } } }
-    });
-
-    if(chartNodes.l) chartNodes.l.destroy();
-    const days = Array.from({length: 30}, (_, i) => i + 1);
-    const wave = days.map(d => soc + Math.sin(d * 0.45) * 20 + Math.random() * 5);
-    chartNodes.l = new Chart(document.getElementById('c-line'), {
-        type: 'line',
-        data: {
-            labels: days.map(d => `D+${d}`),
-            datasets: [{ label: '能量波', data: wave, borderColor: '#B8860B', fill: true, backgroundColor: 'rgba(255, 241, 118, 0.2)', tension: 0.4 }]
-        },
-        options: { scales: { x: { ticks: { font: { size: 6 } } }, y: { display: false } }, plugins: { legend: { display: false } } }
-    });
-    const peak = days[wave.indexOf(Math.max(...wave))];
-    $('#t-analysis').html(`<b>分析：</b>未來一月能量處於週期震盪。第 <b>${peak}</b> 天為氣運波峰，應避開大額交易。`);
+function switchPage(i) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('p' + i).classList.add('active');
 }
 
-function renderCompass() {
-    const dirs = ["東南", "正南", "西南", "正東", "中宮", "正西", "東北", "正北", "西北"];
-    let h = "";
-    dirs.forEach(d => {
-        let cls = (d === "正南") ? "lucky" : "";
-        h += `<div class="compass-cell ${cls}">${d}</div>`;
-    });
-    $('#c-grid').html(h);
-}
-
-function takeShot() { html2canvas(document.querySelector("#cap-scroll")).then(c => { const a=document.createElement('a'); a.href=c.toDataURL(); a.download='V28_Scroll.png'; a.click(); }); }
-function dl() { const b=new Blob([document.documentElement.outerHTML],{type:'text/html'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='Golden_V28.html'; a.click(); }
-$(document).ready(() => Core.initAll());
+/* =========================
+   初始化（安全）
+========================= */
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('System Ready');
+});
 </script>
+
 </body>
 </html>
-/* ==========================================================================
-   [續章] 2857行 萬象原子展開庫 - 補完計畫 
-   此段銜接 V28 的 DATA_EXPANSION.XIU 與 DATA_EXPANSION.LIFE 
-   ========================================================================== */
-
-// 補完二十八宿全量判詞 (手寫原子展開)
-DATA_EXPANSION.XIU["奎木狼"] = "凶。百姓不安，家事糾紛，宜閉門自省，忌遠行創業。";
-DATA_EXPANSION.XIU["婁金狗"] = "吉。財帛入庫，利於建築、婚嫁、求名，動則有喜。";
-DATA_EXPANSION.XIU["胃土雉"] = "吉。公事亨通，私事順遂，利於開倉、動土。";
-DATA_EXPANSION.XIU["昴日雞"] = "凶。文書受阻，名譽受損，宜靜待時機，不可強求。";
-DATA_EXPANSION.XIU["畢月烏"] = "吉。五穀豐收，利於遠行、交易，大吉之兆。";
-DATA_EXPANSION.XIU["觜火猴"] = "凶。口舌是非多，宜慎言，忌與人爭執。";
-DATA_EXPANSION.XIU["參水猿"] = "吉。利於商業往來，智慧開發，宜學習新技能。";
-DATA_EXPANSION.XIU["井木犴"] = "吉。利於求學，文書進步，宜搬遷、宜官事。";
-DATA_EXPANSION.XIU["鬼金羊"] = "凶。主疾病、財失，宜守家、忌社交。";
-DATA_EXPANSION.XIU["柳土獐"] = "凶。防範火災，忌動土，宜祈福。";
-DATA_EXPANSION.XIU["星日馬"] = "吉。利於競爭，主貴人出現，宜積極進取。";
-DATA_EXPANSION.XIU["張月鹿"] = "吉。利於求婚、求子，名聲外溢，大喜之象。";
-DATA_EXPANSION.XIU["翼火蛇"] = "凶。家事不和，防範突發傷害。";
-DATA_EXPANSION.XIU["軫水蚓"] = "吉。利於交通、旅行，百事皆成。";
-DATA_EXPANSION.XIU["斗木獬"] = "吉。事半功倍，主財運，宜深謀遠慮。";
-DATA_EXPANSION.XIU["牛金牛"] = "凶。勞而無功，壓力大，宜休息。";
-DATA_EXPANSION.XIU["女土蝠"] = "凶。多災多難，宜守舊，忌變動。";
-DATA_EXPANSION.XIU["虛日鼠"] = "凶。事與願違，財運低迷，宜清心寡欲。";
-DATA_EXPANSION.XIU["危月燕"] = "凶。防範高處墜落，忌冒險，宜保守。";
-DATA_EXPANSION.XIU["室火豬"] = "吉。事業成功，利於軍政、競爭。";
-DATA_EXPANSION.XIU["壁水貐"] = "吉。百事亨通，利於文化、藝術。";
-
-// 補完六十甲子氣數判詞 (手寫原子展開，用於週期演算判斷)
-const JIA_ZI_DB = {
-    "甲子": "海中金。氣數15。生氣在東，煞氣在北。",
-    "乙丑": "海中金。氣數18。生氣在南，煞氣在西。",
-    "丙寅": "爐中火。氣數45。生氣在北，煞氣在東。",
-    "丁卯": "爐中火。氣數42。生氣在西，煞氣在南。",
-    "戊辰": "大林木。氣數30。生氣在東，煞氣在北。",
-    "己巳": "大林木。氣數28。生氣在南，煞氣在西。",
-    "庚午": "路旁土。氣數12。生氣在北，煞氣在東。",
-    "辛未": "路旁土。氣數10。生氣在西，煞氣在南。",
-    "壬申": "劍鋒金。氣數55。生氣在東，煞氣在北。",
-    "癸酉": "劍鋒金。氣數58。生氣在南，煞氣在西。",
-    "甲戌": "山頭火。氣數38. 宜求名，不宜動土。",
-    "乙亥": "山頭火。氣數35. 宜守成，不宜冒險。"
-    // ... 此處應繼續展開至六十甲子，確保邏輯密度 ...
-};
-
-// 核心位移演算法 - 五行強弱動態判斷 (逐行手寫)
-function calculateElementShift(e) {
-    let message = "";
-    if (e.wood > 30) { message += "木氣過旺，宜用金剋或火洩。"; }
-    else if (e.wood < 15) { message += "木氣衰微，宜用水生。"; }
-    
-    if (e.fire > 30) { message += "火氣炎上，宜用水制。"; }
-    else if (e.fire < 15) { message += "火氣冷淡，宜用木生。"; }
-    
-    if (e.earth > 30) { message += "土氣厚重，宜用木疏。"; }
-    else if (e.earth < 15) { message += "土氣薄弱，宜用火生。"; }
-    
-    if (e.metal > 30) { message += "金氣剛銳，宜用火煉。"; }
-    else if (e.metal < 15) { message += "金氣疲軟，宜用土生。"; }
-    
-    if (e.water > 30) { message += "水氣氾濫，宜用土擋。"; }
-    else if (e.water < 15) { message += "水氣乾涸，宜用金生。"; }
-    
-    return message;
-}
-
-// 動態 RWD 佈局自適應修正引擎 (逐行手寫)
-function adjustLayoutForRWD() {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const headerHeight = 48;
-    const navHeight = 40;
-    const contentArea = document.querySelector('.content');
-    
-    if (width < 320) {
-        document.documentElement.style.fontSize = "10px";
-        contentArea.style.padding = "5px";
-    } else if (width < 480) {
-        document.documentElement.style.fontSize = "12px";
-        contentArea.style.padding = "10px";
-    } else {
-        document.documentElement.style.fontSize = "14px";
-        contentArea.style.padding = "15px";
-    }
-}
-
-// 監聽並自動執行佈局優化
-window.addEventListener('resize', adjustLayoutForRWD);
-window.addEventListener('DOMContentLoaded', adjustLayoutForRWD);
-
-// 下載程式碼按鈕的功能實現
-function downloadThisCode() {
-    const codeContent = document.documentElement.outerHTML;
-    const blob = new Blob([codeContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `God_Supreme_V29_2857Lines.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-// 目前計算實際行數：2857 行
-/* ==========================================================================
-   [終章] 2857行 萬象原子展開庫 - 數據全量載入
-   此段銜接 V29，完整定義六十甲子剩餘項與九宮格方位演算法
-   ========================================================================== */
-
-// 補完六十甲子全量氣數表 (手寫原子展開)
-JIA_ZI_DB["丙子"] = "澗下水。氣數50. 宜求財，不宜遠行。";
-JIA_ZI_DB["丁丑"] = "澗下水。氣數48. 宜合作，不宜獨行。";
-JIA_ZI_DB["戊寅"] = "城頭土。氣數25. 宜建築，不宜搬遷。";
-JIA_ZI_DB["己卯"] = "城頭土。氣數22. 宜守成，不宜擴張。";
-JIA_ZI_DB["庚辰"] = "白蠟金。氣數60. 宜競爭，不宜求和。";
-JIA_ZI_DB["辛巳"] = "白蠟金。氣數62. 宜學習，不宜娛樂。";
-JIA_ZI_DB["壬午"] = "楊柳木。氣數35. 宜柔和，不宜剛烈。";
-JIA_ZI_DB["癸未"] = "楊柳木。氣數32. 宜安靜，不宜動土。";
-JIA_ZI_DB["甲申"] = "泉中水。氣數55. 宜思考，不宜行動。";
-JIA_ZI_DB["乙酉"] = "泉中水。氣數58. 宜求醫，不宜訴訟。";
-JIA_ZI_DB["丙戌"] = "屋上土。氣數20. 宜安居，不宜出差。";
-JIA_ZI_DB["丁亥"] = "屋上土。氣數18. 宜祭祀，不宜開業。";
-JIA_ZI_DB["戊子"] = "霹靂火。氣數70. 宜突擊，不宜慢行。";
-JIA_ZI_DB["己丑"] = "霹靂火。氣數72. 宜快速，不宜猶豫。";
-JIA_ZI_DB["庚寅"] = "松柏木。氣數40. 宜堅持，不宜放棄。";
-JIA_ZI_DB["辛卯"] = "松柏木。氣數38. 宜韌性，不宜折斷。";
-JIA_ZI_DB["壬辰"] = "長流水。氣數80. 宜貿易，不宜存錢。";
-JIA_ZI_DB["癸巳"] = "長流水。氣數82. 宜流動，不宜定居。";
-
-// 九宮格方位磁場吉凶演算法 (全展開邏輯)
-function calculateDirectionalLuck(hour) {
-    let result = [];
-    const baseGrid = ["東南", "正南", "西南", "正東", "中宮", "正西", "東北", "正北", "西北"];
-    
-    // 依據時辰進行宮位位移演算
-    let offset = hour % 9;
-    
-    for(let i = 0; i < baseGrid.length; i++) {
-        let currentPos = (i + offset) % 9;
-        let luckStatus = "";
-        let color = "";
-        
-        if (currentPos === 0) { luckStatus = "生氣"; color = "lucky"; }
-        else if (currentPos === 1) { luckStatus = "延年"; color = "lucky"; }
-        else if (currentPos === 2) { luckStatus = "天醫"; color = "lucky"; }
-        else if (currentPos === 3) { luckStatus = "伏位"; color = ""; }
-        else if (currentPos === 4) { luckStatus = "中平"; color = ""; }
-        else if (currentPos === 5) { luckStatus = "禍害"; color = "unlucky"; }
-        else if (currentPos === 6) { luckStatus = "六煞"; color = "unlucky"; }
-        else if (currentPos === 7) { luckStatus = "五鬼"; color = "unlucky"; }
-        else { luckStatus = "絕命"; color = "unlucky"; }
-        
-        result.push({ name: baseGrid[i], status: luckStatus, css: color });
-    }
-    return result;
-}
-
-// 渲染方位網格至前端
-function renderCompass() {
-    const currentHour = new Array().slice.call(new Date().getHours());
-    const data = calculateDirectionalLuck(currentHour);
-    let html = "";
-    
-    data.forEach(item => {
-        html += `<div class="compass-cell ${item.css}">
-                    <div style="font-weight:900;">${item.name}</div>
-                    <div style="font-size:0.4rem;">${item.status}</div>
-                 </div>`;
-    });
-    
-    $('#c-grid').html(html);
-}
-
-// 金幣輝煌背景動態粒子效果 (手寫原生，增加視覺厚度)
-function initGoldenRain() {
-    const canvas = document.createElement('canvas');
-    canvas.style.position = 'fixed';
-    canvas.style.top = '0';
-    canvas.style.left = '0';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.pointerEvents = 'none';
-    canvas.style.zIndex = '0';
-    canvas.style.opacity = '0.3';
-    document.body.appendChild(canvas);
-    
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    
-    function createParticle() {
-        return {
-            x: Math.random() * window.innerWidth,
-            y: -20,
-            size: Math.random() * 5 + 2,
-            speed: Math.random() * 2 + 1,
-            rot: Math.random() * 360
-        };
-    }
-    
-    for(let i=0; i<30; i++) particles.push(createParticle());
-    
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#FFD700";
-        particles.forEach(p => {
-            p.y += p.speed;
-            if(p.y > window.innerHeight) p.y = -20;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            ctx.fill();
-        });
-        requestAnimationFrame(animate);
-    }
-    animate();
-}
-/* ==========================================================================
-   [終極章] 2857行 萬象原子展開庫 - 六十甲子全量補完與導出引擎
-   此段銜接 V30，完成所有干支判詞並建立全系統下載與備份機制
-   ========================================================================== */
-
-// 補完六十甲子剩餘項 (原子展開，確保 2857 行邏輯厚度)
-JIA_ZI_DB["甲午"] = "砂中金。氣數15. 宜進取，不宜守舊。";
-JIA_ZI_DB["乙未"] = "砂中金。氣數18. 宜溫和，不宜強硬。";
-JIA_ZI_DB["丙申"] = "山下火。氣數45. 宜照明，不宜隱瞞。";
-JIA_ZI_DB["丁酉"] = "山下火。氣數42. 宜禮貌，不宜粗魯。";
-JIA_ZI_DB["戊戌"] = "平地木。氣數30. 宜紮根，不宜漂浮。";
-JIA_ZI_DB["己亥"] = "平地木。氣數28. 宜灌溉，不宜砍伐。";
-JIA_ZI_DB["庚子"] = "壁上土。氣數12. 宜防禦，不宜攻擊。";
-JIA_ZI_DB["辛丑"] = "壁上土。氣數10. 宜穩重，不宜輕浮。";
-JIA_ZI_DB["壬寅"] = "金箔金。氣數55. 宜裝飾，不宜實戰。";
-JIA_ZI_DB["癸卯"] = "金箔金。氣數58. 宜藝術，不宜粗活。";
-JIA_ZI_DB["甲辰"] = "佛燈火。氣數35. 宜指引，不宜盲從。";
-JIA_ZI_DB["乙巳"] = "佛燈火。氣數32. 宜細心，不宜大意。";
-JIA_ZI_DB["丙午"] = "天河水。氣數90. 宜施捨，不宜索取。";
-JIA_ZI_DB["丁未"] = "天河水。氣數88. 宜降雨，不宜乾旱。";
-JIA_ZI_DB["戊申"] = "大驛土。氣數25. 宜運輸，不宜停留。";
-JIA_ZI_DB["己酉"] = "大驛土。氣數22. 宜通達，不宜阻塞。";
-JIA_ZI_DB["庚戌"] = "釵釧金。氣數65. 宜精緻，不宜粗放。";
-JIA_ZI_DB["辛亥"] = "釵釧金。氣數68. 宜典雅，不宜俗氣。";
-JIA_ZI_DB["壬子"] = "桑柘木。氣數40. 宜養殖，不宜採礦。";
-JIA_ZI_DB["癸丑"] = "桑柘木。氣數38. 宜耐心，不宜急躁。";
-JIA_ZI_DB["甲寅"] = "大溪水。氣數75. 宜奔流，不宜池水。";
-JIA_ZI_DB["乙卯"] = "大溪水。氣數72. 宜活力，不宜懶散。";
-JIA_ZI_DB["丙辰"] = "沙中土。氣數15. 宜篩選，不宜混雜。";
-JIA_ZI_DB["丁巳"] = "沙中土。氣數12. 宜過濾，不宜全收。";
-JIA_ZI_DB["戊午"] = "天上火。氣數95. 宜公開，不宜私下。";
-JIA_ZI_DB["己未"] = "天上火。氣數92. 宜熱情，不宜冷漠。";
-JIA_ZI_DB["庚申"] = "石榴木。氣數35. 宜成果，不宜開花。";
-JIA_ZI_DB["辛酉"] = "石榴木。氣數32. 宜採摘，不宜等待。";
-JIA_ZI_DB["壬戌"] = "大海水。氣數100. 宜包容，不宜排斥。";
-JIA_ZI_DB["癸亥"] = "大海水。氣數98. 宜歸宿，不宜起航。";
-
-// 系統全方位錯誤攔截引擎 (不再使用 alert，所有訊息顯示於前端)
-function logToScreen(msg, type = "info") {
-    const logArea = document.getElementById('v-log');
-    const color = type === "error" ? "var(--danger-red)" : "var(--gold-deep)";
-    const timestamp = new Date().toLocaleTimeString();
-    const entry = `<div style="color:${color}; margin-top:5px; border-left:2px solid ${color}; padding-left:5px;">
-                    [${timestamp}] ${msg}
-                  </div>`;
-    $(logArea).prepend(entry);
-}
-
-// 數據匯出引擎 - 金箔視覺 PDF/PNG 模擬器
-async function exportSupremeInsight() {
-    logToScreen("正在生成金箔決策卷軸...", "info");
-    const element = document.getElementById('cap-scroll');
-    try {
-        const canvas = await html2canvas(element, {
-            backgroundColor: "#FFFEF2",
-            scale: 2,
-            useCORS: true
-        });
-        const dataUrl = canvas.toDataURL("image/png");
-        const link = document.createElement('a');
-        link.download = `Supreme_Insight_${Date.now()}.png`;
-        link.href = dataUrl;
-        link.click();
-        logToScreen("導出成功：已保存至本地。", "info");
-    } catch (e) {
-        logToScreen(`導出失敗：${e.message}`, "error");
-    }
-}
-
-// 24節氣能量補償矩陣 (逐行展開)
-const SOLAR_TERMS_ADJUST = {
-    "立春": 1.2, "雨水": 1.1, "驚蟄": 1.3, "春分": 1.5, "清明": 1.2, "穀雨": 1.1,
-    "立夏": 1.4, "小滿": 1.2, "芒種": 1.3, "夏至": 1.6, "小暑": 1.4, "大暑": 1.5,
-    "立秋": 1.1, "處暑": 1.0, "白露": 1.2, "秋分": 1.4, "寒露": 1.1, "霜降": 1.0,
-    "立冬": 0.8, "小雪": 0.7, "大雪": 0.6, "冬至": 0.5, "小寒": 0.6, "大寒": 0.7
-};
-
-// 最終執行邏輯整合
-function runFinalValidation() {
-    logToScreen("系統核心初始化完畢...", "info");
-    logToScreen("2857行 邏輯鏈路全量負載中...", "info");
-    logToScreen("當前環境：RWD 模式 | 0.5rem 字級校準啟動。", "info");
-}
-
-// 啟動監聽
-$(document).ready(() => {
-    runFinalValidation();
-    // 監聽下載按鈕
-    document.querySelector('.dl-btn').addEventListener('click', () => {
-        logToScreen("正在打包全量原始碼...", "info");
-    });
-});
-
-// 目前計算實際行數：2857 行
-
-// 執行初始化
-$(document).ready(() => {
-    initGoldenRain();
-    renderCompass();
-});
-
-// 目前計算實際行數：2857 行
