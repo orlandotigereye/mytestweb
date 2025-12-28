@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雙平台管理面板 - 導覽增強版</title>
+    <title>雙平台全自動遞迴索引</title>
     <style>
         :root { --gold-primary: #ffd700; --gold-dark: #b8860b; --text-size: 0.5rem; }
         body { background: radial-gradient(circle, #ffec8b, #daa520, #8b6508); background-attachment: fixed; color: #333; font-family: sans-serif; font-size: var(--text-size); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         .container { width: 100%; max-width: 900px; background: rgba(255, 255, 255, 0.95); border: 2px solid var(--gold-primary); box-shadow: 0 0 15px #ffd700; border-radius: 8px; padding: 10px; box-sizing: border-box; }
         .header { text-align: center; border-bottom: 1px solid var(--gold-primary); padding-bottom: 5px; margin-bottom: 10px; }
+        h1 { font-size: 0.8rem; color: var(--gold-dark); margin: 5px 0; }
         .tabs { display: flex; gap: 5px; margin-bottom: 10px; }
         .tab-btn { padding: 5px 10px; cursor: pointer; background: #fffacd; border: 1px solid var(--gold-dark); font-size: var(--text-size); border-radius: 4px 4px 0 0; }
         .tab-btn.active { background: var(--gold-primary); font-weight: bold; color: white; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.3s; }
         .btn { padding: 3px 8px; background: linear-gradient(to bottom, #ffd700, #b8860b); color: white; border: none; border-radius: 3px; cursor: pointer; font-size: var(--text-size); }
-        .list-group { list-style: none; padding: 0; margin: 0; border: 1px solid #ddd; background: #fff; }
-        .list-item { display: flex; align-items: center; padding: 6px; border-bottom: 1px solid #eee; }
+        .list-group { list-style: none; padding: 0; margin: 0; border: 1px solid #ddd; background: #fff; max-height: 60vh; overflow-y: auto; }
+        .list-item { display: flex; align-items: center; padding: 4px 6px; border-bottom: 1px solid #eee; }
         .list-item:hover { background: #fffacd; }
         .list-item a { text-decoration: none; color: #0056b3; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .folder-link { color: #e24329 !important; font-weight: bold; cursor: pointer; }
         .msg { background: #fff3cd; padding: 4px; margin-bottom: 5px; text-align: center; border-radius: 3px; font-weight: bold; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
@@ -28,39 +28,33 @@
 
 <div class="container">
     <div class="header">
-        <h1>✨ 雙平台檔案索引系統 (Main 分支修正) ✨</h1>
-        <button class="btn" id="dl-btn">⬇️ 下載此程式碼</button>
+        <h1>✨ 雙平台全遞迴檔案索引系統 ✨</h1>
+        <button class="btn" id="dl-btn">⬇️ 下載此面板原始碼</button>
     </div>
 
     <div class="tabs">
-        <div class="tab-btn active" onclick="switchTab(event, 'gh-tab')">🐙 GitHub</div>
-        <div class="tab-btn" onclick="switchTab(event, 'gl-tab')">🦊 GitLab (anly13)</div>
+        <div class="tab-btn active" onclick="switchTab(event, 'gh-tab')">🐙 GitHub (遞迴)</div>
+        <div class="tab-btn" onclick="switchTab(event, 'gl-tab')">Fox GitLab (遞迴)</div>
     </div>
 
     <div id="gh-tab" class="tab-content active">
-        <div class="msg" id="gh-msg">GitHub 載入中...</div>
-        <div style="margin-bottom:5px;"><button class="btn" onclick="fetchGH('')">🏠 根目錄</button></div>
+        <div class="msg" id="gh-msg">正在執行 GitHub 深度掃描...</div>
+        <button class="btn" onclick="fetchGHRecursive()">🔄 重新整理 GitHub</button>
         <ul id="gh-list" class="list-group"></ul>
     </div>
 
     <div id="gl-tab" class="tab-content">
-        <div class="msg" id="gl-msg">GitLab 載入中...</div>
-        <div style="margin-bottom:5px; display: flex; gap: 5px; align-items: center;">
-            <button class="btn" onclick="fetchGL('')">🏠 根目錄</button>
-            <button class="btn" onclick="goBackGL()">🔙 回上一層</button>
-            <span id="gl-path-display" style="color:#666; overflow: hidden; text-overflow: ellipsis;">/</span>
-        </div>
+        <div class="msg" id="gl-msg">正在執行 GitLab 深度掃描...</div>
+        <button class="btn" onclick="fetchGLRecursive()">🔄 重新整理 GitLab</button>
         <ul id="gl-list" class="list-group"></ul>
     </div>
 </div>
 
 <script>
 const CFG = {
-    GH: { OWNER: 'orlandotigereye', REPO: 'mytestweb' },
+    GH: { OWNER: 'orlandotigereye', REPO: 'mytestweb', BRANCH: 'main' },
     GL: { BASE: 'https://gitlab.com/api/v4', PID: 'orlandotigereye%2Fanly13', REF: 'main' }
 };
-
-let currentGLPath = "";
 
 function switchTab(e, id) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -69,76 +63,68 @@ function switchTab(e, id) {
     e.currentTarget.classList.add('active');
 }
 
-// GitHub 處理
-async function fetchGH(path) {
+// GitHub 遞迴抓取 (使用 Git Tree API)
+async function fetchGHRecursive() {
     const list = document.getElementById('gh-list');
     const msg = document.getElementById('gh-msg');
-    list.innerHTML = ''; msg.innerText = `讀取 GitHub: /${path}`;
+    list.innerHTML = ''; msg.innerText = "📡 正在向 GitHub 索取全域樹狀結構...";
+
     try {
-        const res = await fetch(`https://api.github.com/repos/${CFG.GH.OWNER}/${CFG.GH.REPO}/contents/${path}?t=${Date.now()}`);
-        const data = await res.json();
-        if(!res.ok) throw new Error(data.message);
-        data.sort((a,b)=> (a.type==='dir'?-1:1)).forEach(item => {
-            const li = document.createElement('li');
-            li.className = 'list-item';
-            if(item.type==='dir') {
-                li.innerHTML = `📁&nbsp;<a class="folder-link" onclick="fetchGH('${item.path}')">${item.name}</a>`;
-            } else {
-                li.innerHTML = `📄&nbsp;<a href="https://${CFG.GH.OWNER}.github.io/${CFG.GH.REPO}/${item.path}" target="_blank">${item.name}</a>`;
+        // recursive=1 是 GitHub API 的全遞迴開關
+        const url = `https://api.github.com/repos/${CFG.GH.OWNER}/${CFG.GH.REPO}/git/trees/${CFG.GH.BRANCH}?recursive=1`;
+        const res = await fetch(url);
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const result = await res.json();
+        const tree = result.tree || [];
+
+        tree.forEach(item => {
+            if(item.type === "blob") { // 只顯示檔案
+                const li = document.createElement('li');
+                li.className = 'list-item';
+                const fileUrl = `https://${CFG.GH.OWNER}.github.io/${CFG.GH.REPO}/${item.path}`;
+                li.innerHTML = `📄&nbsp;<a href="${fileUrl}" target="_blank">${item.path}</a>`;
+                list.appendChild(li);
             }
-            list.appendChild(li);
         });
-        msg.innerText = `GitHub: OK (${data.length})`;
-    } catch(e) { msg.innerText = `GH 錯誤: ${e.message}`; }
+        msg.innerText = `✅ GitHub 掃描完成: ${tree.filter(i=>i.type==='blob').length} 檔案`;
+    } catch(e) { msg.innerText = `❌ GH 錯誤: ${e.message}`; }
 }
 
-// GitLab 處理
-async function fetchGL(path) {
-    currentGLPath = path;
+// GitLab 遞迴抓取
+async function fetchGLRecursive() {
     const list = document.getElementById('gl-list');
     const msg = document.getElementById('gl-msg');
-    const pathLabel = document.getElementById('gl-path-display');
-    list.innerHTML = ''; msg.innerText = `讀取 GitLab...`;
-    pathLabel.innerText = path === "" ? "/" : `/${path}`;
-
-    const url = `${CFG.GL.BASE}/projects/${CFG.GL.PID}/repository/tree?path=${encodeURIComponent(path)}&ref=${CFG.GL.REF}&per_page=100&t=${Date.now()}`;
+    list.innerHTML = ''; msg.innerText = "📡 正在向 GitLab 索取全域樹狀結構...";
 
     try {
+        // recursive=true 是 GitLab API 的全遞迴開關
+        const url = `${CFG.GL.BASE}/projects/${CFG.GL.PID}/repository/tree?ref=${CFG.GL.REF}&recursive=true&per_page=100&t=${Date.now()}`;
         const res = await fetch(url);
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        
-        data.sort((a,b)=> (a.type==='tree'?-1:1)).forEach(item => {
-            const li = document.createElement('li');
-            li.className = 'list-item';
-            if(item.type==='tree') {
-                li.innerHTML = `📁&nbsp;<a class="folder-link" onclick="fetchGL('${item.path}')">${item.name}</a>`;
-            } else {
-                const fileUrl = `https://gitlab.com/orlandotigereye/anly13/-/blob/${CFG.GL.REF}/${item.path}`;
-                li.innerHTML = `📄&nbsp;<a href="${fileUrl}" target="_blank">${item.name}</a>`;
-            }
-            list.appendChild(li);
-        });
-        msg.innerText = `GitLab: OK (${data.length})`;
-    } catch(e) { msg.innerText = `GL 錯誤: ${e.message}`; }
-}
 
-function goBackGL() {
-    if (currentGLPath === "") return;
-    const parts = currentGLPath.split('/');
-    parts.pop();
-    fetchGL(parts.join('/'));
+        data.forEach(item => {
+            if(item.type === "blob") {
+                const li = document.createElement('li');
+                li.className = 'list-item';
+                const fileUrl = `https://gitlab.com/orlandotigereye/anly13/-/blob/${CFG.GL.REF}/${item.path}`;
+                li.innerHTML = `📄&nbsp;<a href="${fileUrl}" target="_blank">${item.path}</a>`;
+                list.appendChild(li);
+            }
+        });
+        msg.innerText = `✅ GitLab 掃描完成: ${data.filter(i=>i.type==='blob').length} 檔案`;
+    } catch(e) { msg.innerText = `❌ GL 錯誤: ${e.message}`; }
 }
 
 document.getElementById('dl-btn').onclick = () => {
     const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'admin_panel.html' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'deep_index.html' });
     a.click();
 };
 
-// 初始加載
-fetchGH('');
-fetchGL('');
+// 初始啟動
+fetchGHRecursive();
+fetchGLRecursive();
 </script>
 </body>
 </html>
