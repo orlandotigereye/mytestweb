@@ -3,29 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雙平台全遞迴檔案索引系統</title>
+    <title>雙平台網頁開啟面板</title>
     <style>
         :root { --gold-primary: #ffd700; --gold-dark: #b8860b; --text-size: 0.5rem; }
-        body { 
-            background: radial-gradient(circle, #ffec8b, #daa520, #8b6508); 
-            background-attachment: fixed; color: #333; font-family: sans-serif; 
-            font-size: var(--text-size); margin: 0; padding: 10px; 
-            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
-        }
-        .container { 
-            width: 100%; max-width: 900px; background: rgba(255, 255, 255, 0.95); 
-            border: 2px solid var(--gold-primary); box-shadow: 0 0 20px #ffd700; 
-            border-radius: 8px; padding: 10px; box-sizing: border-box; 
-        }
-        .header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid var(--gold-primary); padding-bottom: 5px; }
-        h1 { font-size: 0.8rem; color: var(--gold-dark); margin: 5px 0; }
+        body { background: radial-gradient(circle, #ffec8b, #daa520, #8b6508); background-attachment: fixed; color: #333; font-family: sans-serif; font-size: var(--text-size); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 900px; background: rgba(255, 255, 255, 0.95); border: 2px solid var(--gold-primary); box-shadow: 0 0 20px #ffd700; border-radius: 8px; padding: 10px; box-sizing: border-box; }
+        .header { text-align: center; border-bottom: 2px solid var(--gold-primary); padding-bottom: 5px; margin-bottom: 10px; }
         .tabs { display: flex; gap: 5px; margin-bottom: 10px; }
-        .tab-btn { 
-            padding: 5px 10px; cursor: pointer; background: #fffacd; 
-            border: 1px solid var(--gold-dark); font-size: var(--text-size); border-radius: 4px 4px 0 0;
-        }
+        .tab-btn { padding: 5px 10px; cursor: pointer; background: #fffacd; border: 1px solid var(--gold-dark); font-size: var(--text-size); border-radius: 4px; }
         .tab-btn.active { background: var(--gold-primary); font-weight: bold; color: white; }
-        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content { display: none; }
         .tab-content.active { display: block; }
         .btn { padding: 4px 10px; background: linear-gradient(to bottom, #ffd700, #b8860b); color: white; border: none; border-radius: 3px; cursor: pointer; font-size: var(--text-size); }
         .list-group { list-style: none; padding: 0; margin: 0; border: 1px solid #ddd; background: #fff; max-height: 50vh; overflow-y: auto; }
@@ -33,29 +20,28 @@
         .list-item:hover { background: #fffacd; }
         .list-item a { text-decoration: none; color: #0056b3; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .msg { background: #fff3cd; padding: 5px; margin-bottom: 8px; text-align: center; border-radius: 3px; font-weight: bold; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>✨ 雙平台全遞迴檔案索引 ✨</h1>
-        <button class="btn" id="dl-btn">⬇️ 下載此程式碼</button>
+        <h1>✨ 雙平台網頁直接開啟系統 ✨</h1>
+        <button class="btn" id="dl-btn">⬇️ 下載此面板</button>
     </div>
 
     <div class="tabs">
-        <div class="tab-btn active" onclick="switchTab(event, 'gh-tab')">🐙 GitHub (遞迴)</div>
-        <div class="tab-btn" onclick="switchTab(event, 'gl-tab')">🦊 GitLab (遞迴)</div>
+        <div class="tab-btn active" onclick="switchTab(event, 'gh-tab')">🐙 GitHub Pages</div>
+        <div class="tab-btn" onclick="switchTab(event, 'gl-tab')">🦊 GitLab Pages</div>
     </div>
 
     <div id="gh-tab" class="tab-content active">
-        <div class="msg" id="gh-msg">正在執行 GitHub 深度掃描...</div>
+        <div class="msg" id="gh-msg">正在掃描 GitHub 網頁...</div>
         <ul id="gh-list" class="list-group"></ul>
     </div>
 
     <div id="gl-tab" class="tab-content">
-        <div class="msg" id="gl-msg">正在執行 GitLab 深度掃描...</div>
+        <div class="msg" id="gl-msg">正在掃描 GitLab 網頁...</div>
         <ul id="gl-list" class="list-group"></ul>
     </div>
 </div>
@@ -63,7 +49,7 @@
 <script>
 const CFG = {
     GH: { OWNER: 'orlandotigereye', REPO: 'mytestweb', BRANCH: 'main' },
-    GL: { BASE: 'https://gitlab.com/api/v4', PID: 'orlandotigereye%2Fanly13', REF: 'main' }
+    GL: { OWNER: 'orlandotigereye', REPO: 'anly13', PID: 'orlandotigereye%2Fanly13', REF: 'main' }
 };
 
 function switchTab(e, id) {
@@ -73,60 +59,54 @@ function switchTab(e, id) {
     e.currentTarget.classList.add('active');
 }
 
-// GitHub 遞迴掃描
-async function fetchGHRecursive() {
+async function fetchGH() {
     const list = document.getElementById('gh-list');
     const msg = document.getElementById('gh-msg');
-    list.innerHTML = '';
     try {
-        const url = `https://api.github.com/repos/${CFG.GH.OWNER}/${CFG.GH.REPO}/git/trees/${CFG.GH.BRANCH}?recursive=1&t=${Date.now()}`;
-        const res = await fetch(url);
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const res = await fetch(`https://api.github.com/repos/${CFG.GH.OWNER}/${CFG.GH.REPO}/git/trees/${CFG.GH.BRANCH}?recursive=1`);
         const data = await res.json();
-        const files = data.tree.filter(i => i.type === 'blob');
+        const htmlFiles = data.tree.filter(i => i.path.endsWith('.html'));
         
-        files.forEach(item => {
+        htmlFiles.forEach(item => {
             const li = document.createElement('li');
             li.className = 'list-item';
-            const fileUrl = `https://${CFG.GH.OWNER}.github.io/${CFG.GH.REPO}/${item.path}`;
-            li.innerHTML = `📄&nbsp;<a href="${fileUrl}" target="_blank">${item.path}</a>`;
+            // 轉換為 GitHub Pages 網址
+            const webUrl = `https://${CFG.GH.OWNER}.github.io/${CFG.GH.REPO}/${item.path}`;
+            li.innerHTML = `🌐&nbsp;<a href="${webUrl}" target="_blank">${item.path}</a>`;
             list.appendChild(li);
         });
-        msg.innerText = `✅ GitHub 掃描完成: ${files.length} 個檔案`;
-    } catch(e) { msg.innerText = `❌ GH 錯誤: ${e.message}`; }
+        msg.innerText = `✅ GitHub: 找到 ${htmlFiles.length} 個網頁`;
+    } catch(e) { msg.innerText = "❌ GitHub 載入失敗"; }
 }
 
-// GitLab 遞迴掃描
-async function fetchGLRecursive() {
+async function fetchGL() {
     const list = document.getElementById('gl-list');
     const msg = document.getElementById('gl-msg');
-    list.innerHTML = '';
     try {
-        const url = `${CFG.GL.BASE}/projects/${CFG.GL.PID}/repository/tree?ref=${CFG.GL.REF}&recursive=true&per_page=100&t=${Date.now()}`;
-        const res = await fetch(url);
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const res = await fetch(`https://gitlab.com/api/v4/projects/${CFG.GL.PID}/repository/tree?ref=${CFG.GL.REF}&recursive=true&per_page=100`);
         const data = await res.json();
-        const files = data.filter(i => i.type === 'blob');
+        const htmlFiles = data.filter(i => i.path.endsWith('.html'));
 
-        files.forEach(item => {
+        htmlFiles.forEach(item => {
             const li = document.createElement('li');
             li.className = 'list-item';
-            const fileUrl = `https://gitlab.com/orlandotigereye/anly13/-/blob/${CFG.GL.REF}/${item.path}`;
-            li.innerHTML = `📄&nbsp;<a href="${fileUrl}" target="_blank">${item.path}</a>`;
+            // 優先指向 Netlify 網域，因為 GitLab Pages 部署較慢
+            const webUrl = `https://${CFG.GL.REPO}.netlify.app/${item.path.replace('public/', '')}`;
+            li.innerHTML = `🌐&nbsp;<a href="${webUrl}" target="_blank">${item.path}</a>`;
             list.appendChild(li);
         });
-        msg.innerText = `✅ GitLab 掃描完成: ${files.length} 個檔案`;
-    } catch(e) { msg.innerText = `❌ GL 錯誤: ${e.message}`; }
+        msg.innerText = `✅ GitLab: 找到 ${htmlFiles.length} 個網頁`;
+    } catch(e) { msg.innerText = "❌ GitLab 載入失敗"; }
 }
 
 document.getElementById('dl-btn').onclick = () => {
     const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'index.html' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'web_launcher.html' });
     a.click();
 };
 
-fetchGHRecursive();
-fetchGLRecursive();
+fetchGH();
+fetchGL();
 </script>
 </body>
 </html>
