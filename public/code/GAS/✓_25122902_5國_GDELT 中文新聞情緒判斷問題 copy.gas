@@ -1,0 +1,163 @@
+/**
+ * GDELT 300筆深度情緒分析系統 (全量五語版 - Part 1)
+ * 特色：英/繁/簡/日/韓全相容、300筆抓取、否定反轉
+ */
+
+function fetchGDELT300() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+  // 初始化標題列
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(["標題", "來源", "連結", "日期", "情緒標籤", "淨分 (Net)", "強度 (Str)", "偵測詞彙"]);
+  }
+
+  const keyword = "Taiwan";
+  // GDELT 單次上限 250，分兩段時間跨度補足 300 筆
+  const configs = [
+    { span: "24h", count: 250 },
+    { span: "1w", count: 250 }
+  ];
+
+  let allArticles = [];
+  let seenUrls = new Set();
+
+  configs.forEach(conf => {
+    if (allArticles.length >= 300) return;
+    // 移除語言限制以支持五語分析
+    const url = "https://api.gdeltproject.org/api/v2/doc/doc?query=" + encodeURIComponent(keyword) +
+                "&mode=ArtList&format=json&maxrecords=" + conf.count + "&timespan=" + conf.span;
+    
+    try {
+      const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+      const text = response.getContentText();
+      if (!text.trim().startsWith("{")) return;
+
+      const data = JSON.parse(text);
+      if (data.articles) {
+        data.articles.forEach(a => {
+          if (!seenUrls.has(a.url) && allArticles.length < 300) {
+            seenUrls.add(a.url);
+            allArticles.push(a);
+          }
+        });
+      }
+    } catch (e) {
+      Logger.log("API 抓取失敗: " + e.toString());
+    }
+  });
+
+  const rows = allArticles.map(a => {
+    const analysis = analyzeSentimentDeep(a.title || "");
+    return [
+      a.title || "",
+      a.source || "",
+      a.url || "",
+      a.seendate ? formatDate(a.seendate) : "",
+      analysis.label,
+      analysis.netScore,
+      analysis.strength,
+      analysis.hitWords
+    ];
+  });
+
+  if (rows.length > 0) {
+    // 依照要求使用 offset 概念處理大檔寫入
+    sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+  }
+  Logger.log("✅ 處理完成，筆數：" + rows.length);
+}
+
+function formatDate(s) {
+  if (!s) return "";
+  return s.substring(0, 4) + "-" + s.substring(4, 6) + "-" + s.substring(6, 8);
+}
+
+// 由於行數較多，核心分析引擎與五語字典請見下一段 (請打 go)
+/* ================= 核心分析引擎 (五語全量細緻版) ================= */
+
+function analyzeSentimentDeep(text) {
+  const MIXED_LEXICON = {
+    "積極強勁_Positive_Strong": { 
+      weight: 3, 
+      words: [
+        "成長","高成長","獲利","盈利","大賺","暴增","大增","創新高","創歷史新高","突破新高","超出預期","優於預期","高於預期","強勁","強勢","明顯改善","看好","長線看好","利多","復甦","回溫","需求暢旺","訂單爆滿","滿單","能見度提升","擴產","擴張","投資加碼","市佔提升","市佔擴大","市場領先","獲得大單","獲得訂單","突破瓶頸","成效顯著",
+        "成长","高成长","获利","盈利","大赚","暴增","大增","创新高","创历史新高","突破新高","超出预期","优于预期","高于预期","强劲","强势","明显改善","长线看好","复苏","回温","需求畅旺","订单爆满","满单","能见度提升","扩产","扩张","投资加码","市占提升","市占扩大","市场领先","获得大单","获得订单","突破瓶颈","成效显著",
+        "growth","surge","breakthrough","outperform","bullish","record-high","profitable","booming","jumped","soared",
+        "成長","最高益","上振れ","急増","強気","回復","改善","拡大","増産","首位","突破","強含み","活況",
+        "성장","이익","급증","사상최고","예상상회","호조","강세","확대","수주","돌파","호황"
+      ] 
+    },
+    "穩定受惠_Positive_Medium": { 
+      weight: 2, 
+      words: [
+        "穩定","表現穩定","改善","逐步改善","回升","回暖","增加","成長動能","受惠","直接受惠","間接受惠","有助","有利","利於","支撐","形成支撐","正向發展","正向循環","持續成長","有望成長","表現不俗","前景樂觀","營運轉佳","營運改善","動能回溫","有利因素","預期改善",
+        "稳定","表现稳定","逐步改善","回升","回暖","增加","成长动能","支撑","形成支撑","正向发展","正向循环","持续成长","有望成长","表现不俗","前景乐观","营运转佳","营运改善","动能回温","预期改善",
+        "stable","improvement","recovery","rebound","benefit","positive","upturn","supportive","resilient",
+        "安定","堅調","上昇","寄与","プラス","追い風","良好","期待","底堅い","維持",
+        "안정","개선","상승","수혜","유리","긍정적","전망밝음","지속성장","양호"
+      ] 
+    },
+    "正向期待_Positive_Light": { 
+      weight: 1, 
+      words: [
+        "期待","市場期待","關注正向","評價提升","信心回升","偏多看待","態度正向",
+        "市场期待","关注正向","评价提升","信心回升","偏多看待","态度正向",
+        "expect","optimistic","upgraded","promising","watching","interest",
+        "注目","関心","意欲","底打ち","기대","관심","낙관","시선"
+      ] 
+    },
+    "危機衰退_Negative_Strong": { 
+      weight: -3, 
+      words: [
+        "衰退","大幅衰退","下滑","明顯下滑","大減","暴跌","重挫","虧損","巨額虧損","轉虧","利空","裁員","大規模裁員","停工","停產","中止","終止","違約","倒閉","砍單","取消訂單","需求下滑","需求驟減","訂單下滑","庫存過高","庫存壓力","資金吃緊","現金流吃緊","財務壓力","營運惡化","經營惡化","前景黯淡","市佔流失","債務問題","負債壓力","風險升高","系統性風險","危機","爆雷",
+        "大幅衰退","明显下滑","大减","暴跌","重挫","亏损","巨额亏损","转亏","利空","裁员","大规模裁员","停产","终止","违约","倒闭","砍单","取消订单","需求下滑","需求骤减","订单下滑","库存过高","库存压力","资金吃紧","现金流吃紧","财务压力","营运恶化","经营恶化","前景黯淡","市占流失","债务问题","负债压力","风险升高","系统性风险","危机",
+        "recession","collapse","crash","default","crisis","slump","layoff","bankrupt","heavy-loss","plunged",
+        "後退","下落","急落","赤字","減益","解雇","停止","破綻","暴落","債務過多","悪化","下方修正","暴落",
+        "침체","하락","폭락","적자","감소","해고","중단","부도","파산","악화","리스크","쇼크"
+      ] 
+    },
+    "壓力風險_Negative_Medium": { 
+      weight: -2, 
+      words: [
+        "壓力","承壓","放緩","成長放緩","修正","向下修正","波動","波動加劇","不如預期","低於預期","表現疲弱","保守","態度保守","疑慮","市場疑慮","隱憂","成本上升","成本增加","毛利下滑","成長趨緩","市況不佳","不確定性","高度不確定","需求疲軟","風險因素","挑戰增加","前景保守",
+        "压力","承压","放缓","成长放缓","修正","向下修正","波动","波动加剧","不如预期","低于预期","表现疲弱","态度保守","疑虑","市场疑虑","隐忧","成长趋缓","市况不佳","不确定性","高度不确定","需求疲软","风险因素","挑战增加","前景保守",
+        "pressure","slowdown","correction","weak","uncertainty","downside","bearish","headwinds","worries",
+        "懸念","圧力","鈍化","下振れ","不透明","軟調","慎重","重荷","減少","不況",
+        "압력","둔화","조정","부진","우려","불확실성","부담","약세"
+      ] 
+    },
+    "謹慎觀察_Negative_Light": { 
+      weight: -1, 
+      words: [
+        "謹慎","態度謹慎","保留","有所保留","觀察","持續觀察","評估中","短期壓力","尚待確認",
+        "谨慎","态度谨慎","观察","持续观察","评估中","短期压力","尚待确认",
+        "caution","wait-and-see","pending","observing","limited","neutral",
+        "様子見","注視","限定的","静観","신중","보류","관망","검토중"
+      ] 
+    }
+  };
+
+  const NEGATIONS = ["不","無","无","未","並非","并非","並未","并未","沒","没","尚未","不足","not","no","without","ない","ず","ません","아니다","안","못"];
+  let flat = [];
+  for (let k in MIXED_LEXICON) { 
+    MIXED_LEXICON[k].words.forEach(w => flat.push({ word: w.toLowerCase(), weight: MIXED_LEXICON[k].weight })); 
+  }
+  flat.sort((a, b) => b.word.length - a.word.length);
+
+  let p = 0, n = 0, h = [], t = text.toLowerCase();
+  flat.forEach(item => {
+    if (t.includes(item.word)) {
+      let w = item.weight, i = t.indexOf(item.word);
+      let context = t.substring(Math.max(0, i - 5), i);
+      let suffix = t.substring(i + item.word.length, i + item.word.length + 3); 
+      if (NEGATIONS.some(neg => context.includes(neg) || suffix.includes(neg))) w = -w;
+      if (w > 0) p += w; else n += Math.abs(w);
+      h.push(item.word);
+      t = t.split(item.word).join("###");
+    }
+  });
+
+  let net = p - n;
+  let label = (p >= 3 && n >= 3) ? "多空分歧/Conflict" : (net > 0 ? "正面/Positive" : (net < 0 ? "負面/Negative" : "中性/Neutral"));
+  return { label, netScore: net, strength: p + n, hitWords: h.join(", ") };
+}
