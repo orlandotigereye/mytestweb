@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>Live2D 漫畫風雲端系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --gold-light: #fef3c7;
+            --gold-main: #fbbf24;
+            --gold-dark: #b45309;
+            --panel-bg: rgba(69, 26, 3, 0.98);
+        }
+        html, body {
+            height: 100%; margin: 0; padding: 0;
+            background: radial-gradient(circle, #92400e 0%, #451a03 100%);
+            background-image: url('https://www.transparenttextures.com/patterns/gold-glitter.png');
+            color: var(--gold-light);
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            overflow: hidden;
+            font-size: 0.5rem; /* 嚴格 0.5rem */
+        }
+        .main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+        .ui-header {
+            padding: 5px; background: var(--panel-bg);
+            border-bottom: 2px solid var(--gold-main);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            z-index: 100;
+        }
+        .stage {
+            flex: 1; display: flex; width: 100%; height: 100%; overflow: hidden;
+            position: relative;
+        }
+        iframe { width: 50%; height: 100%; border: none; background: transparent; }
+        .btn {
+            background: linear-gradient(to bottom, var(--gold-main), var(--gold-dark));
+            border: 1px solid white; padding: 2px 8px; border-radius: 4px;
+            color: #451a03; cursor: pointer; font-weight: bold; font-size: 0.5rem;
+        }
+        #log {
+            font-size: 0.5rem; height: 40px; overflow-y: auto; background: rgba(0,0,0,0.4);
+            padding: 3px; color: var(--gold-main); margin-top: 3px; 
+            border: 1px inset var(--gold-dark); white-space: pre-wrap;
+        }
+        #btnDownload { 
+            position: fixed; right: 5px; top: 5px; z-index: 200; 
+            background: #059669; color: white; border: 1px solid #fff; 
+            font-size: 0.5rem; padding: 2px 10px; border-radius: 20px; 
+        }
+        input { 
+            background: rgba(255,255,255,0.1); border: 1px solid var(--gold-main); 
+            color: white; font-size: 0.5rem; padding: 1px 4px; border-radius: 3px; 
+        }
+        #currentLine { font-size: 0.5rem; }
+    </style>
+</head>
+<body>
+
+<button id="btnDownload" onclick="downloadSource()">下載程式碼</button>
+
+<div class="main-container">
+    <div class="ui-header">
+        <div class="flex justify-between items-center">
+            <span class="font-bold text-yellow-400" style="font-size: 0.6rem;">✨ 雙角金輝漫畫 (Actor: Shizuku / Hibiki)</span>
+            <div class="flex gap-1">
+                <button class="btn" onclick="syncCloud()">同步播放</button>
+                <button class="btn" onclick="location.reload()">重置</button>
+            </div>
+        </div>
+        <div class="flex gap-2 items-center mt-1">
+            <input type="text" id="sid" placeholder="Sheet ID" class="w-32" value="15h6v7zh05fbtNfoauduL9OjpzF8pIeMl86JR9Y9aZbU">
+            <div id="status" class="text-white font-bold" style="font-size:0.5rem;">待機</div>
+            <div id="currentLine" class="italic truncate flex-1 text-yellow-100 border-l border-white/20 pl-2"></div>
+        </div>
+        <pre id="log">系統就緒。支援劇本 Actor: shizuku (左) / hibiki (右)</pre>
+    </div>
+
+    <div class="stage" id="arena">
+        <!-- 雙 Iframe 渲染區 -->
+    </div>
+</div>
+
+<script>
+    // 定義角色：左邊 Shizuku，右邊改用 Hibiki 模型 (或 Koharu 代替，因 Hibiki 官方包較少)
+    const CHARS = [
+        { id: "Left", name: "Shizuku", path: "https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json" },
+        { id: "Right", name: "Hibiki", path: "https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json" }
+    ];
+
+    function log(m) {
+        const l = document.getElementById('log');
+        l.textContent = `[${new Date().toLocaleTimeString()}] ${m}\n` + l.textContent.substring(0, 300);
+    }
+
+    function getIframeTemplate(path, name, side) {
+        return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script>
+    <style>
+        body { margin: 0; overflow: hidden; background: transparent; }
+        #bubble {
+            position: fixed; top: 15%; ${side === 'Left' ? 'right: 15px;' : 'left: 15px;'}
+            background: #fff; border: 3px solid #000; padding: 12px; border-radius: 20px;
+            font-size: 16px; font-weight: 900; color: #000; display: none;
+            max-width: 80%; box-shadow: 5px 5px 0 rgba(0,0,0,0.2); z-index: 1000;
+            line-height: 1.4; position: relative; word-break: break-all;
+        }
+        #bubble::after {
+            content: ''; position: absolute; bottom: -15px; 
+            ${side === 'Left' ? 'right: 25px;' : 'left: 25px;'}
+            border-width: 15px 15px 0; border-style: solid; border-color: #fff transparent transparent;
+        }
+        #bubble::before {
+            content: ''; position: absolute; bottom: -20px; 
+            ${side === 'Left' ? 'right: 23px;' : 'left: 23px;'}
+            border-width: 18px 18px 0; border-style: solid; border-color: #000 transparent transparent;
+        }
+        .name-tag { position: fixed; bottom: 10px; ${side === 'Left' ? 'left: 10px;' : 'right: 10px;'} background: #000; color: #fbbf24; padding: 2px 8px; border-radius: 5px; font-size: 10px; border: 1px solid #fbbf24; }
+    </style>
+</head>
+<body>
+    <div id="bubble"></div>
+    <div class="name-tag">${name}</div>
+    <script>
+        let l2d = null;
+        L2Dwidget.init({
+            model: { jsonPath: "${path}", scale: 1 },
+            display: { 
+                position: "${side === 'Left' ? 'right' : 'left'}", 
+                width: 280, height: 450, hOffset: -50, vOffset: -20 
+            },
+            mobile: { show: true, scale: 0.6 }
+        });
+        setInterval(() => {
+            if (window.live2d && window.live2d.models && window.live2d.models[0]) l2d = window.live2d.models[0];
+        }, 500);
+        window.addEventListener('message', (e) => {
+            const { text, emotion, motion } = e.data;
+            if (text) {
+                const b = document.getElementById('bubble');
+                b.innerText = text; b.style.display = 'block';
+                setTimeout(() => b.style.display = 'none', Math.max(3000, text.length * 250));
+            }
+            if (l2d) {
+                const i = l2d.internalModel || l2d;
+                try {
+                    if (i.expressionManager) i.expressionManager.setExpression(emotion);
+                    if (i.motionManager) i.motionManager.startMotion(motion, 0);
+                } catch(err) {}
+            }
+        });
+    <\/script>
+</body>
+</html>`;
+    }
+
+    function initArena() {
+        const arena = document.getElementById('arena');
+        arena.innerHTML = "";
+        CHARS.forEach(c => {
+            const f = document.createElement('iframe');
+            f.id = `f_${c.id}`;
+            arena.appendChild(f);
+            const d = f.contentWindow.document;
+            d.open(); d.write(getIframeTemplate(c.path, c.name, c.id)); d.close();
+        });
+        log("雙邊 Iframe 載入完畢。");
+    }
+
+    let isPlaying = false;
+    async function syncCloud() {
+        if (isPlaying) return;
+        isPlaying = true;
+        const sheetId = document.getElementById('sid').value.trim();
+        log("連線雲端 CSV...");
+        document.getElementById('status').innerText = "連線中";
+
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+        try {
+            const r = await fetch(csvUrl);
+            const t = await r.text();
+            const scripts = parseCSV(t);
+            if (scripts.length > 0) {
+                log(`劇本獲取成功: ${scripts.length} 條`);
+                await runDrama(scripts);
+            }
+        } catch (e) {
+            log("連線失敗，請檢查權限是否設為「知道連結的人都能查看」。");
+        }
+        isPlaying = false;
+        document.getElementById('status').innerText = "待機";
+    }
+
+    function parseCSV(csv) {
+        const lines = csv.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length < 2) return [];
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        return lines.slice(1).map(line => {
+            const cols = line.split(',');
+            const o = {};
+            headers.forEach((h, i) => o[h] = cols[i] ? cols[i].trim() : "");
+            return o;
+        });
+    }
+
+    async function runDrama(list) {
+        document.getElementById('status').innerText = "播放中";
+        for (const item of list) {
+            const act = (item.actor || "").toLowerCase();
+            // 修正點：明確判定 hibiki 走右邊，其餘(含 shizuku)走左邊
+            const targetSide = (act.includes("hibiki") || act.includes("koharu") || act.includes("right")) ? "Right" : "Left";
+            
+            document.getElementById('currentLine').innerText = `[${act}] ${item.text}`;
+            log(`發言：${act} -> ${targetSide}`);
+
+            const frame = document.getElementById(`f_${targetSide}`);
+            if (frame) {
+                frame.contentWindow.postMessage({
+                    text: item.text,
+                    emotion: item.expression || item.emotion,
+                    motion: item.motion
+                }, '*');
+            }
+
+            if (window.speechSynthesis) {
+                speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(item.text);
+                u.lang = 'zh-TW';
+                speechSynthesis.speak(u);
+            }
+            await new Promise(r => setTimeout(r, Math.max(3000, (item.text || "").length * 300)));
+        }
+    }
+
+    function downloadSource() {
+        const b = new Blob([document.documentElement.outerHTML], { type: "text/html" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(b);
+        a.download = "Live2D_Manga_Hibiki_Fix.html";
+        a.click();
+    }
+
+    window.onload = initArena;
+</script>
+</body>
+</html>
+
