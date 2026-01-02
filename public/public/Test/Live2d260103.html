@@ -1,284 +1,230 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>Live2D 咖啡廳金輝系統</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        :root {
-            --gold-light: #fef3c7;
-            --gold-main: #fbbf24;
-            --gold-dark: #b45309;
-            --panel-bg: rgba(251, 191, 36, 0.95);
-        }
-        html, body {
-            height: 100%; margin: 0; padding: 0;
-            background: #92400e;
-            color: #451a03;
-            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
-            overflow: hidden;
-            font-size: 0.5rem; /* 嚴格 0.5rem */
-        }
-        /* 咖啡廳動態背景 + 金幣輝煌效果 */
-        .master-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: 
-                linear-gradient(rgba(217, 119, 6, 0.3), rgba(217, 119, 6, 0.3)),
-                url('https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&q=80&w=1500');
-            background-size: cover; background-position: center;
-            z-index: -1;
-            filter: contrast(1.1) brightness(1.1);
-        }
-        .master-bg::after {
-            content: ""; position: absolute; inset: 0;
-            background-image: url('https://www.transparenttextures.com/patterns/gold-glitter.png');
-            opacity: 0.7;
-            pointer-events: none;
-            animation: coinShine 8s infinite alternate;
-        }
-        @keyframes coinShine {
-            0% { background-color: rgba(251, 191, 36, 0.1); }
-            100% { background-color: rgba(251, 191, 36, 0.3); }
-        }
-        .main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
-        .ui-header {
-            padding: 4px; background: var(--panel-bg);
-            border-bottom: 2px solid #fff;
-            box-shadow: 0 4px 12px rgba(180, 83, 9, 0.4);
-            z-index: 100;
-        }
-        .stage {
-            flex: 1; display: flex; width: 100%; height: 100%; overflow: hidden;
-            position: relative; align-items: flex-end; justify-content: space-around;
-        }
-        iframe { width: 50%; height: 100%; border: none; background: transparent; }
-        .btn {
-            background: linear-gradient(to bottom, #fff, var(--gold-main));
-            border: 1px solid var(--gold-dark); padding: 2px 6px; border-radius: 4px;
-            color: #451a03; cursor: pointer; font-weight: bold; font-size: 0.5rem;
-        }
-        #log {
-            font-size: 0.5rem; height: 35px; overflow-y: auto; background: rgba(255, 255, 255, 0.7);
-            padding: 2px; color: #451a03; margin-top: 2px; 
-            border: 1px inset var(--gold-dark); white-space: pre-wrap;
-        }
-        #btnDownload { 
-            position: fixed; right: 5px; top: 5px; z-index: 200; 
-            background: #059669; color: white; border: 1px solid #fff; 
-            font-size: 0.5rem; padding: 1px 8px; border-radius: 15px; 
-        }
-        input { 
-            background: white; border: 1px solid var(--gold-dark); 
-            color: #451a03; font-size: 0.5rem; padding: 1px 4px; border-radius: 3px; 
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Live2D 咖啡廳金輝系統</title>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+:root{
+--gold-light:#fef3c7;
+--gold-main:#fbbf24;
+--gold-dark:#b45309;
+--panel-bg:rgba(251,191,36,.94);
+}
+html,body{
+margin:0;padding:0;height:100%;
+overflow:hidden;
+background:#92400e;
+font-family:"PingFang TC","Microsoft JhengHei",sans-serif;
+font-size:.5rem;
+color:#451a03;
+}
+.master-bg{
+position:fixed;
+inset:0;
+background-size:cover;
+background-position:center;
+background-repeat:no-repeat;
+z-index:-1;
+transition:background-image .8s ease-in-out;
+}
+.main-container{display:flex;flex-direction:column;height:100vh;}
+.ui-header{
+padding:4px;
+background:var(--panel-bg);
+border-bottom:2px solid #fff;
+box-shadow:0 4px 12px rgba(180,83,9,.4);
+z-index:100;
+}
+.stage{
+flex:1;
+display:flex;
+align-items:flex-end;
+justify-content:space-around;
+}
+iframe{width:50%;height:100%;border:none;background:transparent;}
+.btn{
+background:linear-gradient(to bottom,#fff,var(--gold-main));
+border:1px solid var(--gold-dark);
+padding:2px 6px;
+border-radius:4px;
+font-size:.5rem;
+font-weight:bold;
+cursor:pointer;
+}
+#log{
+height:35px;
+overflow-y:auto;
+font-size:.5rem;
+background:rgba(255,255,255,.85);
+padding:2px;
+border:1px inset var(--gold-dark);
+white-space:pre-wrap;
+}
+#btnDownload{
+position:fixed;top:5px;right:5px;z-index:200;
+background:#059669;color:#fff;
+font-size:.5rem;padding:2px 10px;
+border-radius:15px;border:1px solid #fff;
+}
+input{
+font-size:.5rem;
+padding:1px 4px;
+border:1px solid var(--gold-dark);
+border-radius:3px;
+}
+</style>
 </head>
+
 <body>
 
-<div class="master-bg"></div>
+<div class="master-bg" id="bg"></div>
 <button id="btnDownload" onclick="downloadSource()">下載程式碼</button>
 
 <div class="main-container">
-    <div class="ui-header">
-        <div class="flex justify-between items-center">
-            <span class="font-bold text-amber-950" style="font-size: 0.55rem;">🏢 咖啡廳人來人往 — 漫畫連動</span>
-            <div class="flex gap-1">
-                <button class="btn" onclick="syncCloud()">同步播放</button>
-                <button class="btn" onclick="location.reload()">重新整理</button>
-            </div>
-        </div>
-        <div class="flex gap-2 items-center mt-1">
-            <input type="text" id="sid" placeholder="Sheet ID" class="w-32" value="15h6v7zh05fbtNfoauduL9OjpzF8pIeMl86JR9Y9aZbU">
-            <div id="status" class="text-amber-900 font-bold" style="font-size:0.5rem;">待機</div>
-            <div id="currentLine" class="italic truncate flex-1 text-amber-800 border-l border-amber-900/20 pl-2" style="font-size:0.5rem;"></div>
-        </div>
-        <pre id="log">系統啟動。人物比例已調小，背景為動態咖啡廳。</pre>
-    </div>
+<div class="ui-header">
 
-    <div class="stage" id="arena"></div>
+<div class="flex justify-between items-center">
+<span class="font-bold" style="font-size:.55rem;">☕ Live2D 咖啡廳 × 劇本自動場景</span>
+<div class="flex gap-1">
+<button class="btn" onclick="syncCloud()">同步播放</button>
+<button class="btn" onclick="location.reload()">重新載入</button>
+</div>
+</div>
+
+<div class="flex gap-2 items-center mt-1">
+<input id="sid" class="w-32"
+value="15h6v7zh05fbtNfoauduL9OjpzF8pIeMl86JR9Y9aZbU">
+<div id="status" class="font-bold">待機</div>
+<div id="currentLine" class="flex-1 truncate italic"></div>
+</div>
+
+<!-- 手動背景切換（不影響自動） -->
+<div class="flex gap-1 mt-1 flex-wrap">
+<button class="btn" onclick="manualBg('day')">☀️ 白天</button>
+<button class="btn" onclick="manualBg('dusk')">🌆 黃昏</button>
+<button class="btn" onclick="manualBg('night')">🌙 夜晚</button>
+<button class="btn" onclick="manualBg('rain')">🌧️ 雨天</button>
+</div>
+
+<pre id="log">系統就緒。</pre>
+</div>
+
+<div class="stage" id="arena"></div>
 </div>
 
 <script>
-    const CHARS = [
-        { id: "Left", name: "Shizuku", path: "https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json" },
-        { id: "Right", name: "Hibiki", path: "https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json" }
-    ];
+/* ===== 背景定義 ===== */
+const BACKGROUNDS={
+day:{name:"白天",url:"https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=2400&auto=format&fit=crop"},
+dusk:{name:"黃昏",url:"https://images.unsplash.com/photo-1511920170033-f8396924c348?q=80&w=2400&auto=format&fit=crop"},
+night:{name:"夜晚",url:"https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2400&auto=format&fit=crop"},
+rain:{name:"雨天",url:"https://images.unsplash.com/photo-1521017432531-fbd92d768814?q=80&w=2400&auto=format&fit=crop"}
+};
 
-    function log(m) {
-        const l = document.getElementById('log');
-        l.textContent = `[${new Date().toLocaleTimeString()}] ${m}\n` + l.textContent.substring(0, 300);
-    }
+let bgLocked=false;
+function setBg(key){
+const bg=BACKGROUNDS[key];
+if(!bg)return;
+document.getElementById("bg").style.backgroundImage=`url("${bg.url}")`;
+log(`背景切換：${bg.name}`);
+}
+function manualBg(key){
+bgLocked=true;
+setBg(key);
+}
 
-    function getIframeTemplate(path, name, side) {
-        return `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script>
-    <style>
-        body { margin: 0; overflow: hidden; background: transparent; }
-        #bubble {
-            position: fixed; top: 18%; 
-            ${side === 'Left' ? 'right: 15px;' : 'left: 15px;'}
-            background: #fff; 
-            border: 3px solid #b45309; 
-            padding: 10px 14px; 
-            border-radius: ${side === 'Left' ? '40px 20px 60px 30px' : '20px 40px 30px 60px'}; 
-            font-size: 15px; font-weight: 900; color: #451a03; display: none;
-            width: fit-content; max-width: 90%;
-            box-shadow: 4px 4px 0 rgba(180, 83, 9, 0.2); 
-            z-index: 1000;
-            line-height: 1.3; position: relative; word-break: break-all;
-        }
-        #bubble::after {
-            content: ''; position: absolute; bottom: -16px; 
-            ${side === 'Left' ? 'right: 20px;' : 'left: 20px;'}
-            border-width: 16px 12px 0; border-style: solid; border-color: #b45309 transparent transparent;
-        }
-        #bubble::before {
-            content: ''; position: absolute; bottom: -10px; 
-            ${side === 'Left' ? 'right: 21px;' : 'left: 21px;'}
-            border-width: 13px 10px 0; border-style: solid; border-color: #fff transparent transparent;
-            z-index: 1001;
-        }
-        .name-tag { position: fixed; bottom: 5px; ${side === 'Left' ? 'left: 5px;' : 'right: 5px;'} background: rgba(251, 191, 36, 0.9); color: #451a03; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: bold; border: 1px solid #b45309; }
-    </style>
-</head>
-<body>
-    <div id="bubble"></div>
-    <div class="name-tag">${name}</div>
-    <script>
-        let l2d = null;
-        L2Dwidget.init({
-            model: { jsonPath: "${path}", scale: 1 }, 
-            display: { 
-                position: "${side === 'Left' ? 'right' : 'left'}", 
-                width: 160, height: 320, hOffset: -20, vOffset: -20 
-            },
-            mobile: { show: true, scale: 0.45 } /* 人物調小 */
-        });
+/* ===== 原本功能 ===== */
+const CHARS=[
+{id:"Left",name:"Shizuku",path:"https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json"},
+{id:"Right",name:"Hibiki",path:"https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json"}
+];
 
-        const checkL2D = setInterval(() => {
-            if (window.live2d && window.live2d.models && window.live2d.models[0]) {
-                l2d = window.live2d.models[0];
-                clearInterval(checkL2D);
-            }
-        }, 500);
+function log(m){
+const l=document.getElementById("log");
+l.textContent=`[${new Date().toLocaleTimeString()}] ${m}\n`+l.textContent.slice(0,300);
+}
 
-        window.addEventListener('message', (e) => {
-            const { text, emotion, motion } = e.data;
-            if (text) {
-                const b = document.getElementById('bubble');
-                b.innerText = text; b.style.display = 'block';
-                b.style.transform = "rotate(" + (Math.random() * 6 - 3) + "deg)";
-                setTimeout(() => b.style.display = 'none', Math.max(3000, text.length * 300));
-            }
-            if (l2d) {
-                const i = l2d.internalModel || l2d;
-                try {
-                    if (i.expressionManager) i.expressionManager.setExpression(emotion || "f01");
-                    const groups = i.motionManager.motionGroups || {};
-                    const gNames = Object.keys(groups);
-                    let mGroup = gNames.find(gn => gn.toLowerCase().includes(motion.toLowerCase()));
-                    if(!mGroup) mGroup = gNames.includes("Idle") ? "Idle" : gNames[0];
-                    if (i.motionManager && mGroup) i.motionManager.startMotion(mGroup, 0);
-                } catch(err) {}
-            }
-        });
-    <\/script>
-</body>
-</html>`;
-    }
+function getIframeTemplate(path,name,side){
+return `
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script>
+<style>
+body{margin:0;overflow:hidden;background:transparent;}
+#bubble{position:fixed;top:18%;${side==="Left"?"right:15px":"left:15px"};
+background:#fff;border:3px solid #b45309;padding:10px 14px;
+font-size:15px;font-weight:900;display:none;max-width:90%;}
+.name-tag{position:fixed;bottom:5px;${side==="Left"?"left:5px":"right:5px"};
+background:rgba(251,191,36,.95);padding:2px 6px;font-size:10px;font-weight:bold;}
+</style></head><body>
+<div id="bubble"></div><div class="name-tag">${name}</div>
+<script>
+L2Dwidget.init({
+model:{jsonPath:"${path}",scale:1},
+display:{position:"${side==="Left"?"right":"left"}",width:150,height:320,hOffset:-20,vOffset:-20},
+mobile:{show:true,scale:.45}
+});
+window.addEventListener("message",e=>{
+if(e.data.text){
+const b=document.getElementById("bubble");
+b.textContent=e.data.text;b.style.display="block";
+setTimeout(()=>b.style.display="none",Math.max(3000,e.data.text.length*320));
+}});
+<\/script></body></html>`;
+}
 
-    function initArena() {
-        const arena = document.getElementById('arena');
-        arena.innerHTML = "";
-        CHARS.forEach(c => {
-            const f = document.createElement('iframe');
-            f.id = `f_${c.id}`;
-            arena.appendChild(f);
-            const d = f.contentWindow.document;
-            d.open(); d.write(getIframeTemplate(c.path, c.name, c.id)); d.close();
-        });
-        log("咖啡廳角色配置完成。");
-    }
+function initArena(){
+const a=document.getElementById("arena");a.innerHTML="";
+CHARS.forEach(c=>{
+const f=document.createElement("iframe");
+f.id="f_"+c.id;a.appendChild(f);
+f.contentWindow.document.open();
+f.contentWindow.document.write(getIframeTemplate(c.path,c.name,c.id));
+f.contentWindow.document.close();
+});
+setBg("day");
+}
 
-    let isPlaying = false;
-    async function syncCloud() {
-        if (isPlaying) return;
-        isPlaying = true;
-        const sheetId = document.getElementById('sid').value.trim();
-        log("獲取雲端試算表...");
-        document.getElementById('status').innerText = "連線中";
+async function syncCloud(){
+bgLocked=false;
+document.getElementById("status").textContent="播放中";
+const url=`https://docs.google.com/spreadsheets/d/${sid.value}/export?format=csv`;
+const t=await fetch(url).then(r=>r.text());
+const lines=t.split(/\r?\n/).slice(1);
 
-        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
-        try {
-            const r = await fetch(csvUrl);
-            const t = await r.text();
-            const scripts = parseCSV(t);
-            if (scripts.length > 0) {
-                log(`劇本成功讀取 ${scripts.length} 條。`);
-                await runDrama(scripts);
-            }
-        } catch (e) {
-            log("讀取失敗：請檢查 ID。");
-        }
-        isPlaying = false;
-        document.getElementById('status').innerText = "待機";
-    }
+for(const line of lines){
+const c=line.split(",");
+const side=(c[0]||"").toLowerCase().includes("right")?"Right":"Left";
+const text=c[1]||"";
+const bg=c[4];
 
-    function parseCSV(csv) {
-        const lines = csv.split(/\r?\n/).filter(l => l.trim());
-        if (lines.length < 2) return [];
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        return lines.slice(1).map(line => {
-            const cols = line.split(',');
-            const o = {};
-            headers.forEach((h, i) => o[h] = cols[i] ? cols[i].trim() : "");
-            return o;
-        });
-    }
+document.getElementById("currentLine").textContent=text;
 
-    async function runDrama(list) {
-        document.getElementById('status').innerText = "播放中";
-        for (const item of list) {
-            const act = (item.actor || "").toLowerCase();
-            const targetSide = (act.includes("hibiki") || act.includes("koharu") || act.includes("right")) ? "Right" : "Left";
-            
-            document.getElementById('currentLine').innerText = `[${act}] ${item.text}`;
-            
-            const frame = document.getElementById(`f_${targetSide}`);
-            if (frame) {
-                frame.contentWindow.postMessage({
-                    text: item.text,
-                    emotion: item.expression || item.emotion || "f01",
-                    motion: item.motion || "idle"
-                }, '*');
-            }
+if(bg && BACKGROUNDS[bg] && !bgLocked) setBg(bg);
 
-            if (window.speechSynthesis) {
-                speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(item.text);
-                u.lang = 'zh-TW';
-                u.rate = 1.0;
-                speechSynthesis.speak(u);
-            }
-            await new Promise(r => setTimeout(r, Math.max(3500, (item.text || "").length * 350)));
-        }
-    }
+document.getElementById("f_"+side).contentWindow.postMessage({text},"*");
 
-    function downloadSource() {
-        const b = new Blob([document.documentElement.outerHTML], { type: "text/html" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(b);
-        a.download = "Live2D_Manga_Cafe_Mini.html";
-        a.click();
-    }
+if(speechSynthesis){
+speechSynthesis.cancel();
+const u=new SpeechSynthesisUtterance(text);
+u.lang="zh-TW";speechSynthesis.speak(u);
+}
+await new Promise(r=>setTimeout(r,Math.max(3500,text.length*350)));
+}
+document.getElementById("status").textContent="待機";
+}
 
-    window.onload = initArena;
+function downloadSource(){
+const b=new Blob([document.documentElement.outerHTML],{type:"text/html"});
+const a=document.createElement("a");
+a.href=URL.createObjectURL(b);
+a.download="Live2D_Cafe_AutoBG.html";
+a.click();
+}
+
+window.onload=initArena;
 </script>
 </body>
 </html>
-
