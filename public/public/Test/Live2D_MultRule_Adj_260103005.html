@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>金輝咖啡廳 V21R - 背景與自動比例修正版</title>
+    <title>金輝咖啡廳 V21R - 雙側穩定加強版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 1. CSS 變數與核心樣式 */
+        /* 1. 樣式定義 */
         :root {
             --gold-light: #fef3c7;
             --gold-main: #fbbf24;
@@ -119,7 +119,7 @@
 <body>
 
 <script>
-    /* 2. 資料定義 */
+    /* 2. 資料與角色清單 (同步加強版) */
     const THEMES = {
         gold: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2400",
         day: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=2400",
@@ -127,6 +127,7 @@
         night: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2400"
     };
 
+    // 完整的 Live2D 角色路徑字典
     const AVATARS = {
         "shizuku": "https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json",
         "koharu": "https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json",
@@ -139,12 +140,22 @@
         "nij": "https://unpkg.com/live2d-widget-model-ni-j@1.0.5/assets/ni-j.model.json",
         "chitose": "https://unpkg.com/live2d-widget-model-chitose@1.0.5/assets/chitose.model.json",
         "tsumiki": "https://unpkg.com/live2d-widget-model-tsumiki@1.0.5/assets/tsumiki.model.json",
-        "unitychan": "https://unpkg.com/live2d-widget-model-unitychan@1.0.5/assets/unitychan.model.json"
+        "unitychan": "https://unpkg.com/live2d-widget-model-unitychan@1.0.5/assets/unitychan.model.json",
+        "hibiki": "https://unpkg.com/live2d-widget-model-hibiki@1.0.5/assets/hibiki.model.json",
+        "izumi": "https://unpkg.com/live2d-widget-model-izumi@1.0.5/assets/izumi.model.json",
+        "epsilon": "https://unpkg.com/live2d-widget-model-epsilon2_1@1.0.5/assets/epsilon2_1.model.json",
+        "gf_95": "https://unpkg.com/live2d-widget-model-gf@1.0.5/assets/95.model.json",
+        "gf_97": "https://unpkg.com/live2d-widget-model-gf@1.0.5/assets/97.model.json",
+        "gf_vivi": "https://unpkg.com/live2d-widget-model-gf@1.0.5/assets/vivi.model.json",
+        "gf_hk416": "https://unpkg.com/live2d-widget-model-gf@1.0.5/assets/hk416.model.json",
+        "nico": "https://unpkg.com/live2d-widget-model-nico@1.0.5/assets/nico.model.json",
+        "niiko": "https://unpkg.com/live2d-widget-model-niiko@1.0.5/assets/niiko.model.json",
+        "nito": "https://unpkg.com/live2d-widget-model-nito@1.0.5/assets/nito.model.json",
+        "ni_j": "https://unpkg.com/live2d-widget-model-ni-j@1.0.5/assets/ni-j.model.json"
     };
 
     let playing = false;
 
-    /* 3. 功能函式 */
     function sysMsg(txt) {
         const logger = document.getElementById('console-log');
         if (!logger) return;
@@ -170,23 +181,16 @@
     function updateBg(keyOrUrl) {
         const bgContainer = document.getElementById('dynamic-bg');
         if (!bgContainer) return;
-        
-        let targetUrl = "";
-        if (keyOrUrl.startsWith("http")) {
-            targetUrl = keyOrUrl;
-            sysMsg(`自定義背景載入中...`);
-        } else {
-            targetUrl = THEMES[keyOrUrl] || THEMES['gold'];
-            sysMsg(`背景切換預設：${keyOrUrl}`);
-        }
+        let targetUrl = (keyOrUrl.startsWith("http")) ? keyOrUrl : (THEMES[keyOrUrl] || THEMES['gold']);
         bgContainer.style.backgroundImage = `url('${targetUrl}')`;
+        sysMsg(`背景切換完畢`);
     }
 
     function applyHostMode() {
         const mode = document.getElementById('host-mode-select').value;
         const stage = document.getElementById('main-stage');
         stage.className = "stage mode-" + mode;
-        sysMsg(`主播模式：${mode}`);
+        sysMsg(`模式切換：${mode}`);
     }
 
     function createCharHTML(path, side, scaleSlider, vOffset) {
@@ -261,13 +265,17 @@
         config.forEach(c => {
             const frame = document.getElementById(`char-${c.id}`);
             if (frame) {
-                const doc = frame.contentWindow.document;
-                doc.open(); 
-                doc.write(createCharHTML(c.path, c.id, scaleVal, vOffsetVal)); 
-                doc.close();
+                // 強制清空並重新寫入，確保穩定
+                frame.src = "about:blank";
+                setTimeout(() => {
+                    const doc = frame.contentWindow.document;
+                    doc.open(); 
+                    doc.write(createCharHTML(c.path, c.id, scaleVal, vOffsetVal)); 
+                    doc.close();
+                }, 50);
             }
         });
-        sysMsg(`角色初始化完成`);
+        sysMsg(`人物雙側初始化中...`);
     }
 
     async function runDrama() {
@@ -281,17 +289,16 @@
             const res = await fetch(url);
             const csv = await res.text();
             const rows = csv.split(/\r?\n/).filter(r => r.trim()).slice(1);
-            sysMsg(`劇本載入成功，${rows.length} 條語句。`);
+            sysMsg(`劇本載入，共 ${rows.length} 句。`);
 
             for (const row of rows) {
                 if(!playing) break;
                 const cols = row.split(',').map(c => c.trim().replace(/"/g, ''));
                 const role = (cols[0] || "").toLowerCase();
                 const text = (cols[1] || "");
-                const bgKeyword = (cols[5] || "").toLowerCase(); // 第六欄
-                const bgUrl = (cols[6] || ""); // 第七欄
+                const bgKeyword = (cols[5] || "").toLowerCase();
+                const bgUrl = (cols[6] || "");
 
-                // 背景邏輯：優先使用第七欄連結，若無則用第六欄關鍵字
                 if (bgUrl && bgUrl.startsWith("http")) {
                     updateBg(bgUrl);
                 } else if (bgKeyword && THEMES[bgKeyword]) {
@@ -313,7 +320,7 @@
                 }
                 await new Promise(r => setTimeout(r, Math.max(5000, text.length * 450)));
             }
-        } catch (e) { sysMsg("劇本執行異常。"); }
+        } catch (e) { sysMsg("劇本執行中斷或異常。"); }
         playing = false;
         document.getElementById('p-status').innerText = "IDLE";
     }
@@ -322,7 +329,7 @@
         const blob = new Blob([document.documentElement.outerHTML], { type: "text/html" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = "linve2D_Background_Enhanced.html";
+        a.download = "linve2D_Dual_Stable.html";
         a.click();
     }
 
@@ -335,9 +342,41 @@
         if(content) content.classList.add('active');
     }
 
+    // 建立通用角色選單內容，確保左右一致且穩定
+    function populateSelectors() {
+        const leftSel = document.getElementById('avatar-left');
+        const rightSel = document.getElementById('avatar-right');
+        
+        const groups = {
+            "經典角色": ["shizuku", "koharu", "haruto", "miku", "izumi", "epsilon"],
+            "萌寵系列": ["hijiki", "tororo", "wanko"],
+            "少女系列": ["chitose", "tsumiki", "unitychan", "nico", "niiko", "nito"],
+            "戰術軍事": ["z16", "hibiki", "gf_95", "gf_97", "gf_vivi", "gf_hk416", "ni_j"]
+        };
+
+        let html = "";
+        for (const [group, members] of Object.entries(groups)) {
+            html += `<optgroup label="${group}">`;
+            members.forEach(m => {
+                if (AVATARS[m]) {
+                    html += `<option value="${m}">${m.toUpperCase()}</option>`;
+                }
+            });
+            html += `</optgroup>`;
+        }
+        
+        leftSel.innerHTML = html;
+        rightSel.innerHTML = html;
+        
+        // 強制設定有效預設值
+        leftSel.value = "shizuku";
+        rightSel.value = "koharu";
+    }
+
     window.onload = () => {
-        sysMsg("環境檢查...");
-        setTimeout(initTheatre, 1200); // 延長延遲確保穩定
+        populateSelectors();
+        sysMsg("系統檢查...");
+        setTimeout(initTheatre, 1000); 
     };
 </script>
 
@@ -350,16 +389,16 @@
 <div class="main-ui">
     <div class="ui-header">
         <div class="flex justify-between items-center gap-2">
-            <span class="font-bold text-amber-950 whitespace-nowrap" style="font-size: 0.6rem;">✨ 金輝咖啡廳 V21R (背景增強)</span>
+            <span class="font-bold text-amber-950 whitespace-nowrap" style="font-size: 0.6rem;">✨ 金輝咖啡廳 V21R (雙側穩定版)</span>
             <div class="flex gap-1 flex-wrap justify-end">
                 <button class="btn-gold" onclick="runDrama()">啟動劇本</button>
-                <button class="btn-gold" onclick="initTheatre()">重新渲染人物</button>
+                <button class="btn-gold" onclick="initTheatre()">重新渲染</button>
             </div>
         </div>
 
         <div class="info-strip">
             <span id="p-status" class="font-black text-amber-800" style="min-width:35px;">IDLE</span>
-            <div id="script-line">支援 Sheet 第七欄背景連結載入。</div>
+            <div id="script-line">同步雙側選單，強化右方角色載入穩定性。</div>
         </div>
 
         <div class="flex mt-1">
@@ -384,7 +423,7 @@
                 <input type="range" id="voffset-range" min="-500" max="500" step="10" value="-100" class="flex-grow" oninput="document.getElementById('val-voff').innerText = this.value">
                 <span id="val-voff" style="min-width:30px;">-100</span>
             </div>
-            <div id="console-log">系統已就緒。畫面高度適配邏輯已啟用。</div>
+            <div id="console-log">雙側選單同步完成，支援 23 位角色。</div>
         </div>
 
         <div id="tab-settings" class="tab-content pt-1">
@@ -399,23 +438,11 @@
                 </div>
                 <div class="flex gap-1 items-center">
                     <span class="control-label">左方角色:</span>
-                    <select id="avatar-left" class="flex-grow" onchange="initTheatre()">
-                        <option value="shizuku">Shizuku (靜)</option>
-                        <option value="haruto">Haruto</option>
-                        <option value="miku">Miku</option>
-                        <option value="hijiki">Hijiki</option>
-                        <option value="tororo">Tororo</option>
-                        <option value="wanko">Wanko</option>
-                        <option value="z16">Z16</option>
-                    </select>
+                    <select id="avatar-left" class="flex-grow text-[0.45rem]" onchange="initTheatre()"></select>
                 </div>
                 <div class="flex gap-1 items-center">
                     <span class="control-label">右方角色:</span>
-                    <select id="avatar-right" class="flex-grow" onchange="initTheatre()">
-                        <option value="koharu" selected>Koharu (小春)</option>
-                        <option value="shizuku">Shizuku</option>
-                        <option value="haruto">Haruto</option>
-                    </select>
+                    <select id="avatar-right" class="flex-grow text-[0.45rem]" onchange="initTheatre()"></select>
                 </div>
                 <div class="flex gap-1 items-center">
                     <span class="control-label">Sheet ID:</span>
