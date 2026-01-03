@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>金輝咖啡廳 V21R - 雙側穩定加強版</title>
+    <title>金輝咖啡廳 V21R - 手機縮放優化版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 1. 樣式定義 */
@@ -120,7 +120,7 @@
 <body>
 
 <script>
-    /* 2. 資料與角色清單 (穩定強化版) */
+    /* 2. 資料與角色清單 */
     const THEMES = {
         gold: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2400",
         day: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=2400",
@@ -227,9 +227,12 @@
                 return;
             }
             try {
+                const isMobile = window.innerWidth <= 768;
                 const h = window.innerHeight;
-                const baseScale = Math.min(1.0, h / 800); 
+                // 手機版基礎倍率從 1.0 提升至 1.8 
+                const baseScale = isMobile ? Math.min(1.8, h / 400) : Math.min(1.0, h / 800); 
                 const finalScale = ${scaleSlider} * baseScale;
+                
                 L2Dwidget.init({
                     model: { jsonPath: "${path}" },
                     display: { 
@@ -259,12 +262,6 @@
 </html>`;
     }
 
-    window.addEventListener('message', e => {
-        if (e.data.status === 'error') {
-            sysMsg(`⚠️ ${e.data.side} 角色渲染異常，嘗試重載。`);
-        }
-    });
-
     function initTheatre() {
         applyHostMode();
         const scaleVal = parseFloat(document.getElementById('scale-range').value);
@@ -280,10 +277,8 @@
         config.forEach(c => {
             const container = document.getElementById(`container-${c.id}`);
             if (container) {
-                // 完全移除並重建 iframe 以防 WebGL 殘留
                 container.innerHTML = `<iframe id="char-${c.id}"></iframe>`;
                 const frame = container.querySelector('iframe');
-                
                 setTimeout(() => {
                     try {
                         const doc = frame.contentWindow.document;
@@ -291,12 +286,12 @@
                         doc.write(createCharHTML(c.path, c.id, scaleVal, vOffsetVal)); 
                         doc.close();
                     } catch (err) {
-                        sysMsg(`❌ 框架寫入失敗: ${c.id}`);
+                        sysMsg(`❌ 載入失敗: ${c.id}`);
                     }
-                }, 200);
+                }, 150);
             }
         });
-        sysMsg(`正在為舞台角色進行環境隔離與載入...`);
+        sysMsg(`已優化手機縮放比例。`);
     }
 
     async function runDrama() {
@@ -310,7 +305,7 @@
             const res = await fetch(url);
             const csv = await res.text();
             const rows = csv.split(/\r?\n/).filter(r => r.trim()).slice(1);
-            sysMsg(`劇本載入成功。`);
+            sysMsg(`劇本讀取中...`);
 
             for (const row of rows) {
                 if(!playing) break;
@@ -341,7 +336,7 @@
                 }
                 await new Promise(r => setTimeout(r, Math.max(5000, text.length * 450)));
             }
-        } catch (e) { sysMsg("劇本讀取失敗。"); }
+        } catch (e) { sysMsg("劇本發生錯誤。"); }
         playing = false;
         document.getElementById('p-status').innerText = "IDLE";
     }
@@ -350,7 +345,7 @@
         const blob = new Blob([document.documentElement.outerHTML], { type: "text/html" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = "linve2D_Dual_Final_Fixed.html";
+        a.download = "linve2D_Mobile_Optimized.html";
         a.click();
     }
 
@@ -387,15 +382,14 @@
         
         leftSel.innerHTML = html;
         rightSel.innerHTML = html;
-        
         leftSel.value = "shizuku";
         rightSel.value = "koharu";
     }
 
     window.onload = () => {
         populateSelectors();
-        sysMsg("環境初始化中...");
-        setTimeout(initTheatre, 1000); 
+        sysMsg("環境初始化...");
+        setTimeout(initTheatre, 800); 
     };
 </script>
 
@@ -408,7 +402,7 @@
 <div class="main-ui">
     <div class="ui-header">
         <div class="flex justify-between items-center gap-2">
-            <span class="font-bold text-amber-950 whitespace-nowrap" style="font-size: 0.6rem;">✨ 金輝咖啡廳 V21R (雙側穩定加強版)</span>
+            <span class="font-bold text-amber-950 whitespace-nowrap" style="font-size: 0.6rem;">✨ 金輝咖啡廳 V21R (手機縮放優化)</span>
             <div class="flex gap-1 flex-wrap justify-end">
                 <button class="btn-gold" onclick="runDrama()">啟動劇本</button>
                 <button class="btn-gold" onclick="initTheatre()">重新渲染</button>
@@ -417,7 +411,7 @@
 
         <div class="info-strip">
             <span id="p-status" class="font-black text-amber-800" style="min-width:35px;">IDLE</span>
-            <div id="script-line">強化 iframe 實體隔離技術，防止 WebGL 衝突導致空白。</div>
+            <div id="script-line">已調高手機版基礎縮放倍率。</div>
         </div>
 
         <div class="flex mt-1">
@@ -433,16 +427,16 @@
                 <button class="btn-gold" onclick="updateBg('night')">🌙 靜夜</button>
             </div>
             <div class="flex items-center gap-2 mb-1">
-                <span class="control-label">額外縮放:</span>
-                <input type="range" id="scale-range" min="0.1" max="1.0" step="0.05" value="0.3" class="flex-grow" oninput="document.getElementById('val-scale').innerText = this.value">
-                <span id="val-scale" style="min-width:25px;">0.3</span>
+                <span class="control-label">縮放調整:</span>
+                <input type="range" id="scale-range" min="0.1" max="1.5" step="0.05" value="0.8" class="flex-grow" oninput="document.getElementById('val-scale').innerText = this.value">
+                <span id="val-scale" style="min-width:25px;">0.8</span>
             </div>
             <div class="flex items-center gap-2">
                 <span class="control-label">垂直偏移:</span>
-                <input type="range" id="voffset-range" min="-500" max="500" step="10" value="-100" class="flex-grow" oninput="document.getElementById('val-voff').innerText = this.value">
-                <span id="val-voff" style="min-width:30px;">-100</span>
+                <input type="range" id="voffset-range" min="-500" max="500" step="10" value="-50" class="flex-grow" oninput="document.getElementById('val-voff').innerText = this.value">
+                <span id="val-voff" style="min-width:30px;">-50</span>
             </div>
-            <div id="console-log">準備就緒。</div>
+            <div id="console-log">準備載入舞台。</div>
         </div>
 
         <div id="tab-settings" class="tab-content pt-1">
@@ -457,11 +451,11 @@
                 </div>
                 <div class="flex gap-1 items-center">
                     <span class="control-label">左方角色:</span>
-                    <select id="avatar-left" class="flex-grow text-[0.45rem]" onchange="initTheatre()"></select>
+                    <select id="avatar-left" class="flex-grow" onchange="initTheatre()"></select>
                 </div>
                 <div class="flex gap-1 items-center">
                     <span class="control-label">右方角色:</span>
-                    <select id="avatar-right" class="flex-grow text-[0.45rem]" onchange="initTheatre()"></select>
+                    <select id="avatar-right" class="flex-grow" onchange="initTheatre()"></select>
                 </div>
                 <div class="flex gap-1 items-center">
                     <span class="control-label">Sheet ID:</span>
@@ -479,3 +473,4 @@
 
 </body>
 </html>
+
