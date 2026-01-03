@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>金輝咖啡廳 V21R - 漫畫可愛對話框 (超多主播修正版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 1. CSS 變數與核心樣式 */
+        :root {
+            --gold-light: #fef3c7;
+            --gold-main: #fbbf24;
+            --gold-dark: #b45309;
+            --panel-bg: rgba(251, 191, 36, 0.96);
+        }
+        html, body {
+            height: 100%; margin: 0; padding: 0;
+            background-color: #fbbf24; 
+            color: #451a03;
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            overflow: hidden;
+            font-size: 0.5rem; /* 嚴格控制 0.5rem */
+        }
+        #dynamic-bg {
+            position: fixed; inset: 0; z-index: 1;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            transition: background-image 0.8s ease-in-out;
+            background-image: url('https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2400');
+        }
+        .gold-texture {
+            position: fixed; inset: 0; z-index: 2;
+            background-image: url('https://www.transparenttextures.com/patterns/gold-glitter.png');
+            opacity: 0.2; pointer-events: none; mix-blend-mode: overlay;
+        }
+        .main-ui {
+            display: flex; flex-direction: column; height: 100vh; width: 100vw; 
+            position: relative; z-index: 10;
+        }
+        .ui-header {
+            padding: 4px 10px; background: var(--panel-bg);
+            border-bottom: 2px solid #fff;
+            box-shadow: 0 4px 15px rgba(180, 83, 9, 0.3);
+        }
+        .stage {
+            flex: 1; display: flex; width: 100%; height: 100%; overflow: hidden;
+            position: relative; align-items: flex-end; justify-content: space-around;
+            pointer-events: none; 
+        }
+        iframe { 
+            border: none; 
+            background: transparent !important; 
+            pointer-events: auto;
+            align-self: flex-end;
+            transition: all 0.4s ease;
+            display: block;
+            z-index: 20;
+        }
+
+        .stage.mode-dual iframe { width: 45%; height: 65vh; }
+        .stage.mode-left iframe#char-left { width: 80%; height: 80vh; }
+        .stage.mode-left iframe#char-right { display: none; }
+        .stage.mode-right iframe#char-right { width: 80%; height: 80vh; }
+        .stage.mode-right iframe#char-left { display: none; }
+
+        @media (max-width: 768px) {
+            .stage.mode-dual iframe { height: 75vh; width: 48%; }
+            .stage.mode-left iframe#char-left, .stage.mode-right iframe#char-right { width: 95%; height: 85vh; }
+        }
+
+        .btn-gold {
+            background: linear-gradient(to bottom, #fff, var(--gold-main));
+            border: 1px solid var(--gold-dark); padding: 2px 6px; border-radius: 4px;
+            color: #451a03; cursor: pointer; font-weight: 900; font-size: 0.5rem;
+            box-shadow: 1px 1px 0 #b45309;
+        }
+        #console-log {
+            font-size: 0.5rem; height: 35px; overflow-y: auto; background: rgba(255, 255, 255, 0.9);
+            padding: 4px; color: #451a03; margin-top: 4px; 
+            border: 1px inset var(--gold-dark); border-radius: 4px; line-height: 1.1;
+        }
+        #btn-download { 
+            position: fixed; right: 10px; bottom: 10px; z-index: 5000; 
+            background: #059669; color: white; border: 1px solid #fff; 
+            font-size: 0.5rem; padding: 3px 12px; border-radius: 20px; font-weight: bold;
+        }
+        input, select { 
+            background: white; border: 1px solid var(--gold-dark); 
+            color: #451a03; font-size: 0.5rem; padding: 2px 6px; border-radius: 4px; 
+        }
+        .info-strip {
+            background: rgba(255, 255, 255, 0.3); border-radius: 4px; padding: 2px 8px;
+            margin-top: 3px; display: flex; align-items: center; gap: 6px;
+        }
+        #script-line {
+            font-style: italic; color: #78350f; font-weight: bold; font-size: 0.7rem;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+            text-shadow: 1px 1px 1px #fff;
+        }
+        .tab-btn {
+            padding: 2px 8px; cursor: pointer; border-radius: 6px 6px 0 0;
+            background: rgba(180, 83, 9, 0.1); border: 1px solid var(--gold-dark);
+            border-bottom: none; font-weight: bold; margin-right: 2px; font-size: 0.5rem;
+        }
+        .tab-btn.active {
+            background: var(--gold-main); border-bottom: 2px solid var(--gold-main);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+
+<script>
+    /* 2. 資料定義 */
+    const THEMES = {
+        gold: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2400",
+        day: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=2400",
+        dusk: "https://images.unsplash.com/photo-1511920170033-f8396924c348?q=80&w=2400",
+        night: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2400"
+    };
+
+    // 角色資料庫 - 修正了鍵值包含 '-' 的語法錯誤
+    const AVATARS = {
+        "shizuku": "https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json",
+        "koharu": "https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json",
+        "haruto": "https://unpkg.com/live2d-widget-model-haruto@1.0.5/assets/haruto.model.json",
+        "miku": "https://unpkg.com/live2d-widget-model-miku@1.0.5/assets/miku.model.json",
+        "hijiki": "https://unpkg.com/live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json",
+        "tororo": "https://unpkg.com/live2d-widget-model-tororo@1.0.5/assets/tororo.model.json",
+        "wanko": "https://unpkg.com/live2d-widget-model-wanko@1.0.5/assets/wanko.model.json",
+        "z16": "https://unpkg.com/live2d-widget-model-z16@1.0.5/assets/z16.model.json",
+        "nij": "https://unpkg.com/live2d-widget-model-ni-j@1.0.5/assets/ni-j.model.json",
+        "chitose": "https://unpkg.com/live2d-widget-model-chitose@1.0.5/assets/chitose.model.json",
+        "tsumiki": "https://unpkg.com/live2d-widget-model-tsumiki@1.0.5/assets/tsumiki.model.json",
+        "unitychan": "https://unpkg.com/live2d-widget-model-unitychan@1.0.5/assets/unitychan.model.json"
+    };
+
+    let playing = false;
+
+    /* 3. 功能函式 */
+    function sysMsg(txt) {
+        const logger = document.getElementById('console-log');
+        if (!logger) return;
+        const d = document.createElement('div');
+        d.innerHTML = `• ${txt}`;
+        logger.prepend(d);
+    }
+
+    function updateBg(key) {
+        const bgContainer = document.getElementById('dynamic-bg');
+        if (!bgContainer) return;
+        const url = THEMES[key] || THEMES['gold'];
+        bgContainer.style.backgroundImage = `url('${url}')`;
+        sysMsg(`背景切換：${key}`);
+    }
+
+    function applyHostMode() {
+        const mode = document.getElementById('host-mode-select').value;
+        const stage = document.getElementById('main-stage');
+        stage.className = "stage mode-" + mode;
+        sysMsg(`主播模式切換：${mode}`);
+    }
+
+    function changeAvatar() {
+        initTheatre();
+        sysMsg("主播陣容已更新。");
+    }
+
+    function createCharHTML(path, side, isMobile) {
+        const scale = isMobile ? 0.65 : 0.35;
+        const vOffset = isMobile ? -50 : -180; 
+        
+        return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script>
+    <style>
+        body { margin: 0; overflow: hidden; background: transparent !important; height: 100vh; width: 100vw; }
+        #pop {
+            position: fixed; top: 12%; 
+            ${side === 'left' ? 'right: 40px;' : 'left: 40px;'} 
+            background: #fff; border: 3px solid #451a03; padding: 10px 18px; 
+            border-radius: 25px; font-size: ${isMobile ? '16px' : '20px'}; 
+            font-weight: 900; color: #451a03; display: none; max-width: 80%; 
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.1); z-index: 10000; line-height: 1.4;
+        }
+        #pop:after {
+            content: ''; position: absolute; bottom: -15px;
+            ${side === 'left' ? 'right: 30px;' : 'left: 30px;'} 
+            width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent;
+            border-top: 15px solid #451a03;
+        }
+        #pop:before {
+            content: ''; position: absolute; bottom: -10px;
+            ${side === 'left' ? 'right: 31px;' : 'left: 31px;'} 
+            width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent;
+            border-top: 13px solid #fff; z-index: 10001;
+        }
+        canvas { width: 100% !important; height: 100% !important; object-fit: contain !important; }
+    </style>
+</head>
+<body>
+    <div id="pop"></div>
+    <script>
+        window.onload = () => {
+            L2Dwidget.init({
+                model: { jsonPath: "${path}" },
+                display: { position: "center", width: window.innerWidth, height: window.innerHeight, vOffset: ${vOffset}, hOffset: 0 },
+                mobile: { show: true, scale: ${scale} },
+                react: { opacity: 1.0 }
+            });
+        };
+        window.addEventListener('message', e => {
+            if (e.data.text) {
+                const p = document.getElementById('pop');
+                if(p) {
+                    p.innerText = e.data.text; p.style.display = 'block';
+                    setTimeout(() => p.style.display = 'none', Math.max(3000, e.data.text.length * 450));
+                }
+            }
+        });
+    <\/script>
+</body>
+</html>`;
+    }
+
+    function initTheatre() {
+        const isMobile = window.innerWidth <= 768;
+        applyHostMode();
+        
+        const leftKey = document.getElementById('avatar-left').value;
+        const rightKey = document.getElementById('avatar-right').value;
+
+        const currentConfig = [
+            { id: "left", path: AVATARS[leftKey] },
+            { id: "right", path: AVATARS[rightKey] }
+        ];
+
+        currentConfig.forEach(c => {
+            const f = document.getElementById(`char-${c.id}`);
+            if (f) {
+                const d = f.contentWindow.document;
+                d.open(); d.write(createCharHTML(c.path, c.id, isMobile)); d.close();
+            }
+        });
+        updateBg('gold');
+    }
+
+    async function runDrama() {
+        if (playing) return;
+        playing = true;
+        document.getElementById('p-status').innerText = "PLAYING";
+        const sid = document.getElementById('sheet-id').value.trim();
+        const url = `https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&gid=0&v=${Date.now()}`;
+        
+        try {
+            const res = await fetch(url);
+            const csv = await res.text();
+            const rows = csv.split(/\r?\n/).filter(r => r.trim()).slice(1);
+            sysMsg(`載入成功，總計 ${rows.length} 段對話。`);
+
+            for (const row of rows) {
+                if(!playing) break;
+                const cols = row.split(',').map(c => c.trim().replace(/"/g, ''));
+                const role = (cols[0] || "").toLowerCase();
+                const text = (cols[1] || "");
+                const bgCmd = (cols[5] || "").toLowerCase();
+
+                if (bgCmd && THEMES[bgCmd]) updateBg(bgCmd);
+                document.getElementById('script-line').innerText = text;
+
+                const leftAvatar = document.getElementById('avatar-left').value;
+                const rightAvatar = document.getElementById('avatar-right').value;
+
+                // 判斷該誰說話
+                const isR = (role.includes('right') || role.includes('右') || role.includes(rightAvatar));
+                const frame = document.getElementById(isR ? 'char-right' : 'char-left');
+                
+                if (frame && frame.contentWindow) {
+                    frame.contentWindow.postMessage({ text }, '*');
+                }
+
+                if (window.speechSynthesis) {
+                    speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance(text);
+                    u.lang = 'zh-TW';
+                    speechSynthesis.speak(u);
+                }
+                await new Promise(r => setTimeout(r, Math.max(5000, text.length * 450)));
+            }
+        } catch (e) { sysMsg("劇本載入出錯。"); }
+        playing = false;
+        document.getElementById('p-status').innerText = "IDLE";
+    }
+
+    function downloadSource() {
+        const blob = new Blob([document.documentElement.outerHTML], { type: "text/html" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "linve2D_V21R_Fixed.html";
+        a.click();
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        const btn = document.querySelector(`[onclick="switchTab('${tabId}')"]`);
+        if(btn) btn.classList.add('active');
+        const content = document.getElementById(tabId);
+        if(content) content.classList.add('active');
+    }
+
+    window.onload = () => setTimeout(initTheatre, 1000);
+</script>
+
+<div id="dynamic-bg"></div>
+<div class="gold-texture"></div>
+
+<button id="btn-download" onclick="downloadSource()">💾 下載原始碼</button>
+
+<div class="main-ui">
+    <div class="ui-header">
+        <div class="flex justify-between items-center">
+            <span class="font-bold text-amber-950" style="font-size: 0.6rem;">✨ 金輝咖啡廳 V21R (修正版)</span>
+            <div class="flex gap-1">
+                <button class="btn-gold" onclick="runDrama()">啟動劇本</button>
+                <button class="btn-gold" onclick="location.reload()">重置頁面</button>
+            </div>
+        </div>
+
+        <div class="info-strip">
+            <span id="p-status" class="font-black text-amber-800" style="min-width:35px;">IDLE</span>
+            <div id="script-line">準備就緒...</div>
+        </div>
+
+        <div class="flex mt-1">
+            <div class="tab-btn active" onclick="switchTab('tab-control')">快速控制</div>
+            <div class="tab-btn" onclick="switchTab('tab-settings')">主播與設定</div>
+        </div>
+
+        <div id="tab-control" class="tab-content active pt-1">
+            <div class="flex gap-1 flex-wrap">
+                <button class="btn-gold" onclick="updateBg('gold')">💰 金輝</button>
+                <button class="btn-gold" onclick="updateBg('day')">☀️ 晨間</button>
+                <button class="btn-gold" onclick="updateBg('dusk')">🌆 黃昏</button>
+                <button class="btn-gold" onclick="updateBg('night')">🌙 靜夜</button>
+            </div>
+            <div id="console-log">已修正連字號導致的語法錯誤。</div>
+        </div>
+
+        <div id="tab-settings" class="tab-content pt-1">
+            <div class="grid grid-cols-1 gap-1">
+                <div class="flex gap-1 items-center">
+                    <span class="font-bold shrink-0">主播模式:</span>
+                    <select id="host-mode-select" class="flex-grow" onchange="applyHostMode()">
+                        <option value="dual">雙人主播 (左 & 右)</option>
+                        <option value="left">單人主播 (左側)</option>
+                        <option value="right">單人主播 (右側)</option>
+                    </select>
+                </div>
+                <div class="flex gap-1 items-center">
+                    <span class="font-bold shrink-0">左側主播:</span>
+                    <select id="avatar-left" class="flex-grow" onchange="changeAvatar()">
+                        <option value="shizuku">Shizuku (預設)</option>
+                        <option value="haruto">Haruto (男生)</option>
+                        <option value="miku">Miku (初音)</option>
+                        <option value="hijiki">Hijiki (黑貓)</option>
+                        <option value="tororo">Tororo (白貓)</option>
+                        <option value="wanko">Wanko (狗狗)</option>
+                        <option value="z16">Z16 (艦娘風)</option>
+                        <option value="nij">Ni-J (人類女)</option>
+                        <option value="chitose">Chitose (人類女)</option>
+                        <option value="tsumiki">Tsumiki (人類女)</option>
+                        <option value="unitychan">UnityChan</option>
+                    </select>
+                </div>
+                <div class="flex gap-1 items-center">
+                    <span class="font-bold shrink-0">右側主播:</span>
+                    <select id="avatar-right" class="flex-grow" onchange="changeAvatar()">
+                        <option value="koharu" selected>Koharu (預設)</option>
+                        <option value="shizuku">Shizuku</option>
+                        <option value="haruto">Haruto</option>
+                        <option value="miku">Miku</option>
+                        <option value="hijiki">Hijiki</option>
+                        <option value="tororo">Tororo</option>
+                        <option value="wanko">Wanko</option>
+                        <option value="z16">Z16</option>
+                        <option value="nij">Ni-J</option>
+                        <option value="chitose">Chitose</option>
+                        <option value="tsumiki">Tsumiki</option>
+                        <option value="unitychan">UnityChan</option>
+                    </select>
+                </div>
+                <div class="flex gap-1 items-center">
+                    <span class="font-bold shrink-0">試算表 ID:</span>
+                    <input type="text" id="sheet-id" class="flex-grow" value="15h6v7zh05fbtNfoauduL9OjpzF8pIeMl86JR9Y9aZbU">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-stage" class="stage mode-dual">
+        <iframe id="char-left"></iframe>
+        <iframe id="char-right"></iframe>
+    </div>
+</div>
+
+</body>
+</html>
