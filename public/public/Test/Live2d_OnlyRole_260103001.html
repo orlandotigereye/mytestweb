@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>金輝咖啡廳 V22S - 左下主播 MP4 版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --gold-light: #fef3c7;
+            --gold-main: #fbbf24;
+            --gold-dark: #b45309;
+            --panel-bg: rgba(251, 191, 36, 0.96);
+        }
+        html, body {
+            height: 100%; margin: 0; padding: 0;
+            background-color: #fbbf24; 
+            color: #451a03;
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            overflow: hidden;
+            font-size: 0.5rem; 
+        }
+        #dynamic-bg {
+            position: fixed; inset: 0; z-index: 1;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            transition: background-image 0.8s ease-in-out;
+            background-image: url('https://images.unsplash.com/photo-1634128221889-82ed6efebfc3?q=80&w=2400');
+        }
+        .gold-texture {
+            position: fixed; inset: 0; z-index: 2;
+            background-image: url('https://www.transparenttextures.com/patterns/gold-glitter.png');
+            opacity: 0.3; pointer-events: none; mix-blend-mode: overlay;
+        }
+        .main-ui {
+            display: flex; flex-direction: column; height: 100vh; width: 100vw; 
+            position: relative; z-index: 10;
+            transition: transform 0.3s ease-in-out;
+        }
+        .main-ui.hidden-ui { transform: translateY(-110%); }
+        .ui-header {
+            padding: 4px 10px; background: var(--panel-bg);
+            border-bottom: 2px solid #fff;
+            box-shadow: 0 4px 15px rgba(180, 83, 9, 0.3);
+            pointer-events: auto;
+        }
+        .stage {
+            flex: 1; display: flex; width: 100%; height: 100%; overflow: hidden;
+            position: fixed; bottom: 0; left: 0;
+            align-items: flex-end; justify-content: flex-start; /* 改為左側對齊 */
+            pointer-events: none; z-index: 5;
+        }
+        .char-container {
+            width: 50%; height: 80vh; display: flex; align-items: flex-end; justify-content: center;
+            /* 針對左下角定位微調 */
+            margin-left: 2%;
+        }
+        iframe { 
+            border: none; background: transparent !important; 
+            pointer-events: auto; width: 100%; height: 100%;
+            display: block; z-index: 20;
+        }
+        .btn-gold {
+            background: linear-gradient(to bottom, #fff, var(--gold-main));
+            border: 1px solid var(--gold-dark); padding: 2px 6px; border-radius: 4px;
+            color: #451a03; cursor: pointer; font-weight: 900; font-size: 0.5rem;
+            box-shadow: 1px 1px 0 #b45309;
+        }
+        .btn-record { background: linear-gradient(to bottom, #ffcccc, #ef4444); color: white; border: 1px solid #991b1b; }
+        .btn-toggle-ui {
+            position: fixed; top: 85px; right: 10px; z-index: 100;
+            background: var(--gold-dark); color: white; padding: 4px 10px; border-radius: 20px;
+            font-size: 0.5rem; font-weight: bold; cursor: pointer; border: 1px solid #fff;
+        }
+        #console-log {
+            font-size: 0.5rem; height: 35px; overflow-y: auto; background: rgba(255, 255, 255, 0.9);
+            padding: 4px; color: #451a03; margin-top: 4px; border: 1px inset var(--gold-dark); border-radius: 4px;
+        }
+        #btn-download { 
+            position: fixed; right: 10px; bottom: 10px; z-index: 5000; 
+            background: #059669; color: white; border: 1px solid #fff; 
+            font-size: 0.5rem; padding: 3px 12px; border-radius: 20px;
+        }
+        input, select { background: white; border: 1px solid var(--gold-dark); font-size: 0.5rem; padding: 2px 6px; border-radius: 4px; }
+        .info-strip { background: rgba(255, 255, 255, 0.3); border-radius: 4px; padding: 2px 8px; margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+        #script-line { font-style: italic; color: #78350f; font-weight: bold; font-size: 0.7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-shadow: 1px 1px 1px #fff; }
+        .tab-btn { padding: 2px 8px; cursor: pointer; border-radius: 6px 6px 0 0; background: rgba(180, 83, 9, 0.1); border: 1px solid var(--gold-dark); border-bottom: none; font-weight: bold; margin-right: 2px; font-size: 0.5rem; }
+        .tab-btn.active { background: var(--gold-main); border-bottom: 2px solid var(--gold-main); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        @media (max-width: 768px) {
+            .char-container { width: 70%; height: 60vh; } /* 手機版縮小容器高度 */
+        }
+    </style>
+</head>
+<body>
+
+<script>
+    const THEMES = {
+        gold: "https://images.unsplash.com/photo-1634128221889-82ed6efebfc3?q=80&w=2400",
+        day: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=2400",
+        dusk: "https://images.unsplash.com/photo-1511920170033-f8396924c348?q=80&w=2400",
+        night: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2400"
+    };
+
+    const AVATARS = {
+        "shizuku": "https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json",
+        "koharu": "https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json",
+        "miku": "https://unpkg.com/live2d-widget-model-miku@1.0.5/assets/miku.model.json",
+        "hijiki": "https://unpkg.com/live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json",
+        "gf_95": "https://unpkg.com/live2d-widget-model-gf@1.0.5/assets/95.model.json",
+        "unitychan": "https://unpkg.com/live2d-widget-model-unitychan@1.0.5/assets/unitychan.model.json"
+    };
+
+    let playing = false;
+    let mediaRecorder;
+    let recordedChunks = [];
+    let isRecording = false;
+
+    function sysMsg(txt) {
+        const logger = document.getElementById('console-log');
+        if (!logger) return;
+        const d = document.createElement('div');
+        d.innerHTML = `• ${txt}`;
+        logger.prepend(d);
+    }
+
+    function toggleUI() {
+        const ui = document.querySelector('.main-ui');
+        const btn = document.querySelector('.btn-toggle-ui');
+        if (ui.classList.contains('hidden-ui')) { ui.classList.remove('hidden-ui'); btn.innerText = "隱藏控制項"; btn.style.top = "85px"; } 
+        else { ui.classList.add('hidden-ui'); btn.innerText = "顯示控制項"; btn.style.top = "10px"; }
+    }
+
+    function updateBg(keyOrUrl) {
+        const bgContainer = document.getElementById('dynamic-bg');
+        let targetUrl = (keyOrUrl.startsWith("http")) ? keyOrUrl : (THEMES[keyOrUrl] || THEMES['gold']);
+        bgContainer.style.backgroundImage = `url('${targetUrl}')`;
+        sysMsg(`背景切換`);
+    }
+
+    function createCharHTML(path, scaleSlider, vOffset) {
+        return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script>
+    <style>
+        body { margin: 0; overflow: hidden; background: transparent !important; height: 100vh; width: 100vw; }
+        #pop {
+            position: fixed; top: 10%; left: 30px; 
+            background: #fff; border: 3px solid #451a03; padding: 10px 18px; 
+            border-radius: 25px; font-size: 20px; font-weight: 900; color: #451a03; display: none; max-width: 80%; 
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.1); z-index: 10000; line-height: 1.4;
+        }
+        #pop:after {
+            content: ''; position: absolute; bottom: -15px; left: 30px;
+            width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 15px solid #451a03;
+        }
+        canvas { width: 100% !important; height: 100% !important; object-fit: contain !important; vertical-align: bottom; }
+    </style>
+</head>
+<body>
+    <div id="pop"></div>
+    <script>
+        const initL2D = () => {
+            if (typeof L2Dwidget === 'undefined') { setTimeout(initL2D, 500); return; }
+            const isMobile = window.innerWidth <= 768;
+            const h = window.innerHeight;
+            // 手機版 scale 調小: 基準由 1.8 降為 0.8
+            const baseScale = isMobile ? Math.min(0.8, h / 600) : Math.min(1.2, h / 700); 
+            const finalScale = ${scaleSlider} * baseScale;
+            L2Dwidget.init({
+                model: { jsonPath: "${path}" },
+                display: { position: "left", width: window.innerWidth, height: window.innerHeight, vOffset: ${vOffset}, hOffset: 0 },
+                mobile: { show: true, scale: finalScale },
+                react: { opacity: 1.0 }
+            });
+        };
+        window.onload = initL2D;
+        window.addEventListener('message', e => {
+            if (e.data.text) {
+                const p = document.getElementById('pop');
+                p.innerText = e.data.text; p.style.display = 'block';
+                setTimeout(() => p.style.display = 'none', Math.max(3000, e.data.text.length * 450));
+            }
+        });
+    <\/script>
+</body>
+</html>`;
+    }
+
+    function initTheatre() {
+        const scaleVal = parseFloat(document.getElementById('scale-range').value);
+        const vOffsetVal = parseInt(document.getElementById('voffset-range').value);
+        const avatarKey = document.getElementById('avatar-main').value;
+        const container = document.getElementById(`container-main`);
+        container.innerHTML = `<iframe id="char-main"></iframe>`;
+        const frame = container.querySelector('iframe');
+        setTimeout(() => {
+            const doc = frame.contentWindow.document;
+            doc.open(); doc.write(createCharHTML(AVATARS[avatarKey], scaleVal, vOffsetVal)); doc.close();
+        }, 150);
+    }
+
+    async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" }, audio: true });
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+            mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `SoloLeft_Recording_${Date.now()}.mp4`; a.click();
+                sysMsg("錄影存檔中...");
+            };
+            mediaRecorder.start();
+            isRecording = true;
+            sysMsg("錄製啟動...");
+        } catch (err) { sysMsg("權限異常"); }
+    }
+
+    async function runDrama(withRecord = false) {
+        if (playing) return;
+        if (withRecord) await startRecording();
+        playing = true;
+        document.getElementById('p-status').innerText = "LIVE";
+        const sid = document.getElementById('sheet-id').value.trim();
+        const url = `https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&gid=0&v=${Date.now()}`;
+        try {
+            const res = await fetch(url);
+            const csv = await res.text();
+            const rows = csv.split(/\r?\n/).filter(r => r.trim()).slice(1);
+            for (const row of rows) {
+                if(!playing) break;
+                const cols = row.split(',').map(c => c.trim().replace(/"/g, ''));
+                const text = (cols[1] || "");
+                const bgKeyword = (cols[5] || "").toLowerCase();
+                if (THEMES[bgKeyword]) updateBg(bgKeyword);
+                document.getElementById('script-line').innerText = text;
+                const frame = document.getElementById('char-main');
+                if (frame && frame.contentWindow) frame.contentWindow.postMessage({ text }, '*');
+                if (window.speechSynthesis) {
+                    speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance(text); u.lang = 'zh-TW';
+                    speechSynthesis.speak(u);
+                }
+                await new Promise(r => setTimeout(r, Math.max(5000, text.length * 450)));
+            }
+        } catch (e) { sysMsg("運行錯誤"); }
+        playing = false;
+        document.getElementById('p-status').innerText = "IDLE";
+        if (withRecord && isRecording) mediaRecorder.stop();
+    }
+
+    function downloadSource() {
+        const blob = new Blob([document.documentElement.outerHTML], { type: "text/html" });
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "SoloLeft_V22S.html"; a.click();
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    window.onload = () => {
+        const sel = document.getElementById('avatar-main');
+        Object.keys(AVATARS).forEach(k => {
+            const opt = document.createElement('option'); opt.value = k; opt.innerText = k.toUpperCase(); sel.appendChild(opt);
+        });
+        sysMsg("左下主播模式啟動。");
+        setTimeout(initTheatre, 800); 
+    };
+</script>
+
+<div id="dynamic-bg"></div>
+<div class="gold-texture"></div>
+
+<button class="btn-toggle-ui" onclick="toggleUI()">隱藏控制項</button>
+<button id="btn-download" onclick="downloadSource()">💾 下載</button>
+
+<div class="main-ui">
+    <div class="ui-header">
+        <div class="flex justify-between items-center gap-2">
+            <span class="font-bold text-amber-950" style="font-size: 0.6rem;">✨ 金輝咖啡廳 V22S (左下主播版)</span>
+            <div class="flex gap-1">
+                <button class="btn-gold btn-record" onclick="runDrama(true)">🎬 錄影</button>
+                <button class="btn-gold" onclick="runDrama(false)">開始</button>
+                <button class="btn-gold" onclick="initTheatre()">渲染</button>
+            </div>
+        </div>
+        <div class="info-strip">
+            <span id="p-status" class="font-black text-amber-800">IDLE</span>
+            <div id="script-line">已切換至左下角排版，手機比例已優化。</div>
+        </div>
+        <div class="flex mt-1">
+            <div class="tab-btn active" onclick="switchTab('tab-control')">控制面板</div>
+            <div class="tab-btn" onclick="switchTab('tab-settings')">參數/劇本</div>
+        </div>
+        <div id="tab-control" class="tab-content active pt-1">
+            <div class="flex gap-1 mb-1">
+                <button class="btn-gold flex-1" onclick="updateBg('gold')">💰金輝</button>
+                <button class="btn-gold flex-1" onclick="updateBg('day')">☀️日景</button>
+                <button class="btn-gold flex-1" onclick="updateBg('night')">🌙夜景</button>
+            </div>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="font-bold">縮放:</span>
+                <input type="range" id="scale-range" min="0.1" max="2.0" step="0.05" value="1.0" class="flex-grow" oninput="document.getElementById('val-scale').innerText = this.value">
+                <span id="val-scale">1.0</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="font-bold">高度:</span>
+                <input type="range" id="voffset-range" min="-500" max="500" step="10" value="0" class="flex-grow" oninput="document.getElementById('val-voff').innerText = this.value">
+                <span id="val-voff">0</span>
+            </div>
+            <div id="console-log">Ready.</div>
+        </div>
+        <div id="tab-settings" class="tab-content pt-1">
+            <div class="flex flex-col gap-1">
+                <select id="avatar-main" onchange="initTheatre()"></select>
+                <input type="text" id="sheet-id" value="15h6v7zh05fbtNfoauduL9OjpzF8pIeMl86JR9Y9aZbU">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="main-stage" class="stage">
+    <div class="char-container" id="container-main"></div>
+</div>
+
+</body>
+</html>
+
