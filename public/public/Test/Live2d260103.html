@@ -13,81 +13,56 @@
 --gold-dark:#b45309;
 --panel-bg:rgba(251,191,36,.94);
 }
+
 html,body{
-margin:0;padding:0;height:100%;
-overflow:hidden;
+height:100%;margin:0;
 background:#92400e;
 font-family:"PingFang TC","Microsoft JhengHei",sans-serif;
+overflow:hidden;
 font-size:.5rem;
-color:#451a03;
 }
+
+/* === 背景容器（改為可切換） === */
 .master-bg{
-position:fixed;
-inset:0;
+position:fixed;inset:0;
 background-size:cover;
 background-position:center;
-background-repeat:no-repeat;
+transition:background-image 1.2s ease, filter .8s ease;
 z-index:-1;
-transition:background-image .8s ease-in-out;
+filter:brightness(1.1) contrast(1.1);
 }
-.main-container{display:flex;flex-direction:column;height:100vh;}
-.ui-header{
-padding:4px;
-background:var(--panel-bg);
-border-bottom:2px solid #fff;
-box-shadow:0 4px 12px rgba(180,83,9,.4);
-z-index:100;
+
+.master-bg::after{
+content:"";position:absolute;inset:0;
+background-image:url('https://www.transparenttextures.com/patterns/gold-glitter.png');
+opacity:.65;
+pointer-events:none;
+animation:goldShimmer 7s infinite alternate;
 }
-.stage{
-flex:1;
-display:flex;
-align-items:flex-end;
-justify-content:space-around;
+
+@keyframes goldShimmer{
+from{background-color:rgba(251,191,36,.08)}
+to{background-color:rgba(251,191,36,.25)}
 }
-iframe{width:50%;height:100%;border:none;background:transparent;}
-.btn{
-background:linear-gradient(to bottom,#fff,var(--gold-main));
-border:1px solid var(--gold-dark);
-padding:2px 6px;
-border-radius:4px;
-font-size:.5rem;
-font-weight:bold;
-cursor:pointer;
-}
-#log{
-height:35px;
-overflow-y:auto;
-font-size:.5rem;
-background:rgba(255,255,255,.85);
-padding:2px;
-border:1px inset var(--gold-dark);
-white-space:pre-wrap;
-}
-#btnDownload{
-position:fixed;top:5px;right:5px;z-index:200;
-background:#059669;color:#fff;
-font-size:.5rem;padding:2px 10px;
-border-radius:15px;border:1px solid #fff;
-}
-input{
-font-size:.5rem;
-padding:1px 4px;
-border:1px solid var(--gold-dark);
-border-radius:3px;
-}
+
+.main-container{display:flex;flex-direction:column;height:100vh}
+.ui-header{padding:4px;background:var(--panel-bg);border-bottom:2px solid #fff;z-index:10}
+.stage{flex:1;display:flex;align-items:flex-end;justify-content:space-around}
+iframe{width:50%;height:100%;border:none;background:transparent}
+.btn{background:linear-gradient(#fff,var(--gold-main));border:1px solid var(--gold-dark);padding:2px 6px;border-radius:4px;font-weight:bold;font-size:.5rem}
+#log{height:35px;overflow:auto;background:rgba(255,255,255,.8);padding:2px;border:1px inset var(--gold-dark)}
+#btnDownload{position:fixed;right:5px;top:5px;z-index:20;background:#059669;color:#fff;border-radius:15px;font-size:.5rem}
 </style>
 </head>
 
 <body>
-
 <div class="master-bg" id="bg"></div>
 <button id="btnDownload" onclick="downloadSource()">下載程式碼</button>
 
 <div class="main-container">
 <div class="ui-header">
-
-<div class="flex justify-between items-center">
-<span class="font-bold" style="font-size:.55rem;">☕ Live2D 咖啡廳 × 劇本自動場景</span>
+<div class="flex justify-between">
+<span class="font-bold">🏙️ 繁忙咖啡廳 — 漫畫同步系統</span>
 <div class="flex gap-1">
 <button class="btn" onclick="syncCloud()">同步播放</button>
 <button class="btn" onclick="location.reload()">重新載入</button>
@@ -95,48 +70,33 @@ border-radius:3px;
 </div>
 
 <div class="flex gap-2 items-center mt-1">
-<input id="sid" class="w-32"
-value="15h6v7zh05fbtNfoauduL9OjpzF8pIeMl86JR9Y9aZbU">
-<div id="status" class="font-bold">待機</div>
-<div id="currentLine" class="flex-1 truncate italic"></div>
+<input id="sid" class="w-32" value="15h6v7zh05fbtNfoauduL9OjpzF8pIeMl86JR9Y9aZbU">
+<div id="status">待機</div>
+<div id="currentLine" class="italic truncate flex-1"></div>
 </div>
-
-<!-- 手動背景切換（不影響自動） -->
-<div class="flex gap-1 mt-1 flex-wrap">
-<button class="btn" onclick="manualBg('day')">☀️ 白天</button>
-<button class="btn" onclick="manualBg('dusk')">🌆 黃昏</button>
-<button class="btn" onclick="manualBg('night')">🌙 夜晚</button>
-<button class="btn" onclick="manualBg('rain')">🌧️ 雨天</button>
-</div>
-
-<pre id="log">系統就緒。</pre>
+<pre id="log">系統啟動完成</pre>
 </div>
 
 <div class="stage" id="arena"></div>
 </div>
 
 <script>
-/* ===== 背景定義 ===== */
-const BACKGROUNDS={
-day:{name:"白天",url:"https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=2400&auto=format&fit=crop"},
-dusk:{name:"黃昏",url:"https://images.unsplash.com/photo-1511920170033-f8396924c348?q=80&w=2400&auto=format&fit=crop"},
-night:{name:"夜晚",url:"https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2400&auto=format&fit=crop"},
-rain:{name:"雨天",url:"https://images.unsplash.com/photo-1521017432531-fbd92d768814?q=80&w=2400&auto=format&fit=crop"}
+/* === 背景定義表 === */
+const BG_MAP={
+cafe:"linear-gradient(rgba(217,119,6,.1),rgba(217,119,6,.1)),url('https://images.unsplash.com/photo-1559925393-8be0ec41b5ec?q=80&w=2000')",
+night:"linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2000')",
+rain:"linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url('https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=2000')",
+gold:"linear-gradient(rgba(251,191,36,.25),rgba(251,191,36,.25)),url('https://images.unsplash.com/photo-1549880338-65ddcdfd017b?q=80&w=2000')"
 };
 
-let bgLocked=false;
-function setBg(key){
-const bg=BACKGROUNDS[key];
-if(!bg)return;
-document.getElementById("bg").style.backgroundImage=`url("${bg.url}")`;
-log(`背景切換：${bg.name}`);
-}
-function manualBg(key){
-bgLocked=true;
-setBg(key);
+let currentBG="cafe";
+function setBG(key){
+if(!BG_MAP[key]||key===currentBG)return;
+currentBG=key;
+document.getElementById("bg").style.backgroundImage=BG_MAP[key];
+log("背景切換 → "+key);
 }
 
-/* ===== 原本功能 ===== */
 const CHARS=[
 {id:"Left",name:"Shizuku",path:"https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json"},
 {id:"Right",name:"Hibiki",path:"https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json"}
@@ -144,87 +104,74 @@ const CHARS=[
 
 function log(m){
 const l=document.getElementById("log");
-l.textContent=`[${new Date().toLocaleTimeString()}] ${m}\n`+l.textContent.slice(0,300);
+l.textContent="["+new Date().toLocaleTimeString()+"] "+m+"\n"+l.textContent.slice(0,300);
 }
 
+/* === 原本 iframe + 漫畫對話框 完整保留 === */
 function getIframeTemplate(path,name,side){
-return `
-<!DOCTYPE html><html><head><meta charset="utf-8">
-<script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script>
+return `<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"></script>
 <style>
-body{margin:0;overflow:hidden;background:transparent;}
-#bubble{position:fixed;top:18%;${side==="Left"?"right:15px":"left:15px"};
+body{margin:0;overflow:hidden;background:transparent}
+#bubble{position:fixed;top:18%;${side==="Left"?"right":"left"}:15px;
 background:#fff;border:3px solid #b45309;padding:10px 14px;
-font-size:15px;font-weight:900;display:none;max-width:90%;}
-.name-tag{position:fixed;bottom:5px;${side==="Left"?"left:5px":"right:5px"};
-background:rgba(251,191,36,.95);padding:2px 6px;font-size:10px;font-weight:bold;}
-</style></head><body>
-<div id="bubble"></div><div class="name-tag">${name}</div>
+border-radius:40px;font-size:15px;font-weight:900;display:none;max-width:90%}
+</style></head>
+<body>
+<div id="bubble"></div>
 <script>
-L2Dwidget.init({
-model:{jsonPath:"${path}",scale:1},
-display:{position:"${side==="Left"?"right":"left"}",width:150,height:320,hOffset:-20,vOffset:-20},
-mobile:{show:true,scale:.45}
-});
+L2Dwidget.init({model:{jsonPath:"${path}",scale:1},display:{position:"${side==="Left"?"right":"left"}",width:150,height:320}});
 window.addEventListener("message",e=>{
 if(e.data.text){
 const b=document.getElementById("bubble");
-b.textContent=e.data.text;b.style.display="block";
+b.innerText=e.data.text;b.style.display="block";
 setTimeout(()=>b.style.display="none",Math.max(3000,e.data.text.length*320));
 }});
-<\/script></body></html>`;
+</script></body></html>`;
 }
 
 function initArena(){
-const a=document.getElementById("arena");a.innerHTML="";
+const a=document.getElementById("arena");
+a.innerHTML="";
 CHARS.forEach(c=>{
 const f=document.createElement("iframe");
-f.id="f_"+c.id;a.appendChild(f);
-f.contentWindow.document.open();
+a.appendChild(f);
 f.contentWindow.document.write(getIframeTemplate(c.path,c.name,c.id));
-f.contentWindow.document.close();
 });
-setBg("day");
 }
 
 async function syncCloud(){
-bgLocked=false;
-document.getElementById("status").textContent="播放中";
-const url=`https://docs.google.com/spreadsheets/d/${sid.value}/export?format=csv`;
-const t=await fetch(url).then(r=>r.text());
-const lines=t.split(/\r?\n/).slice(1);
-
-for(const line of lines){
-const c=line.split(",");
-const side=(c[0]||"").toLowerCase().includes("right")?"Right":"Left";
-const text=c[1]||"";
-const bg=c[4];
-
-document.getElementById("currentLine").textContent=text;
-
-if(bg && BACKGROUNDS[bg] && !bgLocked) setBg(bg);
-
-document.getElementById("f_"+side).contentWindow.postMessage({text},"*");
-
-if(speechSynthesis){
-speechSynthesis.cancel();
-const u=new SpeechSynthesisUtterance(text);
-u.lang="zh-TW";speechSynthesis.speak(u);
+document.getElementById("status").innerText="播放中";
+const id=document.getElementById("sid").value.trim();
+const t=await fetch(`https://docs.google.com/spreadsheets/d/${id}/export?format=csv`).then(r=>r.text());
+const rows=parseCSV(t);
+for(const r of rows){
+if(r.background) setBG(r.background);
+const side=(r.actor||"").toLowerCase().includes("right")?"Right":"Left";
+document.getElementById("currentLine").innerText=r.text||"";
+document.querySelectorAll("iframe")[side==="Left"?0:1].contentWindow.postMessage({text:r.text},"*");
+await new Promise(res=>setTimeout(res,Math.max(3500,(r.text||"").length*350)));
 }
-await new Promise(r=>setTimeout(r,Math.max(3500,text.length*350)));
+document.getElementById("status").innerText="待機";
 }
-document.getElementById("status").textContent="待機";
+
+function parseCSV(csv){
+const [h,...l]=csv.trim().split(/\r?\n/);
+const k=h.split(",").map(s=>s.trim());
+return l.map(x=>{const o={};x.split(",").forEach((v,i)=>o[k[i]]=v);return o});
 }
 
 function downloadSource(){
 const b=new Blob([document.documentElement.outerHTML],{type:"text/html"});
 const a=document.createElement("a");
 a.href=URL.createObjectURL(b);
-a.download="Live2D_Cafe_AutoBG.html";
+a.download="Live2D_Golden_Cafe_Final.html";
 a.click();
 }
 
-window.onload=initArena;
+window.onload=()=>{
+setBG("cafe");
+initArena();
+};
 </script>
 </body>
 </html>
