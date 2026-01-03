@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>金輝 Live2D 劇本視界系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/gh/stevenjoezhang/live2d-widget@latest/autoload.js"></script>
+    <style>
+        :root {
+            --gold-light: #fef3c7;
+            --gold-main: #fbbf24;
+            --gold-dark: #b45309;
+            --panel-bg: rgba(251, 191, 36, 0.95);
+        }
+        html, body {
+            height: 100%; margin: 0; padding: 0;
+            background: #fffbeb;
+            color: #451a03;
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            overflow: hidden;
+            font-size: 0.5rem;
+        }
+        #master-bg {
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 0;
+            background-size: cover;
+            background-position: center;
+            background-image: url('https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&q=80&w=2000');
+            transition: opacity 0.5s;
+        }
+        .sparkle-overlay {
+            position: fixed; inset: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/gold-dust.png');
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.35;
+        }
+        .ui-root {
+            position: relative;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            pointer-events: none;
+        }
+        .top-bar {
+            background: var(--panel-bg);
+            padding: 8px 12px;
+            border-bottom: 3px solid #fcd34d;
+            box-shadow: 0 4px 15px rgba(180, 83, 9, 0.4);
+            pointer-events: auto;
+        }
+        .btn-gold {
+            background: linear-gradient(to bottom, #fef3c7, #fbbf24);
+            border: 1px solid #b45309;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.5rem;
+            font-weight: 900;
+            color: #451a03;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 #b45309;
+            text-shadow: 1px 1px 0 rgba(255,255,255,0.5);
+        }
+        #console {
+            height: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px inset #b45309;
+            margin-top: 6px;
+            padding: 4px 8px;
+            overflow-y: auto;
+            font-size: 0.5rem;
+            border-radius: 4px;
+        }
+        .stage {
+            position: fixed;
+            bottom: 0; left: 0;
+            width: 100vw; height: 85vh;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            z-index: 50;
+            pointer-events: none;
+        }
+        iframe {
+            width: 45%; height: 100%;
+            border: none;
+            pointer-events: auto;
+            background: transparent;
+        }
+        input[type="text"] {
+            border: 1px solid #b45309;
+            background: #fff;
+            padding: 2px 6px;
+            font-size: 0.5rem;
+            border-radius: 3px;
+        }
+        #dl-btn {
+            position: fixed; bottom: 15px; right: 15px;
+            background: #10b981; color: #fff;
+            padding: 6px 12px; border-radius: 6px;
+            font-size: 0.5rem; z-index: 200; border: 2px solid #fff;
+            font-weight: bold; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="master-bg"></div>
+<div class="sparkle-overlay"></div>
+
+<button id="dl-btn" onclick="downloadMe()">💾 下載程式碼</button>
+
+<div class="ui-root">
+    <div class="top-bar">
+        <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-amber-900" style="font-size:0.6rem">✨ 金輝 Live2D 劇本視界系統 V3 (劇情修復版)</span>
+            <div class="flex gap-3">
+                <button class="btn-gold" onclick="document.getElementById('f-in').click()">上傳背景</button>
+                <button class="btn-gold" onclick="setBgUrl()">更換網址</button>
+                <button class="btn-gold" id="script-trigger" onclick="runScript()">啟動雲端劇本</button>
+            </div>
+        </div>
+        <input type="file" id="f-in" hidden accept="image/*" onchange="readBg(this)">
+        <div class="flex gap-2 items-center">
+            <span style="white-space:nowrap; font-weight:bold;">劇本 ID:</span>
+            <input type="text" id="sheet-id" class="w-full" value="15h6v7zh05fbtNfoauduL9OjpzF8pIeMl86JR9Y9aZbU">
+        </div>
+        <div id="console">系統就緒。等待指令...</div>
+    </div>
+</div>
+
+<div class="stage" id="main-stage"></div>
+
+<script>
+    const logBox = document.getElementById('console');
+    const bgLayer = document.getElementById('master-bg');
+
+    function log(msg) {
+        const d = new Date();
+        const t = d.toLocaleTimeString('zh-TW', { hour12: false });
+        const entry = document.createElement('div');
+        entry.innerHTML = `<span style="color:#b45309;">[${t}]</span> ${msg}`;
+        logBox.prepend(entry);
+    }
+
+    function readBg(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                bgLayer.style.backgroundImage = `url('${e.target.result}')`;
+                log("本地背景已載入。");
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function setBgUrl() {
+        const url = prompt("請輸入背景圖片網址:");
+        if(url) {
+            bgLayer.style.backgroundImage = `url('${url}')`;
+            log("背景網址已切換。");
+        }
+    }
+
+    const models = [
+        { id: "L", path: "https://cdn.jsdelivr.net/gh/fghrsh/live2d_api/model/shizuku/model.json" },
+        { id: "R", path: "https://cdn.jsdelivr.net/gh/fghrsh/live2d_api/model/koharu/model.json" }
+    ];
+
+    function initChars() {
+        const stage = document.getElementById('main-stage');
+        stage.innerHTML = "";
+        models.forEach(m => {
+            const iframe = document.createElement('iframe');
+            iframe.id = `char-${m.id}`;
+            stage.appendChild(iframe);
+            const doc = iframe.contentWindow.document;
+            doc.open();
+            doc.write(`
+                <html>
+                <head>
+                    <script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script>
+                    <style>
+                        body { margin:0; padding:0; background:transparent; overflow:hidden; }
+                        #msg-box { 
+                            position:fixed; top:20%; left:5%; right:5%; 
+                            background:rgba(255,255,255,0.95); 
+                            border:4px solid #fbbf24; border-radius:15px; 
+                            padding:12px; font-size:24px; font-weight:bold;
+                            display:none; text-align:center; z-index:9999;
+                            box-shadow: 0 8px 20px rgba(180,83,9,0.5);
+                            color: #451a03;
+                            animation: pop 0.3s ease-out;
+                        }
+                        @keyframes pop { from{transform:scale(0.8); opacity:0;} to{transform:scale(1); opacity:1;} }
+                    </style>
+                </head>
+                <body>
+                    <div id="msg-box"></div>
+                    <script>
+                        window.onload = () => {
+                            L2Dwidget.init({
+                                model: { jsonPath: "${m.path}" },
+                                display: { position: "center", width: 350, height: 700 },
+                                mobile: { show: true, scale: 0.6 },
+                                react: { opacity: 1 }
+                            });
+                        };
+                        window.addEventListener('message', e => {
+                            const mb = document.getElementById('msg-box');
+                            mb.innerText = e.data; 
+                            mb.style.display = 'block';
+                            setTimeout(()=> { mb.style.display = 'none'; }, 5000);
+                        });
+                    <\/script>
+                </body>
+                </html>
+            `);
+            doc.close();
+        });
+        log("視界人物模組初始化成功。");
+    }
+
+    async function runScript() {
+        const sid = document.getElementById('sheet-id').value;
+        const btn = document.getElementById('script-trigger');
+        btn.disabled = true;
+        btn.innerText = "劇本演繹中...";
+        
+        log(`開始獲取劇本: ${sid}`);
+        try {
+            const response = await fetch(`https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&gid=0&t=${Date.now()}`);
+            if(!response.ok) throw new Error("網路請求失敗");
+            
+            const textData = await response.text();
+            // CSV 正則解析處理分行與引號
+            const rows = textData.split(/\r?\n/).filter(line => line.trim() !== "");
+            
+            log(`劇本成功讀取，共 ${rows.length - 1} 段劇情。`);
+            
+            for(let i = 1; i < rows.length; i++) {
+                // 簡單解析 CSV 逗號
+                const parts = rows[i].split(',');
+                if(parts.length < 2) continue;
+                
+                const role = parts[0].replace(/"/g, '').trim().toLowerCase();
+                const dialogue = parts[1].replace(/"/g, '').trim();
+                
+                const targetId = (role.includes('right') || role.includes('koharu') || role.includes('r')) ? 'char-R' : 'char-L';
+                
+                log(`[演繹] ${role.toUpperCase()}: ${dialogue}`);
+                
+                const frame = document.getElementById(targetId);
+                if(frame && frame.contentWindow) {
+                    frame.contentWindow.postMessage(dialogue, '*');
+                }
+                
+                // 等待對話顯示時間
+                await new Promise(r => setTimeout(r, 6000));
+            }
+            
+            log("劇本演繹結束。");
+        } catch(err) {
+            log(`錯誤: ${err.message}`);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "啟動雲端劇本";
+        }
+    }
+
+    function downloadMe() {
+        const content = document.documentElement.outerHTML;
+        const blob = new Blob([content], {type:'text/html'});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = "Golden_Live2D_V3.html";
+        link.click();
+    }
+
+    window.onload = () => {
+        setTimeout(initChars, 800);
+    };
+</script>
+</body>
+</html>
