@@ -1,177 +1,258 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>Live2D 咖啡廳金輝系統</title>
-<script src="https://cdn.tailwindcss.com"></script>
-
-<style>
-:root{
---gold-light:#fef3c7;
---gold-main:#fbbf24;
---gold-dark:#b45309;
---panel-bg:rgba(251,191,36,.94);
-}
-
-html,body{
-height:100%;margin:0;
-background:#92400e;
-font-family:"PingFang TC","Microsoft JhengHei",sans-serif;
-overflow:hidden;
-font-size:.5rem;
-}
-
-/* === 背景容器（改為可切換） === */
-.master-bg{
-position:fixed;inset:0;
-background-size:cover;
-background-position:center;
-transition:background-image 1.2s ease, filter .8s ease;
-z-index:-1;
-filter:brightness(1.1) contrast(1.1);
-}
-
-.master-bg::after{
-content:"";position:absolute;inset:0;
-background-image:url('https://www.transparenttextures.com/patterns/gold-glitter.png');
-opacity:.65;
-pointer-events:none;
-animation:goldShimmer 7s infinite alternate;
-}
-
-@keyframes goldShimmer{
-from{background-color:rgba(251,191,36,.08)}
-to{background-color:rgba(251,191,36,.25)}
-}
-
-.main-container{display:flex;flex-direction:column;height:100vh}
-.ui-header{padding:4px;background:var(--panel-bg);border-bottom:2px solid #fff;z-index:10}
-.stage{flex:1;display:flex;align-items:flex-end;justify-content:space-around}
-iframe{width:50%;height:100%;border:none;background:transparent}
-.btn{background:linear-gradient(#fff,var(--gold-main));border:1px solid var(--gold-dark);padding:2px 6px;border-radius:4px;font-weight:bold;font-size:.5rem}
-#log{height:35px;overflow:auto;background:rgba(255,255,255,.8);padding:2px;border:1px inset var(--gold-dark)}
-#btnDownload{position:fixed;right:5px;top:5px;z-index:20;background:#059669;color:#fff;border-radius:15px;font-size:.5rem}
-</style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>Live2D 咖啡廳金輝系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --gold-light: #fef3c7;
+            --gold-main: #fbbf24;
+            --gold-dark: #b45309;
+            --panel-bg: rgba(251, 191, 36, 0.94);
+        }
+        html, body {
+            height: 100%; margin: 0; padding: 0;
+            background: #fff;
+            color: #451a03;
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            overflow: hidden;
+            font-size: 0.5rem; /* 嚴格 0.5rem */
+        }
+        /* 上下分段背景 */
+        .master-bg {
+            position: fixed; inset: 0;
+            display: flex; flex-direction: column;
+            z-index: -1;
+        }
+        .bg-top {
+            height: 50%; background: #ffffff;
+        }
+        .bg-bottom {
+            height: 50%;
+            background-image: linear-gradient(rgba(217, 119, 6, 0.1), rgba(217, 119, 6, 0.1)), 
+                              url('https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=2400&auto=format&fit=crop');
+            background-size: cover; background-position: center;
+            position: relative;
+        }
+        /* 金幣輝煌閃爍效果 - 只在下半部咖啡廳明顯或全螢幕疊加 */
+        .master-bg::after {
+            content: ""; position: absolute; inset: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/gold-glitter.png');
+            opacity: 0.6;
+            pointer-events: none;
+            animation: goldShimmer 8s infinite alternate;
+        }
+        @keyframes goldShimmer {
+            from { background-color: rgba(251, 191, 36, 0.05); }
+            to { background-color: rgba(251, 191, 36, 0.2); }
+        }
+        .main-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; position: relative; }
+        .ui-header {
+            padding: 4px; background: var(--panel-bg);
+            border-bottom: 2px solid #fff;
+            box-shadow: 0 4px 12px rgba(180, 83, 9, 0.4);
+            z-index: 100;
+        }
+        .stage {
+            flex: 1; display: flex; width: 100%; height: 100%; overflow: hidden;
+            position: relative; align-items: flex-end; justify-content: space-around;
+        }
+        iframe { width: 50%; height: 100%; border: none; background: transparent; }
+        .btn {
+            background: linear-gradient(to bottom, #fff, var(--gold-main));
+            border: 1px solid var(--gold-dark); padding: 2px 6px; border-radius: 4px;
+            color: #451a03; cursor: pointer; font-weight: bold; font-size: 0.5rem;
+        }
+        #log {
+            font-size: 0.5rem; height: 35px; overflow-y: auto; background: rgba(255, 255, 255, 0.85);
+            padding: 2px; color: #451a03; margin-top: 2px; 
+            border: 1px inset var(--gold-dark); white-space: pre-wrap;
+        }
+        #btnDownload { 
+            position: fixed; right: 5px; top: 5px; z-index: 200; 
+            background: #059669; color: white; border: 1px solid #fff; 
+            font-size: 0.5rem; padding: 1px 8px; border-radius: 15px; 
+        }
+        input { 
+            background: white; border: 1px solid var(--gold-dark); 
+            color: #451a03; font-size: 0.5rem; padding: 1px 4px; border-radius: 3px; 
+        }
+    </style>
 </head>
-
 <body>
-<div class="master-bg" id="bg"></div>
+
+<div class="master-bg">
+    <div class="bg-top"></div>
+    <div class="bg-bottom" id="bg"></div>
+</div>
 <button id="btnDownload" onclick="downloadSource()">下載程式碼</button>
 
 <div class="main-container">
-<div class="ui-header">
-<div class="flex justify-between">
-<span class="font-bold">🏙️ 繁忙咖啡廳 — 漫畫同步系統</span>
-<div class="flex gap-1">
-<button class="btn" onclick="syncCloud()">同步播放</button>
-<button class="btn" onclick="location.reload()">重新載入</button>
-</div>
-</div>
+    <div class="ui-header">
+        <div class="flex justify-between items-center">
+            <span class="font-bold text-amber-950" style="font-size: 0.55rem;">☕ Live2D 分段背景 × 劇本同步系統</span>
+            <div class="flex gap-1">
+                <button class="btn" onclick="syncCloud()">同步播放</button>
+                <button class="btn" onclick="location.reload()">重新載入</button>
+            </div>
+        </div>
+        <div class="flex gap-2 items-center mt-1">
+            <input type="text" id="sid" placeholder="Sheet ID" class="w-32" value="15h6v7zh05fbtNfoauduL9OjpzF8pIeMl86JR9Y9aZbU">
+            <div id="status" class="text-amber-900 font-bold" style="font-size:0.5rem;">待機</div>
+            <div id="currentLine" class="italic truncate flex-1 text-amber-800 border-l border-amber-900/20 pl-2" style="font-size:0.5rem;"></div>
+        </div>
+        
+        <div class="flex gap-1 mt-1 flex-wrap">
+            <button class="btn" onclick="manualBg('day')">☀️ 白天</button>
+            <button class="btn" onclick="manualBg('dusk')">🌆 黃昏</button>
+            <button class="btn" onclick="manualBg('night')">🌙 夜晚</button>
+            <button class="btn" onclick="manualBg('rain')">🌧️ 雨天</button>
+        </div>
 
-<div class="flex gap-2 items-center mt-1">
-<input id="sid" class="w-32" value="15h6v7zh05fbtNfoauduL9OjpzF8pIeMl86JR9Y9aZbU">
-<div id="status">待機</div>
-<div id="currentLine" class="italic truncate flex-1"></div>
-</div>
-<pre id="log">系統啟動完成</pre>
-</div>
+        <pre id="log">系統就緒。背景已改為上下分段。文字 0.5rem。</pre>
+    </div>
 
-<div class="stage" id="arena"></div>
+    <div class="stage" id="arena"></div>
 </div>
 
 <script>
-/* === 背景定義表 === */
-const BG_MAP={
-cafe:"linear-gradient(rgba(217,119,6,.1),rgba(217,119,6,.1)),url('https://images.unsplash.com/photo-1559925393-8be0ec41b5ec?q=80&w=2000')",
-night:"linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2000')",
-rain:"linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url('https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=2000')",
-gold:"linear-gradient(rgba(251,191,36,.25),rgba(251,191,36,.25)),url('https://images.unsplash.com/photo-1549880338-65ddcdfd017b?q=80&w=2000')"
-};
+    const BACKGROUNDS = {
+        day: { name: "白天", url: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=2400&auto=format&fit=crop" },
+        dusk: { name: "黃昏", url: "https://images.unsplash.com/photo-1511920170033-f8396924c348?q=80&w=2400&auto=format&fit=crop" },
+        night: { name: "夜晚", url: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2400&auto=format&fit=crop" },
+        rain: { name: "雨天", url: "https://images.unsplash.com/photo-1521017432531-fbd92d768814?q=80&w=2400&auto=format&fit=crop" }
+    };
 
-let currentBG="cafe";
-function setBG(key){
-if(!BG_MAP[key]||key===currentBG)return;
-currentBG=key;
-document.getElementById("bg").style.backgroundImage=BG_MAP[key];
-log("背景切換 → "+key);
-}
+    let bgLocked = false;
+    function setBg(key) {
+        const bg = BACKGROUNDS[key];
+        if (!bg) return;
+        document.getElementById("bg").style.backgroundImage = `url("${bg.url}")`;
+        log(`下半部背景切換：${bg.name}`);
+    }
+    function manualBg(key) {
+        bgLocked = true;
+        setBg(key);
+    }
 
-const CHARS=[
-{id:"Left",name:"Shizuku",path:"https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json"},
-{id:"Right",name:"Hibiki",path:"https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json"}
-];
+    const CHARS = [
+        { id: "Left", name: "Shizuku", path: "https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json" },
+        { id: "Right", name: "Hibiki", path: "https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json" }
+    ];
 
-function log(m){
-const l=document.getElementById("log");
-l.textContent="["+new Date().toLocaleTimeString()+"] "+m+"\n"+l.textContent.slice(0,300);
-}
+    function log(m) {
+        const l = document.getElementById('log');
+        l.textContent = `[${new Date().toLocaleTimeString()}] ${m}\n` + l.textContent.substring(0, 300);
+    }
 
-/* === 原本 iframe + 漫畫對話框 完整保留 === */
-function getIframeTemplate(path,name,side){
-return `<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"></script>
-<style>
-body{margin:0;overflow:hidden;background:transparent}
-#bubble{position:fixed;top:18%;${side==="Left"?"right":"left"}:15px;
-background:#fff;border:3px solid #b45309;padding:10px 14px;
-border-radius:40px;font-size:15px;font-weight:900;display:none;max-width:90%}
-</style></head>
+    function getIframeTemplate(path, name, side) {
+        return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script>
+    <style>
+        body { margin: 0; overflow: hidden; background: transparent; }
+        #bubble {
+            position: fixed; top: 15%; 
+            ${side === 'Left' ? 'right: 10px;' : 'left: 10px;'}
+            background: #fff; border: 3px solid #b45309; padding: 10px 14px; 
+            border-radius: ${side === 'Left' ? '30px 15px 50px 20px' : '15px 30px 20px 50px'}; 
+            font-size: 15px; font-weight: 900; color: #451a03; display: none;
+            width: fit-content; max-width: 90%;
+            box-shadow: 4px 4px 0 rgba(180, 83, 9, 0.2); 
+            z-index: 1000; line-height: 1.4; position: relative; word-break: break-all;
+        }
+        #bubble::after {
+            content: ''; position: absolute; bottom: -16px; 
+            ${side === 'Left' ? 'right: 20px;' : 'left: 20px;'}
+            border-width: 16px 12px 0; border-style: solid; border-color: #b45309 transparent transparent;
+        }
+        .name-tag { position: fixed; bottom: 5px; ${side === 'Left' ? 'left: 5px;' : 'right: 5px;'} background: rgba(251, 191, 36, 0.95); color: #451a03; padding: 1px 5px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1.5px solid #b45309; }
+    </style>
+</head>
 <body>
-<div id="bubble"></div>
-<script>
-L2Dwidget.init({model:{jsonPath:"${path}",scale:1},display:{position:"${side==="Left"?"right":"left"}",width:150,height:320}});
-window.addEventListener("message",e=>{
-if(e.data.text){
-const b=document.getElementById("bubble");
-b.innerText=e.data.text;b.style.display="block";
-setTimeout(()=>b.style.display="none",Math.max(3000,e.data.text.length*320));
-}});
-</script></body></html>`;
-}
+    <div id="bubble"></div>
+    <div class="name-tag">${name}</div>
+    <script>
+        L2Dwidget.init({
+            model: { jsonPath: "${path}", scale: 1 },
+            display: { 
+                position: "${side === 'Left' ? 'right' : 'left'}", 
+                width: 150, height: 320, hOffset: -20, vOffset: -10 
+            },
+            mobile: { show: true, scale: 0.45 }
+        });
+        window.addEventListener('message', e => {
+            if (e.data.text) {
+                const b = document.getElementById('bubble');
+                b.innerText = e.data.text; b.style.display = 'block';
+                setTimeout(() => b.style.display = 'none', Math.max(3000, e.data.text.length * 320));
+            }
+        });
+    <\/script>
+</body>
+</html>`;
+    }
 
-function initArena(){
-const a=document.getElementById("arena");
-a.innerHTML="";
-CHARS.forEach(c=>{
-const f=document.createElement("iframe");
-a.appendChild(f);
-f.contentWindow.document.write(getIframeTemplate(c.path,c.name,c.id));
-});
-}
+    function initArena() {
+        const arena = document.getElementById('arena');
+        arena.innerHTML = "";
+        CHARS.forEach(c => {
+            const f = document.createElement('iframe');
+            f.id = `f_${c.id}`;
+            arena.appendChild(f);
+            const d = f.contentWindow.document;
+            d.open(); d.write(getIframeTemplate(c.path, c.name, c.id)); d.close();
+        });
+        setBg("day");
+    }
 
-async function syncCloud(){
-document.getElementById("status").innerText="播放中";
-const id=document.getElementById("sid").value.trim();
-const t=await fetch(`https://docs.google.com/spreadsheets/d/${id}/export?format=csv`).then(r=>r.text());
-const rows=parseCSV(t);
-for(const r of rows){
-if(r.background) setBG(r.background);
-const side=(r.actor||"").toLowerCase().includes("right")?"Right":"Left";
-document.getElementById("currentLine").innerText=r.text||"";
-document.querySelectorAll("iframe")[side==="Left"?0:1].contentWindow.postMessage({text:r.text},"*");
-await new Promise(res=>setTimeout(res,Math.max(3500,(r.text||"").length*350)));
-}
-document.getElementById("status").innerText="待機";
-}
+    let isPlaying = false;
+    async function syncCloud() {
+        if (isPlaying) return;
+        isPlaying = true; bgLocked = false;
+        const sheetId = document.getElementById('sid').value.trim();
+        document.getElementById('status').innerText = "播放中";
+        const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+        try {
+            const r = await fetch(csvUrl);
+            const t = await r.text();
+            const lines = t.split(/\r?\n/).filter(l => l.trim()).slice(1);
+            for (const line of lines) {
+                const cols = line.split(',');
+                const act = (cols[0] || "").toLowerCase();
+                const text = cols[1] || "";
+                const bgKey = cols[4] ? cols[4].trim().toLowerCase() : null;
+                const side = (act.includes("right") || act.includes("hibiki")) ? "Right" : "Left";
+                document.getElementById('currentLine').innerText = text;
+                if (bgKey && BACKGROUNDS[bgKey] && !bgLocked) setBg(bgKey);
+                const frame = document.getElementById(`f_${side}`);
+                if (frame) frame.contentWindow.postMessage({ text }, '*');
+                if (window.speechSynthesis) {
+                    speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance(text);
+                    u.lang = 'zh-TW'; speechSynthesis.speak(u);
+                }
+                await new Promise(res => setTimeout(res, Math.max(3500, text.length * 350)));
+            }
+        } catch (e) { log("連線失敗。"); }
+        isPlaying = false;
+        document.getElementById('status').innerText = "待機";
+    }
 
-function parseCSV(csv){
-const [h,...l]=csv.trim().split(/\r?\n/);
-const k=h.split(",").map(s=>s.trim());
-return l.map(x=>{const o={};x.split(",").forEach((v,i)=>o[k[i]]=v);return o});
-}
+    function downloadSource() {
+        const b = new Blob([document.documentElement.outerHTML], { type: "text/html" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(b);
+        a.download = "Live2D_Split_Golden_Cafe.html";
+        a.click();
+    }
 
-function downloadSource(){
-const b=new Blob([document.documentElement.outerHTML],{type:"text/html"});
-const a=document.createElement("a");
-a.href=URL.createObjectURL(b);
-a.download="Live2D_Golden_Cafe_Final.html";
-a.click();
-}
-
-window.onload=()=>{
-setBG("cafe");
-initArena();
-};
+    window.onload = initArena;
 </script>
 </body>
 </html>
