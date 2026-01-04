@@ -1,7 +1,7 @@
 <html lang="zh-Hant"><head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>金輝咖啡廳 V22R - 漫畫對話版</title>
+    <title>金輝咖啡廳 V22R - 漫畫對話全功能版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
@@ -27,7 +27,8 @@
             background-image: url('https://www.transparenttextures.com/patterns/gold-glitter.png');
             opacity: 0.2; pointer-events: none; mix-blend-mode: overlay;
         }
-        /* UI 控制面板 */
+
+        /* UI Panel */
         .main-ui {
             display: flex; flex-direction: column; height: 100vh; width: 100vw; 
             position: relative; z-index: 2000; transition: transform 0.3s ease-in-out;
@@ -40,10 +41,11 @@
             box-shadow: 0 4px 15px rgba(180, 83, 9, 0.3);
             pointer-events: auto;
         }
-        /* 舞台區域 */
+
+        /* Stage */
         .stage { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
         
-        /* 拖動容器 */
+        /* Draggable Containers */
         .draggable-box {
             position: absolute; pointer-events: auto; cursor: move; touch-action: none;
             display: flex; align-items: center; justify-content: center;
@@ -53,9 +55,9 @@
         
         #container-main { width: 350px; height: 500px; z-index: 100; }
         
-        /* 漫畫氣泡樣式 */
+        /* Manga Bubble */
         #subtitle-box {
-            width: 280px; min-height: 100px; z-index: 200;
+            width: 280px; min-height: 120px; z-index: 500;
             display: none; align-items: center; justify-content: center;
             filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.15));
         }
@@ -63,25 +65,27 @@
             position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%;
         }
         .bubble-text {
-            padding: 20px; color: #000; font-weight: 900; font-size: 1.1rem;
+            padding: 20px 20px 35px 20px; color: #000; font-weight: 900; font-size: 1.1rem;
             text-align: center; word-break: break-all; line-height: 1.4;
         }
 
         iframe { border: none; background: transparent !important; width: 100%; height: 100%; pointer-events: none; }
 
+        /* Buttons & Inputs */
         .btn-gold {
             background: linear-gradient(to bottom, #fff, var(--gold-main));
-            border: 1px solid var(--gold-dark); padding: 2px 6px; border-radius: 4px;
+            border: 1px solid var(--gold-dark); padding: 2px 8px; border-radius: 4px;
             color: #451a03; cursor: pointer; font-weight: 900; font-size: 0.5rem;
             box-shadow: 1px 1px 0 #b45309;
         }
+        .btn-gold:active { transform: translate(1px, 1px); box-shadow: none; }
         .btn-toggle-ui {
             position: fixed; top: 85px; right: 10px; z-index: 3000;
             background: var(--gold-dark); color: white; padding: 4px 10px; border-radius: 20px;
             font-size: 0.5rem; font-weight: bold; cursor: pointer; border: 1px solid #fff;
         }
         #console-log {
-            font-size: 0.5rem; height: 35px; overflow-y: auto; background: rgba(255, 255, 255, 0.9);
+            font-size: 0.5rem; height: 40px; overflow-y: auto; background: rgba(255, 255, 255, 0.9);
             padding: 4px; color: #451a03; margin-top: 4px; border: 1px inset var(--gold-dark); border-radius: 4px;
         }
         #btn-download { 
@@ -90,6 +94,7 @@
             font-size: 0.5rem; padding: 3px 12px; border-radius: 20px; font-weight: bold;
         }
         input, select { background: white; border: 1px solid var(--gold-dark); font-size: 0.5rem; padding: 2px 6px; border-radius: 4px; }
+        
         .info-strip {
             background: rgba(255, 255, 255, 0.3); border-radius: 4px; padding: 2px 8px; margin-top: 3px; display: flex; align-items: center; gap: 6px;
         }
@@ -97,6 +102,7 @@
             font-style: italic; color: #78350f; font-weight: bold; font-size: 0.7rem;
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-shadow: 1px 1px 1px #fff;
         }
+        
         .tab-btn {
             padding: 2px 8px; cursor: pointer; border-radius: 6px 6px 0 0;
             background: rgba(180, 83, 9, 0.1); border: 1px solid var(--gold-dark);
@@ -105,6 +111,8 @@
         .tab-btn.active { background: var(--gold-main); border-bottom: 2px solid var(--gold-main); }
         .tab-content { display: none; pointer-events: auto; }
         .tab-content.active { display: block; }
+
+        .control-label { font-weight: bold; min-width: 65px; color: #451a03; }
     </style>
 </head>
 <body>
@@ -118,14 +126,20 @@
         "hijiki": "https://unpkg.com/live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json",
         "tororo": "https://unpkg.com/live2d-widget-model-tororo@1.0.5/assets/tororo.model.json",
         "z16": "https://unpkg.com/live2d-widget-model-z16@1.0.5/assets/z16.model.json",
-        "epsilon": "https://unpkg.com/live2d-widget-model-epsilon2_1@1.0.5/assets/epsilon2_1.model.json"
+        "epsilon": "https://unpkg.com/live2d-widget-model-epsilon2_1@1.0.5/assets/epsilon2_1.model.json",
+        "chitose": "https://unpkg.com/live2d-widget-model-chitose@1.0.5/assets/chitose.model.json",
+        "tsumiki": "https://unpkg.com/live2d-widget-model-tsumiki@1.0.5/assets/tsumiki.model.json",
+        "unitychan": "https://unpkg.com/live2d-widget-model-unitychan@1.0.5/assets/unitychan.model.json",
+        "hibiki": "https://unpkg.com/live2d-widget-model-hibiki@1.0.5/assets/hibiki.model.json"
     };
 
-    let layoutState = {
+    let state = {
         char: { x: "50%", y: "60%", scale: 1.0, rotation: 0 },
         sub: { x: "50%", y: "25%", scale: 1.0, rotation: 0 },
         playing: false,
-        currentActor: ""
+        currentActor: "",
+        vOffset: -50,
+        sheetId: "1WihMsLmV8ia52pzQICd8-XXfzmwUHxRd-epUayv8Oic"
     };
 
     function sysMsg(txt) {
@@ -144,48 +158,49 @@
         btn.style.top = ui.classList.contains('hidden-ui') ? "10px" : "85px";
     }
 
-    const getDistance = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-    const getAngle = (t1, t2) => Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
+    // Touch Helpers
+    const getDist = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+    const getAng = (t1, t2) => Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
 
-    function bindDraggable(el, stateKey) {
+    function bindDrag(el, key) {
         let isDragging = false;
-        let startX, startY, initialLeft, initialTop;
-        let initialDist, initialScale, initialAngle, initialRotation;
+        let startX, startY, initL, initT;
+        let initDist, initScale, initAngle, initRot;
 
         const onStart = (e) => {
-            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') return;
+            if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) return;
             el.classList.add('dragging');
             if (e.touches && e.touches.length === 2) {
                 isDragging = false;
-                initialDist = getDistance(e.touches[0], e.touches[1]);
-                initialScale = layoutState[stateKey].scale;
-                initialAngle = getAngle(e.touches[0], e.touches[1]);
-                initialRotation = layoutState[stateKey].rotation;
+                initDist = getDist(e.touches[0], e.touches[1]);
+                initScale = state[key].scale;
+                initAngle = getAng(e.touches[0], e.touches[1]);
+                initRot = state[key].rotation;
             } else {
                 isDragging = true;
                 const touch = e.type.includes('touch') ? e.touches[0] : e;
                 startX = touch.clientX; startY = touch.clientY;
-                initialLeft = el.offsetLeft; initialTop = el.offsetTop;
+                initL = el.offsetLeft; initT = el.offsetTop;
             }
         };
 
         const onMove = (e) => {
             if (e.touches && e.touches.length === 2) {
-                const currentDist = getDistance(e.touches[0], e.touches[1]);
-                layoutState[stateKey].scale = initialScale * (currentDist / (initialDist || 1));
-                const currentAngle = getAngle(e.touches[0], e.touches[1]);
-                layoutState[stateKey].rotation = initialRotation + (currentAngle - initialAngle);
-                el.style.transform = `translate(-50%, -50%) scale(${layoutState[stateKey].scale}) rotate(${layoutState[stateKey].rotation}deg)`;
+                const curDist = getDist(e.touches[0], e.touches[1]);
+                state[key].scale = initScale * (curDist / (initDist || 1));
+                const curAngle = getAng(e.touches[0], e.touches[1]);
+                state[key].rotation = initRot + (curAngle - initAngle);
+                applyTransform(el, key);
             } else if (isDragging) {
                 const touch = e.type.includes('touch') ? e.touches[0] : e;
-                layoutState[stateKey].x = (initialLeft + touch.clientX - startX) + 'px';
-                layoutState[stateKey].y = (initialTop + touch.clientY - startY) + 'px';
-                el.style.left = layoutState[stateKey].x;
-                el.style.top = layoutState[stateKey].y;
+                state[key].x = (initL + touch.clientX - startX) + 'px';
+                state[key].y = (initT + touch.clientY - startY) + 'px';
+                el.style.left = state[key].x;
+                el.style.top = state[key].y;
             }
         };
 
-        const onEnd = () => { isDragging = false; el.classList.remove('dragging'); saveAll(); };
+        const onEnd = () => { isDragging = false; el.classList.remove('dragging'); save(); };
 
         el.addEventListener('mousedown', onStart);
         el.addEventListener('touchstart', onStart, { passive: false });
@@ -195,42 +210,52 @@
         window.addEventListener('touchend', onEnd);
     }
 
-    function saveAll() { localStorage.setItem('L2D_MANGA_V22R', JSON.stringify(layoutState)); }
-    function loadAll() {
-        const saved = localStorage.getItem('L2D_MANGA_V22R');
-        if (saved) { layoutState = { ...layoutState, ...JSON.parse(saved) }; }
+    function applyTransform(el, key) {
+        el.style.transform = `translate(-50%, -50%) scale(${state[key].scale}) rotate(${state[key].rotation}deg)`;
+    }
+
+    function save() { 
+        state.vOffset = parseInt(document.getElementById('voffset-range').value);
+        state.sheetId = document.getElementById('sheet-id').value;
+        localStorage.setItem('CAFE_MANGA_SAVE', JSON.stringify(state)); 
+    }
+    
+    function load() {
+        const data = localStorage.getItem('CAFE_MANGA_SAVE');
+        if (data) { state = { ...state, ...JSON.parse(data) }; }
+        document.getElementById('voffset-range').value = state.vOffset;
+        document.getElementById('v-val').innerText = state.vOffset;
+        document.getElementById('sheet-id').value = state.sheetId;
         applyLayout('container-main', 'char');
         applyLayout('subtitle-box', 'sub');
     }
 
     function applyLayout(id, key) {
         const el = document.getElementById(id);
-        const s = layoutState[key];
-        el.style.left = s.x; el.style.top = s.y;
-        el.style.transform = `translate(-50%, -50%) scale(${s.scale}) rotate(${s.rotation}deg)`;
+        el.style.left = state[key].x; 
+        el.style.top = state[key].y;
+        applyTransform(el, key);
     }
 
-    function createCharHTML(path, vOffset) {
-        return `<!DOCTYPE html><html><head><meta charset="utf-8"><script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script><style>body { margin: 0; overflow: hidden; background: transparent !important; height: 100vh; width: 100vw; } canvas { width: 100% !important; height: 100% !important; object-fit: contain !important; pointer-events: none; }</style></head><body><script>window.onload = () => { L2Dwidget.init({ model: { jsonPath: "${path}" }, display: { position: "center", width: 350, height: 500, vOffset: ${vOffset} }, mobile: { show: true, scale: 1.0 }, react: { opacity: 1.0 } }); };<\/script></body></html>`;
+    function createL2DDoc(path, v) {
+        return `<!DOCTYPE html><html><head><meta charset="utf-8"><script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script><style>body { margin: 0; overflow: hidden; background: transparent !important; height: 100vh; width: 100vw; } canvas { width: 100% !important; height: 100% !important; object-fit: contain !important; }</style></head><body><script>L2Dwidget.init({ model: { jsonPath: "${path}" }, display: { position: "center", width: 350, height: 500, vOffset: ${v} }, mobile: { show: true, scale: 1.0 }, react: { opacity: 1.0 } });<\/script></body></html>`;
     }
 
-    function initTheatre() {
-        const vOffsetVal = parseInt(document.getElementById('voffset-range').value);
-        const avatarKey = document.getElementById('avatar-main').value;
+    function initChar() {
+        const v = parseInt(document.getElementById('voffset-range').value);
+        const key = document.getElementById('avatar-main').value;
         const container = document.getElementById(`container-main`);
-        container.innerHTML = `<iframe id="char-main"></iframe>`;
-        const frame = container.querySelector('iframe');
-        setTimeout(() => {
-            const doc = frame.contentWindow.document;
-            doc.open(); doc.write(createCharHTML(AVATARS[avatarKey], vOffsetVal)); doc.close();
-            layoutState.currentActor = avatarKey;
-        }, 150);
-        sysMsg(`角色渲染: ${avatarKey}`);
+        container.innerHTML = `<iframe></iframe>`;
+        const doc = container.querySelector('iframe').contentWindow.document;
+        doc.open(); doc.write(createL2DDoc(AVATARS[key], v)); doc.close();
+        state.currentActor = key;
+        sysMsg(`載入角色: ${key}`);
+        save();
     }
 
-    async function runDrama() {
-        if (layoutState.playing) { layoutState.playing = false; return; }
-        layoutState.playing = true;
+    async function play() {
+        if (state.playing) { state.playing = false; return; }
+        state.playing = true;
         document.getElementById('p-status').innerText = "PLAYING";
         const sid = document.getElementById('sheet-id').value.trim();
         const url = `https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&gid=0&v=${Date.now()}`;
@@ -241,44 +266,44 @@
             const rows = csv.split(/\r?\n/).filter(r => r.trim()).slice(1);
             
             for (const row of rows) {
-                if(!layoutState.playing) break;
+                if(!state.playing) break;
                 const cols = row.split(',').map(c => c.trim().replace(/"/g, ''));
-                const actorName = cols[0].toLowerCase();
-                const textContent = cols[1] || "";
+                const actor = cols[0].toLowerCase();
+                const msg = cols[1] || "";
 
-                if (AVATARS[actorName] && actorName !== layoutState.currentActor) {
-                    document.getElementById('avatar-main').value = actorName;
-                    initTheatre();
+                if (AVATARS[actor] && actor !== state.currentActor) {
+                    document.getElementById('avatar-main').value = actor;
+                    initChar();
                     await new Promise(r => setTimeout(r, 2000));
                 }
 
-                if (!textContent) continue;
-                document.getElementById('script-line').innerText = `[${actorName.toUpperCase()}] ${textContent}`;
-                const subBox = document.getElementById('subtitle-box');
-                document.getElementById('manga-text').innerText = textContent;
-                subBox.style.display = 'flex';
+                if (!msg) continue;
+                document.getElementById('script-line').innerText = `[${actor}] ${msg}`;
+                const box = document.getElementById('subtitle-box');
+                document.getElementById('manga-text').innerText = msg;
+                box.style.display = 'flex';
                 
                 if (window.speechSynthesis) {
                     speechSynthesis.cancel();
-                    const u = new SpeechSynthesisUtterance(textContent); u.lang = 'zh-TW';
+                    const u = new SpeechSynthesisUtterance(msg); u.lang = 'zh-TW';
                     speechSynthesis.speak(u);
                 }
                 
-                await new Promise(r => setTimeout(r, Math.max(3500, textContent.length * 300)));
-                subBox.style.display = 'none';
+                await new Promise(r => setTimeout(r, Math.max(3000, msg.length * 250)));
+                box.style.display = 'none';
             }
-        } catch (e) { sysMsg("劇本讀取失敗"); }
-        layoutState.playing = false; document.getElementById('p-status').innerText = "IDLE";
+        } catch (e) { sysMsg("劇本讀取異常: " + e.message); }
+        state.playing = false; document.getElementById('p-status').innerText = "IDLE";
     }
 
-    function switchTab(tabId) {
+    function switchTab(t) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
-        document.getElementById(tabId).classList.add('active');
+        document.querySelector(`[onclick="switchTab('${t}')"]`).classList.add('active');
+        document.getElementById(t).classList.add('active');
     }
 
-    function downloadSource() {
+    function download() {
         const blob = new Blob([document.documentElement.outerHTML], { type: "text/html" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
@@ -287,12 +312,12 @@
     }
 
     window.onload = () => {
-        const html = Object.keys(AVATARS).map(m => `<option value="${m}">${m.toUpperCase()}</option>`).join('');
-        document.getElementById('avatar-main').innerHTML = html;
-        loadAll();
-        bindDraggable(document.getElementById('container-main'), 'char');
-        bindDraggable(document.getElementById('subtitle-box'), 'sub');
-        setTimeout(initTheatre, 800); 
+        const opt = Object.keys(AVATARS).map(m => `<option value="${m}">${m.toUpperCase()}</option>`).join('');
+        document.getElementById('avatar-main').innerHTML = opt;
+        load();
+        bindDrag(document.getElementById('container-main'), 'char');
+        bindDrag(document.getElementById('subtitle-box'), 'sub');
+        setTimeout(initChar, 500);
     };
 </script>
 
@@ -300,46 +325,56 @@
 <div class="gold-texture"></div>
 
 <button class="btn-toggle-ui" onclick="toggleUI()">隱藏控制項</button>
-<button id="btn-download" onclick="downloadSource()">💾 下載原始碼</button>
+<button id="btn-download" onclick="download()">💾 下載原始碼</button>
 
 <div class="main-ui">
     <div class="ui-header">
         <div class="flex justify-between items-center gap-2">
-            <span class="font-bold text-amber-950 whitespace-nowrap" style="font-size: 0.6rem;">✨ 金輝漫畫 V22R (雙重自由縮放)</span>
-            <div class="flex gap-1 flex-wrap justify-end">
-                <button class="btn-gold" onclick="runDrama()">啟動劇本</button>
-                <button class="btn-gold" onclick="initTheatre()">渲染角色</button>
+            <span class="font-bold text-amber-950" style="font-size: 0.6rem;">✨ 金輝咖啡 V22R (漫畫縮放版)</span>
+            <div class="flex gap-1">
+                <button class="btn-gold" onclick="play()">播放劇本</button>
+                <button class="btn-gold" onclick="initChar()">渲染</button>
             </div>
         </div>
+        
         <div class="info-strip">
             <span id="p-status" class="font-black text-amber-800" style="min-width:35px;">IDLE</span>
-            <div id="script-line">支援雙指縮放對話框與人物。尾巴方向固定向下。</div>
+            <div id="script-line">支援人物、對話框獨立雙指縮放與旋轉。</div>
         </div>
+
         <div class="flex mt-1">
-            <div class="tab-btn active" onclick="switchTab('tab-control')">視覺偏移</div>
-            <div class="tab-btn" onclick="switchTab('tab-settings')">系統參數</div>
+            <div class="tab-btn active" onclick="switchTab('tab-main')">佈局設定</div>
+            <div class="tab-btn" onclick="switchTab('tab-system')">系統/劇本</div>
         </div>
-        <div id="tab-control" class="tab-content pt-1 active">
-            <div class="flex gap-1 flex-wrap mb-1">
-                <button class="btn-gold" onclick="localStorage.clear(); location.reload();">重設佈局</button>
-                <button class="btn-gold" onclick="const b=document.getElementById('subtitle-box'); b.style.display=(b.style.display==='none'?'flex':'none')">預覽氣泡</button>
+
+        <!-- Tab 1 -->
+        <div id="tab-main" class="tab-content pt-1 active">
+            <div class="grid grid-cols-2 gap-1 mb-1">
+                <button class="btn-gold" onclick="localStorage.clear(); location.reload();">重設所有狀態</button>
+                <button class="btn-gold" onclick="const b=document.getElementById('subtitle-box'); b.style.display=(b.style.display==='none'?'flex':'none')">手動開關氣泡</button>
             </div>
             <div class="flex items-center gap-2">
-                <span class="font-bold" style="min-width:60px;">角色偏移:</span>
-                <input type="range" id="voffset-range" min="-500" max="500" value="-50" class="flex-grow" oninput="document.getElementById('v-val').innerText=this.value">
+                <span class="control-label">角色 V 偏移:</span>
+                <input type="range" id="voffset-range" min="-400" max="400" value="-50" class="flex-grow" oninput="document.getElementById('v-val').innerText=this.value">
                 <span id="v-val" style="min-width:30px;">-50</span>
             </div>
-            <div id="console-log">佈局核心啟動。</div>
+            <div id="console-log">系統準備就緒。</div>
         </div>
-        <div id="tab-settings" class="tab-content pt-1">
-            <div class="grid grid-cols-1 gap-1">
-                <div class="flex gap-1 items-center">
-                    <span class="font-bold" style="min-width:60px;">當前角色:</span>
-                    <select id="avatar-main" class="flex-grow" onchange="initTheatre()"></select>
+
+        <!-- Tab 2 -->
+        <div id="tab-system" class="tab-content pt-1">
+            <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-1">
+                    <span class="control-label">手動切換:</span>
+                    <select id="avatar-main" class="flex-grow" onchange="initChar()"></select>
                 </div>
-                <div class="flex gap-1 items-center">
-                    <span class="font-bold" style="min-width:60px;">Sheet ID:</span>
-                    <input type="text" id="sheet-id" class="flex-grow" value="1WihMsLmV8ia52pzQICd8-XXfzmwUHxRd-epUayv8Oic">
+                <div class="flex items-center gap-1">
+                    <span class="control-label">試算表 ID:</span>
+                    <input type="text" id="sheet-id" class="flex-grow" onchange="save()">
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="control-label">背景 URL:</span>
+                    <input type="text" class="flex-grow" placeholder="貼上圖片網址..." onchange="document.getElementById('dynamic-bg').style.backgroundImage=`url('${this.value}')`">
                 </div>
             </div>
         </div>
@@ -347,16 +382,28 @@
 </div>
 
 <div class="stage">
-    <!-- 人物 -->
+    <!-- Character -->
     <div id="container-main" class="draggable-box"></div>
-    <!-- 漫畫對話氣泡 -->
+    
+    <!-- Manga Dialogue Bubble -->
     <div id="subtitle-box" class="draggable-box">
         <svg class="bubble-svg" viewBox="0 0 280 120" preserveAspectRatio="none">
-            <!-- 漫畫氣泡尾巴與本體 -->
-            <path d="M 20,0 L 260,0 Q 280,0 280,20 L 280,80 Q 280,100 260,100 L 160,100 L 140,120 L 120,100 L 20,100 Q 0,100 0,80 L 0,20 Q 0,0 20,0" 
-                  fill="white" stroke="#b45309" stroke-width="4" />
+            <!-- 漫畫氣泡主體：帶尾巴的封閉路徑 -->
+            <path d="M 20,5 
+                     L 260,5 
+                     Q 275,5 275,20 
+                     L 275,80 
+                     Q 275,95 260,95 
+                     L 165,95 
+                     L 140,115 
+                     L 115,95 
+                     L 20,95 
+                     Q 5,95 5,80 
+                     L 5,20 
+                     Q 5,5 20,5" 
+                  fill="white" stroke="#451a03" stroke-width="3" />
         </svg>
-        <div id="manga-text" class="bubble-text">這是一個具備尾巴與縮放功能的漫畫對話框！</div>
+        <div id="manga-text" class="bubble-text">歡迎來到金輝咖啡廳！</div>
     </div>
 </div>
 
