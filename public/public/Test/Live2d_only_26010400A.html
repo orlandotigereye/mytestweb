@@ -1,0 +1,370 @@
+<html lang="zh-Hant"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>金輝咖啡廳 V21R - 自由布局版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --gold-light: #fef3c7;
+            --gold-main: #fbbf24;
+            --gold-dark: #b45309;
+            --panel-bg: rgba(251, 191, 36, 0.96);
+        }
+        html, body {
+            height: 100%; margin: 0; padding: 0;
+            background-color: #fbbf24; color: #451a03;
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            overflow: hidden; font-size: 0.5rem;
+        }
+        #dynamic-bg {
+            position: fixed; inset: 0; z-index: 1;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            transition: background-image 0.8s ease-in-out;
+            background-image: url('https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2400');
+        }
+        .gold-texture {
+            position: fixed; inset: 0; z-index: 2;
+            background-image: url('https://www.transparenttextures.com/patterns/gold-glitter.png');
+            opacity: 0.2; pointer-events: none; mix-blend-mode: overlay;
+        }
+        .main-ui {
+            display: flex; flex-direction: column; height: 100vh; width: 100vw; 
+            position: relative; z-index: 2000; transition: transform 0.3s ease-in-out;
+            pointer-events: none;
+        }
+        .main-ui.hidden-ui { transform: translateY(-110%); }
+        .ui-header {
+            padding: 4px 10px; background: var(--panel-bg);
+            border-bottom: 2px solid #fff;
+            box-shadow: 0 4px 15px rgba(180, 83, 9, 0.3);
+            pointer-events: auto;
+        }
+        .stage {
+            position: fixed; inset: 0; z-index: 5; pointer-events: none;
+        }
+        /* 可拖動容器通用的樣式 */
+        .draggable-box {
+            position: absolute; pointer-events: auto; cursor: move; touch-action: none;
+            display: flex; align-items: center; justify-content: center;
+            transform-origin: center center;
+        }
+        .draggable-box.dragging { opacity: 0.8; outline: 1px dashed #fff; filter: brightness(1.1); }
+        
+        #container-main { width: 350px; height: 500px; z-index: 100; }
+        #subtitle-box {
+            width: 280px; min-height: 80px; z-index: 200;
+            background: rgba(255,255,255,0.9); border: 3px solid var(--gold-dark);
+            border-radius: 15px; padding: 10px; color: var(--gold-dark);
+            font-weight: 900; font-size: 1rem; text-align: center;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+            display: none; /* 初始隱藏 */
+        }
+
+        iframe { border: none; background: transparent !important; width: 100%; height: 100%; pointer-events: none; }
+
+        .btn-gold {
+            background: linear-gradient(to bottom, #fff, var(--gold-main));
+            border: 1px solid var(--gold-dark); padding: 2px 6px; border-radius: 4px;
+            color: #451a03; cursor: pointer; font-weight: 900; font-size: 0.5rem;
+            box-shadow: 1px 1px 0 #b45309;
+        }
+        .btn-toggle-ui {
+            position: fixed; top: 85px; right: 10px; z-index: 3000;
+            background: var(--gold-dark); color: white; padding: 4px 10px; border-radius: 20px;
+            font-size: 0.5rem; font-weight: bold; cursor: pointer; border: 1px solid #fff;
+        }
+        #console-log {
+            font-size: 0.5rem; height: 35px; overflow-y: auto; background: rgba(255, 255, 255, 0.9);
+            padding: 4px; color: #451a03; margin-top: 4px; border: 1px inset var(--gold-dark); border-radius: 4px;
+        }
+        #btn-download { 
+            position: fixed; right: 10px; bottom: 10px; z-index: 5000; 
+            background: #059669; color: white; border: 1px solid #fff; 
+            font-size: 0.5rem; padding: 3px 12px; border-radius: 20px; font-weight: bold;
+        }
+        input, select { background: white; border: 1px solid var(--gold-dark); font-size: 0.5rem; padding: 2px 6px; border-radius: 4px; }
+        .info-strip {
+            background: rgba(255, 255, 255, 0.3); border-radius: 4px; padding: 2px 8px; margin-top: 3px; display: flex; align-items: center; gap: 6px;
+        }
+        #script-line {
+            font-style: italic; color: #78350f; font-weight: bold; font-size: 0.7rem;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-shadow: 1px 1px 1px #fff;
+        }
+        .tab-btn {
+            padding: 2px 8px; cursor: pointer; border-radius: 6px 6px 0 0;
+            background: rgba(180, 83, 9, 0.1); border: 1px solid var(--gold-dark);
+            border-bottom: none; font-weight: bold; margin-right: 2px; font-size: 0.5rem;
+        }
+        .tab-btn.active { background: var(--gold-main); border-bottom: 2px solid var(--gold-main); }
+        .tab-content { display: none; pointer-events: auto; }
+        .tab-content.active { display: block; }
+        .control-label { font-weight: bold; min-width: 60px; }
+    </style>
+</head>
+<body>
+
+<script>
+    const AVATARS = {
+        "shizuku": "https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json",
+        "koharu": "https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json",
+        "haruto": "https://unpkg.com/live2d-widget-model-haruto@1.0.5/assets/haruto.model.json",
+        "miku": "https://unpkg.com/live2d-widget-model-miku@1.0.5/assets/miku.model.json",
+        "hijiki": "https://unpkg.com/live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json",
+        "tororo": "https://unpkg.com/live2d-widget-model-tororo@1.0.5/assets/tororo.model.json",
+        "z16": "https://unpkg.com/live2d-widget-model-z16@1.0.5/assets/z16.model.json",
+        "epsilon": "https://unpkg.com/live2d-widget-model-epsilon2_1@1.0.5/assets/epsilon2_1.model.json"
+    };
+
+    const THEMES = {
+        gold: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2400",
+        day: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?q=80&w=2400",
+        night: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2400"
+    };
+
+    // 儲存物件：包含角色與字幕的狀態
+    let layoutState = {
+        char: { x: "50%", y: "50%", scale: 0.8, rotation: 0 },
+        sub: { x: "50%", y: "20%", scale: 1.0, rotation: 0 },
+        playing: false,
+        currentActor: ""
+    };
+
+    function sysMsg(txt) {
+        const logger = document.getElementById('console-log');
+        if (!logger) return;
+        const d = document.createElement('div');
+        d.innerHTML = `• ${txt}`;
+        logger.prepend(d);
+    }
+
+    function toggleUI() {
+        const ui = document.querySelector('.main-ui');
+        const btn = document.querySelector('.btn-toggle-ui');
+        ui.classList.toggle('hidden-ui');
+        btn.innerText = ui.classList.contains('hidden-ui') ? "顯示控制項" : "隱藏控制項";
+        btn.style.top = ui.classList.contains('hidden-ui') ? "10px" : "85px";
+    }
+
+    // --- 通用拖放與縮放引擎 ---
+    const getDistance = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+    const getAngle = (t1, t2) => Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
+
+    function bindDraggable(el, stateKey) {
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+        let initialDist, initialScale, initialAngle, initialRotation;
+
+        const onStart = (e) => {
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') return;
+            el.classList.add('dragging');
+            if (e.touches && e.touches.length === 2) {
+                isDragging = false;
+                initialDist = getDistance(e.touches[0], e.touches[1]);
+                initialScale = layoutState[stateKey].scale;
+                initialAngle = getAngle(e.touches[0], e.touches[1]);
+                initialRotation = layoutState[stateKey].rotation;
+            } else {
+                isDragging = true;
+                const touch = e.type.includes('touch') ? e.touches[0] : e;
+                startX = touch.clientX; startY = touch.clientY;
+                initialLeft = el.offsetLeft; initialTop = el.offsetTop;
+            }
+        };
+
+        const onMove = (e) => {
+            if (e.touches && e.touches.length === 2) {
+                const currentDist = getDistance(e.touches[0], e.touches[1]);
+                layoutState[stateKey].scale = initialScale * (currentDist / (initialDist || 1));
+                const currentAngle = getAngle(e.touches[0], e.touches[1]);
+                layoutState[stateKey].rotation = initialRotation + (currentAngle - initialAngle);
+                el.style.transform = `translate(-50%, -50%) scale(${layoutState[stateKey].scale}) rotate(${layoutState[stateKey].rotation}deg)`;
+            } else if (isDragging) {
+                const touch = e.type.includes('touch') ? e.touches[0] : e;
+                layoutState[stateKey].x = (initialLeft + touch.clientX - startX) + 'px';
+                layoutState[stateKey].y = (initialTop + touch.clientY - startY) + 'px';
+                el.style.left = layoutState[stateKey].x;
+                el.style.top = layoutState[stateKey].y;
+            }
+        };
+
+        const onEnd = () => { isDragging = false; el.classList.remove('dragging'); saveAll(); };
+
+        el.addEventListener('mousedown', onStart);
+        el.addEventListener('touchstart', onStart, { passive: false });
+        window.addEventListener('mousemove', (e) => { if(isDragging || (e.touches && e.touches.length===2)) onMove(e); });
+        window.addEventListener('touchmove', (e) => { if(isDragging || (e.touches && e.touches.length===2)) onMove(e); }, { passive: false });
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchend', onEnd);
+    }
+
+    function saveAll() {
+        localStorage.setItem('L2D_LAYOUT_V21R', JSON.stringify(layoutState));
+    }
+
+    function loadAll() {
+        const saved = localStorage.getItem('L2D_LAYOUT_V21R');
+        if (saved) {
+            const data = JSON.parse(saved);
+            layoutState = { ...layoutState, ...data };
+        }
+        applyLayout('container-main', 'char');
+        applyLayout('subtitle-box', 'sub');
+    }
+
+    function applyLayout(id, key) {
+        const el = document.getElementById(id);
+        const s = layoutState[key];
+        el.style.left = s.x; el.style.top = s.y;
+        el.style.transform = `translate(-50%, -50%) scale(${s.scale}) rotate(${s.rotation}deg)`;
+    }
+
+    function createCharHTML(path, vOffset) {
+        return `<!DOCTYPE html><html><head><meta charset="utf-8"><script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script><style>body { margin: 0; overflow: hidden; background: transparent !important; height: 100vh; width: 100vw; } canvas { width: 100% !important; height: 100% !important; object-fit: contain !important; pointer-events: none; }</style></head><body><script>window.onload = () => { L2Dwidget.init({ model: { jsonPath: "${path}" }, display: { position: "center", width: 350, height: 500, vOffset: ${vOffset} }, mobile: { show: true, scale: 1.0 }, react: { opacity: 1.0 } }); };<\/script></body></html>`;
+    }
+
+    function initTheatre() {
+        const vOffsetVal = parseInt(document.getElementById('voffset-range').value);
+        const avatarKey = document.getElementById('avatar-main').value;
+        const container = document.getElementById(`container-main`);
+        container.innerHTML = `<iframe id="char-main"></iframe>`;
+        const frame = container.querySelector('iframe');
+        setTimeout(() => {
+            const doc = frame.contentWindow.document;
+            doc.open(); doc.write(createCharHTML(AVATARS[avatarKey], vOffsetVal)); doc.close();
+            layoutState.currentActor = avatarKey;
+        }, 150);
+        sysMsg(`角色渲染: ${avatarKey}`);
+    }
+
+    async function runDrama() {
+        if (layoutState.playing) { layoutState.playing = false; return; }
+        layoutState.playing = true;
+        document.getElementById('p-status').innerText = "PLAYING";
+        const sid = document.getElementById('sheet-id').value.trim();
+        const url = `https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&gid=0&v=${Date.now()}`;
+        
+        try {
+            const res = await fetch(url);
+            const csv = await res.text();
+            const rows = csv.split(/\r?\n/).filter(r => r.trim()).slice(1);
+            
+            for (const row of rows) {
+                if(!layoutState.playing) break;
+                const cols = row.split(',').map(c => c.trim().replace(/"/g, ''));
+                const actorName = cols[0].toLowerCase();
+                const textContent = cols[1] || "";
+
+                if (AVATARS[actorName] && actorName !== layoutState.currentActor) {
+                    document.getElementById('avatar-main').value = actorName;
+                    initTheatre();
+                    sysMsg(`切換為: ${actorName}`);
+                    await new Promise(r => setTimeout(r, 2000));
+                }
+
+                if (!textContent) continue;
+
+                document.getElementById('script-line').innerText = `[${actorName.toUpperCase()}] ${textContent}`;
+                const subBox = document.getElementById('subtitle-box');
+                subBox.innerText = textContent;
+                subBox.style.display = 'flex';
+                
+                if (window.speechSynthesis) {
+                    speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance(textContent); u.lang = 'zh-TW';
+                    speechSynthesis.speak(u);
+                }
+                
+                await new Promise(r => setTimeout(r, Math.max(4000, textContent.length * 350)));
+                subBox.style.display = 'none';
+            }
+        } catch (e) { sysMsg("劇本讀取失敗"); }
+        layoutState.playing = false; document.getElementById('p-status').innerText = "IDLE";
+    }
+
+    function downloadSource() {
+        const blob = new Blob([document.documentElement.outerHTML], { type: "text/html" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "Cafe_Layout_V21R.html";
+        a.click();
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[onclick="switchTab('${tabId}')"]`).classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    window.onload = () => {
+        const html = Object.keys(AVATARS).map(m => `<option value="${m}">${m.toUpperCase()}</option>`).join('');
+        document.getElementById('avatar-main').innerHTML = html;
+        document.getElementById('avatar-main').value = "shizuku";
+        
+        loadAll();
+        bindDraggable(document.getElementById('container-main'), 'char');
+        bindDraggable(document.getElementById('subtitle-box'), 'sub');
+        
+        setTimeout(initTheatre, 800); 
+    };
+</script>
+
+<div id="dynamic-bg"></div>
+<div class="gold-texture"></div>
+
+<button class="btn-toggle-ui" onclick="toggleUI()">隱藏控制項</button>
+<button id="btn-download" onclick="downloadSource()">💾 下載原始碼</button>
+
+<div class="main-ui">
+    <div class="ui-header">
+        <div class="flex justify-between items-center gap-2">
+            <span class="font-bold text-amber-950 whitespace-nowrap" style="font-size: 0.6rem;">✨ 金輝咖啡廳 V21R (自由布局版)</span>
+            <div class="flex gap-1 flex-wrap justify-end">
+                <button class="btn-gold" onclick="runDrama()">啟動劇本</button>
+                <button class="btn-gold" onclick="initTheatre()">手動渲染</button>
+            </div>
+        </div>
+        <div class="info-strip">
+            <span id="p-status" class="font-black text-amber-800" style="min-width:35px;">IDLE</span>
+            <div id="script-line">人物與對白均可自由拖放、縮放，位置會自動儲存。</div>
+        </div>
+        <div class="flex mt-1">
+            <div class="tab-btn active" onclick="switchTab('tab-control')">佈置/偏移</div>
+            <div class="tab-btn" onclick="switchTab('tab-settings')">劇本/角色</div>
+        </div>
+        <div id="tab-control" class="tab-content pt-1 active">
+            <div class="flex gap-1 flex-wrap mb-1">
+                <button class="btn-gold" onclick="localStorage.clear(); location.reload();">🧹 重置位置</button>
+                <button class="btn-gold" onclick="document.getElementById('subtitle-box').style.display='flex'">👁️ 預覽字幕框</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="control-label">垂直偏移:</span>
+                <input type="range" id="voffset-range" min="-500" max="500" step="10" value="-50" class="flex-grow" oninput="document.getElementById('val-voff').innerText = this.value">
+                <span id="val-voff" style="min-width:30px;">-50</span>
+            </div>
+            <div id="console-log">歡迎來到金輝。</div>
+        </div>
+        <div id="tab-settings" class="tab-content pt-1">
+            <div class="grid grid-cols-1 gap-1">
+                <div class="flex gap-1 items-center">
+                    <span class="control-label">角色切換:</span>
+                    <select id="avatar-main" class="flex-grow" onchange="initTheatre()"></select>
+                </div>
+                <div class="flex gap-1 items-center">
+                    <span class="control-label">Sheet ID:</span>
+                    <input type="text" id="sheet-id" class="flex-grow" value="1WihMsLmV8ia52pzQICd8-XXfzmwUHxRd-epUayv8Oic">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stage">
+    <!-- 人物容器 -->
+    <div id="container-main" class="draggable-box"></div>
+    <!-- 獨立字幕容器 -->
+    <div id="subtitle-box" class="draggable-box">對白測試中...</div>
+</div>
+
+</body></html>
+
