@@ -1,0 +1,523 @@
+<html lang="zh-Hant"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>金輝咖啡廳 V30R - 字幕顯示修正專家版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 1. 基礎與金箔視覺定義 */
+        :root {
+            --gold-light: #fef3c7;
+            --gold-main: #fbbf24;
+            --gold-dark: #b45309;
+            --panel-bg: rgba(251, 191, 36, 0.98);
+        }
+        
+        html, body {
+            height: 100%; margin: 0; padding: 0;
+            background-color: #fbbf24; color: #451a03;
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            overflow: hidden; font-size: 0.5rem; /* 嚴格 0.5rem */
+        }
+
+        #dynamic-bg {
+            position: fixed; inset: 0; z-index: 1;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            transition: background-image 1s ease-in-out;
+            background-image: url('https://images.unsplash.com/photo-1634128221889-82ed6efebfc3?q=80&w=2400');
+        }
+        
+        .gold-texture {
+            position: fixed; inset: 0; z-index: 2;
+            background-image: url('https://www.transparenttextures.com/patterns/gold-glitter.png');
+            opacity: 0.45; pointer-events: none; mix-blend-mode: overlay;
+        }
+
+        /* 2. UI 面板架構 (0.5rem) */
+        .main-ui {
+            display: flex; flex-direction: column; height: 100vh; width: 100vw; 
+            position: relative; z-index: 10000; transition: transform 0.4s ease;
+            pointer-events: none;
+        }
+        
+        .main-ui.hidden-ui { transform: translateY(-110%); }
+        
+        .ui-header {
+            padding: 8px 15px; background: var(--panel-bg);
+            border-bottom: 3px solid #fff;
+            box-shadow: 0 6px 30px rgba(180, 83, 9, 0.7);
+            pointer-events: auto;
+        }
+
+        /* 3. 舞台物件控制 */
+        .stage { position: fixed; inset: 0; z-index: 5000; pointer-events: none; }
+        
+        .draggable-box {
+            position: absolute; pointer-events: auto; cursor: move; touch-action: none;
+            display: flex; align-items: center; justify-content: center;
+            transform: translate(-50%, -50%); transform-origin: center center;
+            will-change: transform, left, top;
+        }
+        
+        #container-main { width: 350px; height: 500px; z-index: 6000; }
+        
+        /* 核心修正：對話氣泡層級與顯示 */
+        #subtitle-box { 
+            width: 320px; min-height: 140px; z-index: 9999 !important; 
+            transition: opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.4s;
+            display: block; 
+        }
+        
+        .bubble-hidden { opacity: 0; pointer-events: none; transform: translate(-50%, -50%) scale(0.5); }
+        .bubble-visible { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+        
+        .bubble-svg { 
+            position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; 
+            filter: drop-shadow(6px 6px 2px rgba(0,0,0,0.3)); 
+        }
+        
+        .bubble-text { 
+            padding: 30px 30px 50px 30px; color: #000; font-weight: 900; 
+            font-size: 1.25rem; text-align: center; word-break: break-all; line-height: 1.6; 
+            width: 100%; min-height: 80px; display: flex; align-items: center; justify-content: center;
+        }
+
+        iframe { border: none; background: transparent !important; width: 100%; height: 100%; pointer-events: none; }
+
+        /* 4. 分頁按鈕樣式 */
+        .btn-gold {
+            background: linear-gradient(180deg, #ffffff 0%, #fbbf24 100%);
+            border: 1px solid var(--gold-dark); padding: 5px 12px; border-radius: 4px;
+            color: #451a03; cursor: pointer; font-weight: 900; font-size: 0.5rem;
+            box-shadow: 2px 2px 0 #b45309; transition: all 0.1s;
+        }
+        
+        .btn-gold:active { transform: translate(1px, 1px); box-shadow: none; }
+        .btn-rec-active { background: #ef4444 !important; color: white !important; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .btn-toggle-ui {
+            position: fixed; top: 165px; right: 15px; z-index: 11000;
+            background: var(--gold-dark); color: white; padding: 8px 18px; border-radius: 20px;
+            font-size: 0.5rem; font-weight: bold; cursor: pointer; border: 2px solid #fff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+        
+        #console-log { 
+            font-size: 0.5rem; height: 60px; overflow-y: auto; 
+            background: rgba(255, 255, 255, 0.95); padding: 6px; 
+            color: #451a03; margin-top: 8px; border: 2px inset var(--gold-dark); 
+            border-radius: 6px; 
+        }
+        
+        #btn-download-src { 
+            position: fixed; left: 15px; bottom: 15px; z-index: 12000; 
+            background: #2563eb; color: white; border: 2px solid #fff; 
+            font-size: 0.5rem; padding: 7px 18px; border-radius: 25px; font-weight: bold; 
+        }
+        
+        input, select { background: white; border: 1px solid var(--gold-dark); font-size: 0.5rem; padding: 4px 10px; border-radius: 4px; color: #451a03; }
+        
+        .info-strip { background: rgba(255, 255, 255, 0.5); border-radius: 8px; padding: 6px 15px; margin-top: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(180, 83, 9, 0.3); }
+        #script-line { font-style: italic; color: #78350f; font-weight: bold; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-shadow: 1px 1px 0px #fff; }
+        
+        .tab-btn { padding: 8px 18px; cursor: pointer; border-radius: 8px 8px 0 0; background: rgba(180, 83, 9, 0.15); border: 1.5px solid var(--gold-dark); border-bottom: none; font-weight: bold; margin-right: 6px; font-size: 0.5rem; }
+        .tab-btn.active { background: var(--gold-main); border-bottom: 4px solid var(--gold-main); color: #000; }
+        .tab-content { display: none; pointer-events: auto; padding-top: 12px; }
+        .tab-content.active { display: block; }
+        .control-label { font-weight: bold; min-width: 95px; color: #451a03; }
+
+        #thumb-canvas-box { width: 100%; height: 90px; background: #222; border-radius: 6px; margin-top: 6px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--gold-dark); overflow: hidden; }
+    </style>
+</head>
+<body>
+
+<script>
+    /* 5. 資料與常數 */
+    const AVATARS = {
+        "shizuku": "https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json",
+        "koharu": "https://unpkg.com/live2d-widget-model-koharu@1.0.5/assets/koharu.model.json",
+        "haruto": "https://unpkg.com/live2d-widget-model-haruto@1.0.5/assets/haruto.model.json",
+        "miku": "https://unpkg.com/live2d-widget-model-miku@1.0.5/assets/miku.model.json",
+        "z16": "https://unpkg.com/live2d-widget-model-z16@1.0.5/assets/z16.model.json",
+        "epsilon": "https://unpkg.com/live2d-widget-model-epsilon2_1@1.0.5/assets/epsilon2_1.model.json",
+        "chitose": "https://unpkg.com/live2d-widget-model-chitose@1.0.5/assets/chitose.model.json",
+        "unitychan": "https://unpkg.com/live2d-widget-model-unitychan@1.0.5/assets/unitychan.model.json"
+    };
+
+    const BACKGROUNDS = {
+        "gold_vault": "https://images.unsplash.com/photo-1634128221889-82ed6efebfc3?q=80&w=2400",
+        "warm_cafe": "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2400",
+        "cyber_room": "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=2400"
+    };
+
+    let state = {
+        char: { x: "50%", y: "60%", scale: 1.0, rotation: 0 },
+        sub: { x: "50%", y: "25%", scale: 1.0, rotation: 0 },
+        playing: false,
+        currentActor: "shizuku",
+        vOffset: -50,
+        sheetId: "1WihMsLmV8ia52pzQICd8-XXfzmwUHxRd-epUayv8Oic",
+        bgUrl: BACKGROUNDS.gold_vault
+    };
+
+    let mediaRecorder;
+    let recordedChunks = [];
+    let isRecording = false;
+
+    /* 6. 功能模組 */
+    function sysLog(msg) {
+        const box = document.getElementById('console-log');
+        if (!box) return;
+        const div = document.createElement('div');
+        div.innerHTML = `<span style="color:#b45309">➤</span> [${new Date().toLocaleTimeString()}] ${msg}`;
+        box.prepend(div);
+    }
+
+    function toggleUI() {
+        const ui = document.querySelector('.main-ui');
+        const btn = document.querySelector('.btn-toggle-ui');
+        ui.classList.toggle('hidden-ui');
+        btn.innerText = ui.classList.contains('hidden-ui') ? "顯示面板" : "隱藏面板";
+        btn.style.top = ui.classList.contains('hidden-ui') ? "15px" : "165px";
+    }
+
+    // --- 持久化儲存 ---
+    function saveState() {
+        state.vOffset = parseInt(document.getElementById('voffset-range').value);
+        state.sheetId = document.getElementById('sheet-id').value;
+        state.currentActor = document.getElementById('avatar-main').value;
+        state.bgUrl = document.getElementById('bg-manual-url').value;
+        localStorage.setItem('CAFE_EXPERT_V30_DB', JSON.stringify(state));
+    }
+
+    function loadState() {
+        const saved = localStorage.getItem('CAFE_EXPERT_V30_DB');
+        if (saved) {
+            state = { ...state, ...JSON.parse(saved) };
+            sysLog("系統：配置已從本地資料庫還原。");
+        }
+        document.getElementById('voffset-range').value = state.vOffset;
+        document.getElementById('v-val').innerText = state.vOffset;
+        document.getElementById('sheet-id').value = state.sheetId;
+        document.getElementById('avatar-main').value = state.currentActor;
+        document.getElementById('bg-manual-url').value = state.bgUrl;
+        
+        applyBG(state.bgUrl);
+        updatePos('container-main', 'char');
+        updatePos('subtitle-box', 'sub');
+    }
+
+    function updatePos(id, key) {
+        const el = document.getElementById(id);
+        el.style.left = state[key].x; 
+        el.style.top = state[key].y;
+        applyT(el, key);
+    }
+
+    // --- 拖曳與變換邏輯 ---
+    const dist = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+    const ang = (t1, t2) => Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
+
+    function bind(el, key) {
+        let dragging = false, pinching = false;
+        let sX, sY, iL, iT, iD, iS, iA, iR;
+
+        const onS = (e) => {
+            if (e.target.closest('button, select, input')) return;
+            el.classList.add('dragging');
+            const ts = e.touches;
+            if (ts && ts.length === 2) {
+                dragging = false; pinching = true;
+                iD = dist(ts[0], ts[1]); iS = state[key].scale;
+                iA = ang(ts[0], ts[1]); iR = state[key].rotation;
+            } else {
+                dragging = true; pinching = false;
+                const p = ts ? ts[0] : e;
+                sX = p.clientX; sY = p.clientY;
+                iL = el.offsetLeft; iT = el.offsetTop;
+            }
+        };
+
+        const onM = (e) => {
+            const ts = e.touches;
+            if (pinching && ts && ts.length === 2) {
+                e.preventDefault();
+                const d = dist(ts[0], ts[1]);
+                if (iD > 0) state[key].scale = iS * (d / iD);
+                const a = ang(ts[0], ts[1]);
+                state[key].rotation = iR + (a - iA);
+                applyT(el, key);
+            } else if (dragging) {
+                e.preventDefault();
+                const p = ts ? ts[0] : e;
+                state[key].x = (iL + (p.clientX - sX)) + 'px';
+                state[key].y = (iT + (p.clientY - sY)) + 'px';
+                el.style.left = state[key].x; el.style.top = state[key].y;
+            }
+        };
+
+        const onE = () => { dragging = false; pinching = false; el.classList.remove('dragging'); saveState(); };
+
+        el.addEventListener('mousedown', onS);
+        el.addEventListener('touchstart', onS, { passive: false });
+        window.addEventListener('mousemove', (e) => { if(dragging || pinching) onM(e); });
+        window.addEventListener('touchmove', (e) => { if(dragging || pinching) onM(e); }, { passive: false });
+        window.addEventListener('mouseup', onE);
+        window.addEventListener('touchend', onE);
+    }
+
+    function applyT(el, key) { 
+        el.style.transform = `translate(-50%, -50%) scale(${state[key].scale}) rotate(${state[key].rotation}deg)`; 
+    }
+
+    function applyBG(url) {
+        if(!url) return;
+        state.bgUrl = url;
+        document.getElementById('dynamic-bg').style.backgroundImage = `url('${url}')`;
+        saveState();
+        updateThumb();
+    }
+
+    function initLive2D() {
+        const v = parseInt(document.getElementById('voffset-range').value);
+        const k = document.getElementById('avatar-main').value;
+        const box = document.getElementById(`container-main`);
+        box.innerHTML = `<iframe></iframe>`;
+        const d = box.querySelector('iframe').contentWindow.document;
+        d.open();
+        d.write(`<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"><\/script><style>body{margin:0;background:transparent!important;overflow:hidden;height:100vh;width:100vw;}canvas{width:100%!important;height:100%!important;object-fit:contain!important;}</style></head><body><script>L2Dwidget.init({model:{jsonPath:"${AVATARS[k]}"},display:{position:"center",width:350,height:500,vOffset:${v}},mobile:{show:true,scale:1}});<\/script></body></html>`);
+        d.close();
+        state.currentActor = k;
+        sysLog(`模型載入：${k}`);
+        saveState();
+    }
+
+    // --- 錄製與 YouTube 工作流 ---
+    async function toggleRec() {
+        if (!isRecording) {
+            try {
+                const s = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 60 }, audio: true });
+                mediaRecorder = new MediaRecorder(s, { mimeType: 'video/webm;codecs=vp9' });
+                recordedChunks = [];
+                mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = `Manga_V30_REC_${Date.now()}.mp4`; a.click();
+                    sysLog("錄製：影片導出完成。");
+                    isRecording = false;
+                    document.getElementById('rec-btn-main').classList.remove('btn-rec-active');
+                    document.getElementById('rec-btn-main').innerText = "🔴 開始錄製";
+                    s.getTracks().forEach(t => t.stop());
+                };
+                mediaRecorder.start();
+                isRecording = true;
+                document.getElementById('rec-btn-main').classList.add('btn-rec-active');
+                document.getElementById('rec-btn-main').innerText = "⏹ 停止錄製";
+                sysLog("錄製：系統已啟動錄影。");
+            } catch (err) { sysLog("錄製錯誤：" + err.message); }
+        } else {
+            mediaRecorder.stop();
+        }
+    }
+
+    function updateThumb() {
+        const cvs = document.getElementById('thumbnail-canvas');
+        if (!cvs) return;
+        const ctx = cvs.getContext('2d');
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = state.bgUrl;
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
+            ctx.fillStyle = "rgba(180, 83, 9, 0.7)";
+            ctx.fillRect(0, 60, cvs.width, 30);
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 14px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("GOLDEN MANGA V30", cvs.width/2, 80);
+        };
+    }
+
+    // --- 劇本引擎核心 (字幕修正) ---
+    async function runScript() {
+        if (state.playing) { state.playing = false; return; }
+        state.playing = true;
+        document.getElementById('p-status').innerText = "PLAYING";
+        const sid = document.getElementById('sheet-id').value.trim();
+        const url = `https://docs.google.com/spreadsheets/d/${sid}/export?format=csv&gid=0&v=${Date.now()}`;
+        
+        try {
+            const r = await fetch(url);
+            const csv = await r.text();
+            const rows = csv.split(/\r?\n/).filter(line => line.trim()).slice(1);
+            
+            for (const row of rows) {
+                if(!state.playing) break;
+                const cols = row.split(',').map(c => c.trim().replace(/"/g, ''));
+                const actor = (cols[0] || "").toLowerCase();
+                const txt = cols[1] || "";
+                
+                if (AVATARS[actor] && actor !== state.currentActor) {
+                    document.getElementById('avatar-main').value = actor;
+                    initLive2D();
+                    await new Promise(res => setTimeout(res, 2600));
+                }
+                
+                if (txt) {
+                    sysLog(`執行：[${actor}] ${txt}`);
+                    document.getElementById('script-line').innerText = `[${actor}] ${txt}`;
+                    
+                    const box = document.getElementById('subtitle-box');
+                    document.getElementById('manga-text').innerText = txt;
+                    
+                    // 強制觸發氣泡顯示
+                    box.classList.remove('bubble-hidden');
+                    box.classList.add('bubble-visible');
+                    
+                    if (window.speechSynthesis) {
+                        speechSynthesis.cancel();
+                        const ut = new SpeechSynthesisUtterance(txt); ut.lang = 'zh-TW';
+                        speechSynthesis.speak(ut);
+                    }
+                    
+                    const waitTime = Math.max(3500, txt.length * 400);
+                    await new Promise(res => setTimeout(res, waitTime));
+                    
+                    // 劇本執行間隔關閉氣泡
+                    box.classList.replace('bubble-visible', 'bubble-hidden');
+                    await new Promise(res => setTimeout(res, 300));
+                }
+            }
+        } catch (e) { sysLog("腳本錯誤：無法讀取 Sheet 資料。"); }
+        state.playing = false; document.getElementById('p-status').innerText = "IDLE";
+    }
+
+    function switchTab(t) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector(`[onclick="switchTab('${t}')"]`).classList.add('active');
+        document.getElementById(t).classList.add('active');
+    }
+
+    function downloadMe() {
+        const blob = new Blob([document.documentElement.outerHTML], { type: "text/html" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = "Golden_Expert_V30.html"; a.click();
+    }
+
+    window.onload = () => {
+        document.getElementById('avatar-main').innerHTML = Object.keys(AVATARS).map(k => `<option value="${k}">${k.toUpperCase()}</option>`).join('');
+        document.getElementById('bg-selector').innerHTML = Object.keys(BACKGROUNDS).map(k => `<option value="${BACKGROUNDS[k]}">${k.replace('_',' ').toUpperCase()}</option>`).join('') + `<option value="custom">自定義 URL...</option>`;
+        loadState();
+        bind(document.getElementById('container-main'), 'char');
+        bind(document.getElementById('subtitle-box'), 'sub');
+        setTimeout(() => { initLive2D(); updateThumb(); }, 800);
+    };
+</script>
+
+<div id="dynamic-bg"></div>
+<div class="gold-texture"></div>
+
+<button class="btn-toggle-ui" onclick="toggleUI()">隱藏面板</button>
+<button id="btn-download-src" onclick="downloadMe()">📥 下載源碼檔案</button>
+
+<div class="main-ui">
+    <div class="ui-header">
+        <div class="flex justify-between items-center gap-2">
+            <span class="font-black text-amber-950" style="font-size: 0.7rem;">👑 金輝專家 V30R (字幕修正版)</span>
+            <div class="flex gap-1">
+                <button class="btn-gold" onclick="runScript()">🎬 播放劇本</button>
+                <button id="rec-btn-main" class="btn-gold" onclick="toggleRec()">🔴 錄製</button>
+                <button class="btn-gold" style="background:#ef4444; color:white; border:none;" onclick="window.open('https://studio.youtube.com','_blank')">🚀 YT Studio</button>
+            </div>
+        </div>
+        
+        <div class="info-strip">
+            <span id="p-status" class="font-black text-amber-900" style="min-width:50px;">IDLE</span>
+            <div id="script-line">專家模式已就緒。</div>
+        </div>
+
+        <div class="flex mt-3">
+            <div class="tab-btn active" onclick="switchTab('tab-ctrl')">佈置控制</div>
+            <div class="tab-btn" onclick="switchTab('tab-thumb')">縮圖與影片</div>
+            <div class="tab-btn" onclick="switchTab('tab-sys')">系統設定</div>
+            <div class="tab-btn" onclick="switchTab('tab-sync')">資料同步</div>
+        </div>
+
+        <!-- Layout Tab -->
+        <div id="tab-ctrl" class="tab-content active">
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <button class="btn-gold" onclick="initLive2D()">刷新 Live2D</button>
+                <button class="btn-gold" onclick="const b=document.getElementById('subtitle-box'); b.classList.toggle('bubble-visible'); b.classList.toggle('bubble-hidden');">切換字幕氣泡</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="control-label">模型 V-偏移:</span>
+                <input type="range" id="voffset-range" min="-600" max="600" value="-50" class="flex-grow" oninput="document.getElementById('v-val').innerText=this.value">
+                <span id="v-val" style="min-width:35px;">-50</span>
+            </div>
+            <div id="console-log">歡迎來到 V30R 專家版。</div>
+        </div>
+
+        <!-- Thumbnail Tab -->
+        <div id="tab-thumb" class="tab-content">
+            <div class="flex flex-col gap-1">
+                <span class="font-bold">自動縮圖生成:</span>
+                <div id="thumb-canvas-box">
+                    <canvas id="thumbnail-canvas" width="200" height="112"></canvas>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    <button class="btn-gold" onclick="const c=document.getElementById('thumbnail-canvas'); const a=document.createElement('a'); a.href=c.toDataURL(); a.download='thumbnail.png'; a.click();">💾 下載 PNG</button>
+                    <button class="btn-gold" onclick="updateThumb()">🔄 刷新縮圖</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Tab -->
+        <div id="tab-sys" class="tab-content">
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="control-label">角色切換:</span>
+                    <select id="avatar-main" class="flex-grow" onchange="initLive2D()"></select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="control-label">背景預設:</span>
+                    <select id="bg-selector" class="flex-grow" onchange="if(this.value!=='custom'){applyBG(this.value); document.getElementById('bg-manual-url').value=this.value;}"></select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="control-label">自定網址:</span>
+                    <input type="text" id="bg-manual-url" class="flex-grow" placeholder="https://..." onchange="applyBG(this.value)">
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Tab -->
+        <div id="tab-sync" class="tab-content">
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="control-label">Sheet ID:</span>
+                    <input type="text" id="sheet-id" class="flex-grow" onchange="saveState()" placeholder="貼上 Google 試算表 ID...">
+                </div>
+                <div class="grid grid-cols-2 gap-2 mt-1">
+                    <button class="btn-gold" onclick="saveState(); sysLog('系統：設定已存檔。');">💾 手動存檔</button>
+                    <button class="btn-gold" onclick="loadState(); initLive2D();">📂 恢復設定</button>
+                </div>
+                <button class="btn-gold w-full mt-1" style="background:#b45309; color:white;" onclick="localStorage.clear(); location.reload();">🛑 清空所有本地快取資料</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stage">
+    <div id="container-main" class="draggable-box"></div>
+    <div id="subtitle-box" class="draggable-box bubble-hidden">
+        <svg class="bubble-svg" viewBox="0 0 320 140" preserveAspectRatio="none">
+            <path d="M 25,5 L 295,5 Q 315,5 315,25 L 315,100 Q 315,120 295,120 L 180,120 L 160,138 L 140,120 L 25,120 Q 5,120 5,100 L 5,25 Q 5,5 25,5" fill="white" stroke="#451a03" stroke-width="4" />
+        </svg>
+        <div id="manga-text" class="bubble-text">專家工作流修正版 V30</div>
+    </div>
+</div>
+
+</body></html>
+
