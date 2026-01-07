@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8" />
+    <title>Shizuku 背景錄製引擎 (v4.5) - AI版手機響應式優化</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"></script>
+    <style>
+        /* 1. CSS (RWD 響應式佈局) */
+        :root { --gold: #D4AF37; --bg: #FDFDFD; --dark: #333; }
+        
+        body { 
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; 
+            font-size: 10px; 
+            background: #f0f2f5; 
+            margin: 0; 
+            padding: 10px; 
+            color: var(--dark); 
+            display: flex; 
+            justify-content: center;
+        }
+
+        .card { 
+            width: 100%;
+            max-width: 854px; 
+            background: var(--bg); 
+            border-radius: 8px; 
+            border: 1px solid var(--gold); 
+            overflow: hidden; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            position: relative; 
+            z-index: 10; 
+        }
+
+        /* 頂部標題 */
+        .header { background: #fff; padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
+        .header h2 { margin: 0; font-size: 14px; color: var(--gold); }
+
+        /* 分頁按鈕 */
+        .tabs { display: flex; background: #eee; border-bottom: 1px solid var(--gold); }
+        .tab-btn { 
+            flex: 1; 
+            padding: 10px 5px; 
+            border: none; 
+            background: none; 
+            cursor: pointer; 
+            font-size: 10px; 
+            font-weight: bold; 
+            color: #666; 
+            transition: 0.3s; 
+            white-space: nowrap;
+        }
+        .tab-btn.active { background: #fff; color: var(--gold); border-bottom: 2px solid var(--gold); }
+
+        /* 內容區 */
+        .tab-content { display: none; padding: 15px; min-height: 300px; box-sizing: border-box; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+
+        /* 按鈕優化 */
+        .btn { 
+            background: linear-gradient(135deg, var(--gold), #f1c40f); 
+            color: #000; 
+            border: none; 
+            width: 100%; 
+            padding: 12px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 12px; 
+            margin-top: 8px;
+            touch-action: manipulation;
+        }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        
+        /* 日誌區 */
+        #log { 
+            margin-top: 10px; 
+            padding: 8px; 
+            background: #fafafa; 
+            border-radius: 4px; 
+            border: 1px dashed #ccc; 
+            font-family: 'Consolas', monospace; 
+            font-size: 9px; 
+            white-space: pre-wrap; 
+            height: 120px; 
+            overflow-y: auto; 
+        }
+        
+        /* 畫布容器 - 關鍵 RWD */
+        #canvas-wrap { 
+            width: 100%;
+            display: flex; 
+            justify-content: center; 
+            background: #222; 
+            padding: 5px; 
+            border-radius: 6px; 
+            margin-top: 5px; 
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        canvas { 
+            max-width: 100%; 
+            height: auto !important; 
+            border: 1px solid var(--gold); 
+            background: #fff; 
+        }
+
+        /* 手機版微調 */
+        @media (max-width: 600px) {
+            body { padding: 5px; }
+            .header { padding: 8px; }
+            .header h2 { font-size: 12px; }
+            .tab-content { padding: 10px; }
+            .btn { padding: 14px; font-size: 13px; } /* 手機版按鈕更大好按 */
+        }
+
+        /* Live2D 隔離 */
+        #l2d-isolate-zone { position: absolute; left: -5000px; top: -5000px; width: 300px; height: 400px; z-index: -9999; pointer-events: none; }
+        #live2d-widget, .live2d-widget-container { position: fixed !important; left: -5000px !important; top: -5000px !important; visibility: visible !important; opacity: 1 !important; }
+
+        .footer { padding: 10px; text-align: center; background: #f9f9f9; font-size: 8px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <h2>Shizuku Studio AI (手機響應式版)</h2>
+        <div style="font-size:8px;color:#999;margin-top:2px">RWD 技術 · 擦除轉場 · 角色完全隔離</div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'control')">1. 設定</button>
+        <button class="tab-btn" onclick="switchTab(event, 'progress')">2. 日誌</button>
+        <button class="tab-btn" onclick="switchTab(event, 'preview')">3. 預覽</button>
+    </div>
+
+    <div id="control" class="tab-content active">
+        <div style="margin-bottom:10px">
+            <label style="font-weight:bold; font-size:10px">教學教材 (.txt, .md):</label>
+            <input type="file" id="f" accept=".txt,.md" multiple style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-top:5px; font-size:10px" />
+        </div>
+        
+        <div style="background:#fffbe6; padding:12px; border-radius:6px; border:1px solid #ffe58f; line-height:1.6; font-size:9px">
+            <strong style="color:#faad14">📱 AI 版 RWD 特色：</strong>
+            <ul style="margin:5px 0 0 15px; padding:0">
+                <li><strong>寬度自動適配</strong>：完美支持手機直向/橫向操作，不溢出。</li>
+                <li><strong>畫布智能縮放</strong>：預覽畫布會隨螢幕大小縮放，錄製則維持 854x480。</li>
+                <li><strong>角色徹底隔離</strong>：繼承 AH 版，角色絕不干擾手機操作介面。</li>
+                <li><strong>金色擦除轉場</strong>：保留專業動畫特效。</li>
+            </ul>
+        </div>
+
+        <button class="btn" id="start-btn" onclick="startProduction()" disabled>正在適配裝置並載入引擎...</button>
+    </div>
+
+    <div id="progress" class="tab-content">
+        <div id="progress-container">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:10px">
+                <span id="status-text">同步錄製中...</span>
+                <span id="percent-text">0%</span>
+            </div>
+            <div style="width:100%; height:8px; background:#eee; border-radius:4px; overflow:hidden; margin:10px 0">
+                <div id="p-bar-fill" style="width:0%; height:100%; background:var(--gold); transition:0.3s"></div>
+            </div>
+        </div>
+        <div id="log">系統就緒。</div>
+    </div>
+
+    <div id="preview" class="tab-content">
+        <div id="canvas-wrap"><canvas id="master-canvas" width="854" height="480"></canvas></div>
+        <p style="text-align:center; color:#888; font-size:8px; margin-top:10px">預覽畫面會依裝置寬度縮放</p>
+    </div>
+
+    <div class="footer">
+        <button onclick="downloadSource()" style="background:none; border:1px solid #ccc; padding:4px 12px; font-size:8px; color:#aaa; border-radius:4px; cursor:pointer">下載此系統源碼 (AI版)</button>
+    </div>
+</div>
+
+<div id="l2d-isolate-zone"></div>
+
+<script>
+// 2. Fixed Data & Buffers
+const CONFIG = {
+    SEC_PER_SLIDE: 6,
+    TRANSITION_SEC: 1.0,
+    FPS: 20,
+    MODEL_PATH: "https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json",
+    CANVAS_WIDTH: 854,
+    CANVAS_HEIGHT: 480,
+    TEXT_MARGIN_X: 85,
+    TEXT_MARGIN_Y: 185,
+    TEXT_MAX_WIDTH: 450,
+    LINE_HEIGHT: 48,
+    AVATAR_RADIUS: 125
+};
+
+let slides = [];
+let mediaRecorder;
+let recordedChunks = [];
+let isModelReady = false;
+let l2dCanvasReference = null;
+
+const prevBuffer = document.createElement('canvas');
+const nextBuffer = document.createElement('canvas');
+[prevBuffer, nextBuffer].forEach(c => { c.width = CONFIG.CANVAS_WIDTH; c.height = CONFIG.CANVAS_HEIGHT; });
+
+// 3. Script Logic
+window.onload = () => {
+    addLog("🚀 系統啟動：正在進行裝置適配與引擎初始化...");
+    initLive2D();
+    switchTab(null, 'control');
+};
+
+function addLog(msg) {
+    const log = document.getElementById("log");
+    log.textContent += `\n[${new Date().toLocaleTimeString()}] ${msg}`;
+    log.scrollTop = log.scrollHeight;
+}
+
+function switchTab(e, id) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if(e) e.currentTarget.classList.add('active');
+    else document.querySelector(`[onclick*="${id}"]`).classList.add('active');
+}
+
+function initLive2D() {
+    try {
+        L2Dwidget.init({
+            model: { jsonPath: CONFIG.MODEL_PATH, scale: 1 },
+            display: { superBase: document.getElementById('l2d-isolate-zone'), width: 300, height: 400 },
+            mobile: { show: true, scale: 0.5 },
+            react: { opacity: 1 }
+        });
+        let attempts = 0;
+        const check = setInterval(() => {
+            const canvas = document.querySelector('#live2d-widget canvas') || document.querySelector('#l2d-isolate-zone canvas');
+            if (canvas) {
+                clearInterval(check);
+                l2dCanvasReference = canvas;
+                isModelReady = true;
+                addLog("✅ 引擎已隔離。支援手機與 PC 雙模式。");
+                document.getElementById("start-btn").disabled = false;
+                document.getElementById("start-btn").textContent = "啟動 RWD 同步錄製";
+            }
+            if (++attempts > 150) clearInterval(check);
+        }, 200);
+    } catch (e) { addLog("❌ 引擎異常: " + e.message); }
+}
+
+async function startProduction() {
+    const fileInput = document.getElementById("f");
+    if (!fileInput.files.length) { alert("請提供教材檔案"); return; }
+    switchTab(null, 'progress');
+    document.getElementById("start-btn").disabled = true;
+    addLog("📡 正在解析內容並規劃響應式路徑...");
+
+    slides = [];
+    let fileTitles = [];
+    for (let file of fileInput.files) {
+        const decoder = new TextDecoder('utf-8');
+        const rawText = decoder.decode(await file.arrayBuffer());
+        let lines = rawText.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length > 0) {
+            let title = lines[0].replace(/^#+\s*/, '').trim();
+            fileTitles.push(title);
+            const sentences = lines.slice(1).join(" ").replace(/\s+/g, ' ').match(/[^。.]*[。.]/g) || [lines.slice(1).join(" ")];
+            let temp = "";
+            sentences.forEach(s => {
+                if ((temp + s).length > 100) { if (temp) slides.push({ title, body: temp }); temp = s; } 
+                else { temp += s; }
+            });
+            if (temp) slides.push({ title, body: temp });
+        }
+    }
+    const summaryList = fileTitles.map((t, idx) => `${idx + 1}. ${t}`).join("\n");
+    slides.push({ title: "課程內容總結", body: `今天討論的主題包含：\n${summaryList}\n\n今天討論的內容如上，下次見。我是 Oeye (Orlandotigereye)，下次見。` });
+
+    addLog(`📝 解析完畢：共 ${slides.length} 個分鏡將進行轉場錄製。`);
+    prepareRecording();
+}
+
+function prepareRecording() {
+    const master = document.getElementById("master-canvas");
+    const stream = master.captureStream(CONFIG.FPS);
+    recordedChunks = [];
+    try { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' }); } 
+    catch(e) { mediaRecorder = new MediaRecorder(stream); }
+    mediaRecorder.ondataavailable = (e) => { if(e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = exportVideo;
+    mediaRecorder.start();
+    renderLoop(master.getContext("2d"), 0);
+}
+
+function renderLoop(ctx, slideIdx) {
+    if (slideIdx >= slides.length) { mediaRecorder.stop(); return; }
+    const s = slides[slideIdx];
+    const totalFrames = CONFIG.SEC_PER_SLIDE * CONFIG.FPS;
+    const transitionFrames = CONFIG.TRANSITION_SEC * CONFIG.FPS;
+    let currentFrame = 0;
+
+    if (slideIdx > 0) drawSlideToCanvas(prevBuffer.getContext('2d'), slides[slideIdx - 1]);
+    drawSlideToCanvas(nextBuffer.getContext('2d'), s);
+
+    const interval = setInterval(() => {
+        ctx.clearRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+        if (slideIdx > 0 && currentFrame < transitionFrames) {
+            const ratio = currentFrame / transitionFrames;
+            const wipeX = CONFIG.CANVAS_WIDTH * ratio;
+            ctx.drawImage(prevBuffer, 0, 0);
+            ctx.save();
+            ctx.beginPath(); ctx.rect(0, 0, wipeX, CONFIG.CANVAS_HEIGHT); ctx.clip();
+            ctx.drawImage(nextBuffer, 0, 0);
+            ctx.restore();
+            ctx.fillStyle = "rgba(212, 175, 55, 0.8)"; ctx.fillRect(wipeX - 4, 0, 8, CONFIG.CANVAS_HEIGHT);
+            ctx.shadowBlur = 15; ctx.shadowColor = "var(--gold)"; ctx.fillRect(wipeX - 1, 0, 2, CONFIG.CANVAS_HEIGHT);
+            ctx.shadowBlur = 0;
+        } else {
+            ctx.drawImage(nextBuffer, 0, 0);
+        }
+        drawHost(ctx);
+        const total = slides.length * totalFrames;
+        const prog = ((slideIdx * totalFrames + currentFrame) / total) * 100;
+        document.getElementById("p-bar-fill").style.width = prog + "%";
+        document.getElementById("percent-text").textContent = Math.round(prog) + "%";
+        currentFrame++;
+        if (currentFrame >= totalFrames) { clearInterval(interval); renderLoop(ctx, slideIdx + 1); }
+    }, 1000 / CONFIG.FPS);
+}
+
+function drawSlideToCanvas(targetCtx, slide) {
+    targetCtx.fillStyle = "#FFFFFF"; targetCtx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    targetCtx.strokeStyle = "#D4AF37"; targetCtx.lineWidth = 14; targetCtx.strokeRect(7, 7, CONFIG.CANVAS_WIDTH - 14, CONFIG.CANVAS_HEIGHT - 14);
+    drawSmartTitle(targetCtx, slide.title, 60, 50, 500);
+    targetCtx.fillStyle = "#333";
+    if (slide.title === "課程內容總結") {
+        targetCtx.font = "19px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+        drawElegantText(targetCtx, slide.body, CONFIG.TEXT_MARGIN_X, CONFIG.TEXT_MARGIN_Y - 20, CONFIG.TEXT_MAX_WIDTH, 34, 1.2);
+    } else {
+        targetCtx.font = "22px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+        drawElegantText(targetCtx, slide.body, CONFIG.TEXT_MARGIN_X, CONFIG.TEXT_MARGIN_Y, CONFIG.TEXT_MAX_WIDTH, CONFIG.LINE_HEIGHT, 1.5);
+    }
+}
+
+function drawHost(ctx) {
+    if (!l2dCanvasReference) return;
+    const cx = CONFIG.CANVAS_WIDTH - 160, cy = CONFIG.CANVAS_HEIGHT - 160, radius = CONFIG.AVATAR_RADIUS;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.drawImage(l2dCanvasReference, cx - radius, cy - radius - 35, radius * 2, radius * 2.8);
+    ctx.restore();
+    ctx.strokeStyle = "#D4AF37"; ctx.lineWidth = 6; ctx.stroke();
+}
+
+function drawSmartTitle(ctx, title, x, y, maxBoxWidth) {
+    ctx.font = `bold 26px 'PingFang TC', 'Microsoft JhengHei', sans-serif`;
+    let m = ctx.measureText(title);
+    if (m.width > 440) {
+        let mid = Math.floor(title.length / 2);
+        ctx.fillStyle = "#D4AF37"; ctx.fillRect(x, y, maxBoxWidth, 80);
+        ctx.fillStyle = "#FFF"; ctx.font = `bold 22px 'PingFang TC', 'Microsoft JhengHei', sans-serif`;
+        ctx.fillText(title.substring(0, mid), x + 35, y + 32); ctx.fillText(title.substring(mid), x + 35, y + 62);
+    } else {
+        ctx.fillStyle = "#D4AF37"; ctx.fillRect(x, y, maxBoxWidth, 55);
+        ctx.fillStyle = "#FFF"; ctx.fillText(title, x + 35, y + 38);
+    }
+}
+
+function drawElegantText(ctx, text, x, y, maxWidth, lineHeight, charSpacing) {
+    const lines = text.split('\n');
+    let curY = y;
+    lines.forEach(l => {
+        const chars = l.split('');
+        let curX = x, lineText = '';
+        for (let i = 0; i < chars.length; i++) {
+            const w = ctx.measureText(chars[i]).width;
+            if (ctx.measureText(lineText + chars[i]).width > maxWidth) { curY += lineHeight; curX = x; lineText = ''; }
+            ctx.fillText(chars[i], curX, curY);
+            curX += w + charSpacing; lineText += chars[i];
+        }
+        curY += lineHeight;
+    });
+}
+
+function exportVideo() {
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `Studio_AI_RWD_${Date.now()}.webm`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    addLog("✨ 響應式錄製完成，影片已下載。");
+    document.getElementById("start-btn").disabled = false;
+}
+
+function downloadSource() {
+    const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'TextToVideoAI.html' });
+    a.click();
+}
+</script>
+</body>
+</html>
