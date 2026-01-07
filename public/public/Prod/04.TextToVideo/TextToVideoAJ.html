@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8" />
+    <title>Shizuku 背景錄製引擎 (v4.6) - AJ版高效能 Canvas 修復</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"></script>
+    <style>
+        /* 1. CSS (精簡小字模式 + RWD) */
+        :root { --gold: #D4AF37; --bg: #FDFDFD; --dark: #333; }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; font-size: 10px; background: #f0f2f5; margin: 0; padding: 5px; color: var(--dark); display: flex; justify-content: center; }
+        .card { width: 100%; max-width: 854px; background: var(--bg); border-radius: 8px; border: 1px solid var(--gold); overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative; z-index: 10; }
+        .header { background: #fff; padding: 10px; text-align: center; border-bottom: 1px solid #eee; }
+        .header h2 { margin: 0; font-size: 13px; color: var(--gold); }
+        .tabs { display: flex; background: #eee; border-bottom: 1px solid var(--gold); }
+        .tab-btn { flex: 1; padding: 10px 5px; border: none; background: none; cursor: pointer; font-size: 10px; font-weight: bold; color: #666; transition: 0.3s; }
+        .tab-btn.active { background: #fff; color: var(--gold); border-bottom: 2px solid var(--gold); }
+        .tab-content { display: none; padding: 12px; min-height: 300px; box-sizing: border-box; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        .btn { background: linear-gradient(135deg, var(--gold), #f1c40f); color: #000; border: none; width: 100%; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; margin-top: 5px; touch-action: manipulation; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        #log { margin-top: 8px; padding: 8px; background: #fafafa; border-radius: 4px; border: 1px dashed #ccc; font-family: 'Consolas', monospace; font-size: 9px; white-space: pre-wrap; height: 110px; overflow-y: auto; }
+        #canvas-wrap { width: 100%; display: flex; justify-content: center; background: #222; padding: 4px; border-radius: 6px; margin-top: 5px; box-sizing: border-box; overflow: hidden; }
+        canvas { max-width: 100%; height: auto !important; border: 1px solid var(--gold); background: #fff; }
+        @media (max-width: 600px) { .btn { padding: 15px; font-size: 13px; } .header h2 { font-size: 11px; } }
+        /* Live2D 隔離 */
+        #l2d-isolate-zone { position: absolute; left: -5000px; top: -5000px; width: 300px; height: 400px; z-index: -9999; pointer-events: none; }
+        #live2d-widget, .live2d-widget-container { position: fixed !important; left: -5000px !important; top: -5000px !important; visibility: visible !important; opacity: 1 !important; }
+        .footer { padding: 8px; text-align: center; background: #f9f9f9; font-size: 8px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <h2>Shizuku Studio AJ (高效能修復版)</h2>
+        <div style="font-size:8px;color:#999;margin-top:2px">RAF 繪製技術 · 智慧編碼相容 · 手機效能優化</div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'control')">1. 設定</button>
+        <button class="tab-btn" onclick="switchTab(event, 'progress')">2. 錄製</button>
+        <button class="tab-btn" onclick="switchTab(event, 'preview')">3. 預覽</button>
+    </div>
+
+    <div id="control" class="tab-content active">
+        <input type="file" id="f" accept=".txt,.md" multiple style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-size:10px" />
+        <div style="background:#f6ffed; padding:10px; border-radius:6px; border:1px solid #b7eb8f; line-height:1.5; font-size:9px; margin-top:10px">
+            <strong style="color:#389e0d">🚀 AJ 版效能優化項目：</strong>
+            <ul style="margin:3px 0 0 15px; padding:0">
+                <li><strong>Canvas 效能修復</strong>：改用 <code>requestAnimationFrame</code> 降低手機發熱。</li>
+                <li><strong>智慧編碼偵測</strong>：自動支援 iOS (MP4) 與 Android/PC (WebM)。</li>
+                <li><strong>轉場平滑化</strong>：轉場動畫更流暢，主播恆定不抖動。</li>
+                <li><strong>記憶體管理</strong>：優化雙緩衝機制，防止長影片閃退。</li>
+            </ul>
+        </div>
+        <button class="btn" id="start-btn" onclick="startProduction()" disabled>正在優化環境...</button>
+    </div>
+
+    <div id="progress" class="tab-content">
+        <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:10px">
+            <span id="status-text">準備錄製...</span>
+            <span id="percent-text">0%</span>
+        </div>
+        <div style="width:100%; height:6px; background:#eee; border-radius:3px; overflow:hidden; margin:8px 0">
+            <div id="p-bar-fill" style="width:0%; height:100%; background:var(--gold); transition:0.3s"></div>
+        </div>
+        <div id="log">系統就緒。</div>
+    </div>
+
+    <div id="preview" class="tab-content">
+        <div id="canvas-wrap"><canvas id="master-canvas" width="854" height="480"></canvas></div>
+    </div>
+
+    <div class="footer">
+        <button onclick="downloadSource()" style="background:none; border:1px solid #ccc; padding:3px 10px; font-size:8px; color:#aaa; border-radius:4px; cursor:pointer">下載源碼 (AJ版)</button>
+    </div>
+</div>
+
+<div id="l2d-isolate-zone"></div>
+
+<script>
+const CONFIG = {
+    SEC_PER_SLIDE: 6,
+    TRANSITION_SEC: 1.0,
+    FPS: 20,
+    MODEL_PATH: "https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json",
+    CANVAS_WIDTH: 854,
+    CANVAS_HEIGHT: 480,
+    TEXT_MARGIN_X: 85,
+    TEXT_MARGIN_Y: 185,
+    TEXT_MAX_WIDTH: 450,
+    LINE_HEIGHT: 48,
+    AVATAR_RADIUS: 125
+};
+
+let slides = [];
+let mediaRecorder;
+let recordedChunks = [];
+let isModelReady = false;
+let l2dCanvasReference = null;
+let rafId = null;
+
+const prevBuffer = document.createElement('canvas');
+const nextBuffer = document.createElement('canvas');
+[prevBuffer, nextBuffer].forEach(c => { c.width = CONFIG.CANVAS_WIDTH; c.height = CONFIG.CANVAS_HEIGHT; });
+
+window.onload = () => {
+    addLog("🚀 AJ 高效能版啟動：正在初始化 Canvas 轉向引擎...");
+    initLive2D();
+};
+
+function addLog(msg) {
+    const log = document.getElementById("log");
+    log.textContent += `\n[${new Date().toLocaleTimeString()}] ${msg}`;
+    log.scrollTop = log.scrollHeight;
+}
+
+function switchTab(e, id) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if(e) e.currentTarget.classList.add('active');
+    else document.querySelector(`[onclick*="${id}"]`).classList.add('active');
+}
+
+function initLive2D() {
+    try {
+        L2Dwidget.init({
+            model: { jsonPath: CONFIG.MODEL_PATH, scale: 1 },
+            display: { superBase: document.getElementById('l2d-isolate-zone'), width: 300, height: 400 },
+            mobile: { show: true, scale: 0.5 },
+            react: { opacity: 1 }
+        });
+        let attempts = 0;
+        const check = setInterval(() => {
+            const canvas = document.querySelector('#live2d-widget canvas') || document.querySelector('#l2d-isolate-zone canvas');
+            if (canvas) {
+                clearInterval(check);
+                l2dCanvasReference = canvas;
+                isModelReady = true;
+                addLog("✅ 引擎已背景隔離。");
+                document.getElementById("start-btn").disabled = false;
+                document.getElementById("start-btn").textContent = "啟動高效能錄製";
+            }
+            if (++attempts > 150) clearInterval(check);
+        }, 200);
+    } catch (e) { addLog("❌ 錯誤: " + e.message); }
+}
+
+async function startProduction() {
+    const fileInput = document.getElementById("f");
+    if (!fileInput.files.length) { alert("請提供檔案"); return; }
+    switchTab(null, 'progress');
+    document.getElementById("start-btn").disabled = true;
+    
+    slides = [];
+    let titles = [];
+    for (let file of fileInput.files) {
+        const raw = await file.arrayBuffer();
+        const text = new TextDecoder('utf-8').decode(raw);
+        let lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length > 0) {
+            let title = lines[0].replace(/^#+\s*/, '').trim();
+            titles.push(title);
+            const sentences = lines.slice(1).join(" ").replace(/\s+/g, ' ').match(/[^。.]*[。.]/g) || [lines.slice(1).join(" ")];
+            let temp = "";
+            sentences.forEach(s => {
+                if ((temp + s).length > 100) { if (temp) slides.push({ title, body: temp }); temp = s; } 
+                else { temp += s; }
+            });
+            if (temp) slides.push({ title, body: temp });
+        }
+    }
+    const summary = titles.map((t, idx) => `${idx + 1}. ${t}`).join("\n");
+    slides.push({ title: "課程總結", body: `討論主題：\n${summary}\n\n內容如上。我是 Oeye (Orlandotigereye)，下次見。` });
+
+    addLog(`📝 解析完成：${slides.length} 分鏡。正在選擇最佳編碼器...`);
+    prepareRecording();
+}
+
+function getSupportedMimeType() {
+    const types = ['video/webm;codecs=vp9', 'video/webm', 'video/mp4'];
+    for (let t of types) {
+        if (MediaRecorder.isTypeSupported(t)) return t;
+    }
+    return '';
+}
+
+function prepareRecording() {
+    const master = document.getElementById("master-canvas");
+    const stream = master.captureStream(CONFIG.FPS);
+    recordedChunks = [];
+    const mimeType = getSupportedMimeType();
+    addLog(`🎬 使用編碼: ${mimeType || '預設'}`);
+    
+    try {
+        mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+    } catch(e) {
+        mediaRecorder = new MediaRecorder(stream);
+    }
+    
+    mediaRecorder.ondataavailable = (e) => { if(e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = exportVideo;
+    mediaRecorder.start();
+    renderLoopRAF(master.getContext("2d"), 0);
+}
+
+// 使用 requestAnimationFrame 的核心循環
+function renderLoopRAF(ctx, slideIdx) {
+    if (slideIdx >= slides.length) { mediaRecorder.stop(); return; }
+
+    const s = slides[slideIdx];
+    const totalFrames = CONFIG.SEC_PER_SLIDE * CONFIG.FPS;
+    const transitionFrames = CONFIG.TRANSITION_SEC * CONFIG.FPS;
+    let currentFrame = 0;
+    let lastTime = 0;
+    const frameInterval = 1000 / CONFIG.FPS;
+
+    if (slideIdx > 0) drawSlide(prevBuffer.getContext('2d'), slides[slideIdx - 1]);
+    drawSlide(nextBuffer.getContext('2d'), s);
+
+    function frame(time) {
+        const delta = time - lastTime;
+        if (delta >= frameInterval) {
+            lastTime = time - (delta % frameInterval);
+            
+            ctx.clearRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+            if (slideIdx > 0 && currentFrame < transitionFrames) {
+                const wipeX = CONFIG.CANVAS_WIDTH * (currentFrame / transitionFrames);
+                ctx.drawImage(prevBuffer, 0, 0);
+                ctx.save();
+                ctx.beginPath(); ctx.rect(0, 0, wipeX, CONFIG.CANVAS_HEIGHT); ctx.clip();
+                ctx.drawImage(nextBuffer, 0, 0);
+                ctx.restore();
+                ctx.fillStyle = "rgba(212, 175, 55, 0.8)"; ctx.fillRect(wipeX - 4, 0, 8, CONFIG.CANVAS_HEIGHT);
+            } else {
+                ctx.drawImage(nextBuffer, 0, 0);
+            }
+            drawHost(ctx);
+            
+            const prog = ((slideIdx * totalFrames + currentFrame) / (slides.length * totalFrames)) * 100;
+            document.getElementById("p-bar-fill").style.width = prog + "%";
+            document.getElementById("percent-text").textContent = Math.round(prog) + "%";
+
+            currentFrame++;
+            if (currentFrame >= totalFrames) {
+                renderLoopRAF(ctx, slideIdx + 1);
+                return;
+            }
+        }
+        rafId = requestAnimationFrame(frame);
+    }
+    rafId = requestAnimationFrame(frame);
+}
+
+function drawSlide(tCtx, slide) {
+    tCtx.fillStyle = "#FFFFFF"; tCtx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT); 
+    tCtx.strokeStyle = "#D4AF37"; tCtx.lineWidth = 14; tCtx.strokeRect(7, 7, CONFIG.CANVAS_WIDTH-14, CONFIG.CANVAS_HEIGHT-14);
+    
+    tCtx.font = `bold 26px sans-serif`;
+    tCtx.fillStyle = "#D4AF37"; tCtx.fillRect(60, 50, 500, 55);
+    tCtx.fillStyle = "#FFF"; tCtx.fillText(slide.title, 95, 88);
+    
+    tCtx.fillStyle = "#333"; tCtx.font = "22px sans-serif";
+    const lines = slide.body.split('\n');
+    let curY = CONFIG.TEXT_MARGIN_Y;
+    lines.forEach(l => {
+        let lineText = '';
+        for (let char of l) {
+            if (tCtx.measureText(lineText + char).width > CONFIG.TEXT_MAX_WIDTH) {
+                tCtx.fillText(lineText, CONFIG.TEXT_MARGIN_X, curY);
+                lineText = char; curY += CONFIG.LINE_HEIGHT;
+            } else { lineText += char; }
+        }
+        tCtx.fillText(lineText, CONFIG.TEXT_MARGIN_X, curY); curY += CONFIG.LINE_HEIGHT;
+    });
+}
+
+function drawHost(ctx) {
+    if (!l2dCanvasReference) return;
+    const cx = CONFIG.CANVAS_WIDTH - 160, cy = CONFIG.CANVAS_HEIGHT - 160, r = CONFIG.AVATAR_RADIUS;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
+    ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.drawImage(l2dCanvasReference, cx-r, cy-r-35, r*2, r*2.8);
+    ctx.restore();
+    ctx.strokeStyle = "#D4AF37"; ctx.lineWidth = 6; ctx.stroke();
+}
+
+function exportVideo() {
+    cancelAnimationFrame(rafId);
+    const blob = new Blob(recordedChunks, { type: recordedChunks[0].type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `Studio_AJ_Fixed_${Date.now()}.mp4`;
+    a.click();
+    addLog("✨ 效能錄製完成！");
+    document.getElementById("start-btn").disabled = false;
+}
+
+function switchTab(e, id) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if(e) e.currentTarget.classList.add('active');
+    else document.querySelector(`[onclick*="${id}"]`).classList.add('active');
+}
+
+function downloadSource() {
+    const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'TextToVideoAJ.html' });
+    a.click();
+}
+</script>
+</body>
+</html>
