@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雙平台管理面板 - 整合寫入版 (vC)</title>
+    <style>
+        /* 1. CSS */
+        :root { --gold-primary: #ffd700; --gold-dark: #b8860b; --text-size: 0.55rem; }
+        body { background: radial-gradient(circle, #ffec8b, #daa520, #8b6508); background-attachment: fixed; color: #333; font-family: sans-serif; font-size: var(--text-size); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 900px; background: rgba(255, 255, 255, 0.95); border: 2px solid var(--gold-primary); box-shadow: 0 0 15px #ffd700; border-radius: 8px; padding: 10px; box-sizing: border-box; }
+        .header { text-align: center; border-bottom: 1px solid var(--gold-primary); padding-bottom: 5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Config Box */
+        .config-box { background: #fff9e6; border: 1px solid #ffe58f; padding: 5px; margin-bottom: 8px; border-radius: 4px; display: flex; gap: 5px; align-items: center; }
+        input[type="text"], input[type="password"] { font-size: var(--text-size); padding: 2px 5px; border: 1px solid #ccc; border-radius: 2px; flex: 1; }
+
+        /* Action Row */
+        .action-row { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; }
+
+        .tabs { display: flex; gap: 5px; margin-bottom: 10px; }
+        .tab-btn { flex: 1; padding: 5px; cursor: pointer; background: #fffacd; border: 1px solid var(--gold-dark); font-size: var(--text-size); border-radius: 4px 4px 0 0; text-align: center; }
+        .tab-btn.active { background: var(--gold-primary); font-weight: bold; color: #000; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+
+        .btn { padding: 3px 8px; background: linear-gradient(to bottom, #ffd700, #b8860b); color: #000; border: 1px solid var(--gold-dark); border-radius: 3px; cursor: pointer; font-size: var(--text-size); font-weight: bold; }
+        
+        #drop-zone { border: 2px dashed var(--gold-dark); border-radius: 6px; padding: 15px; text-align: center; margin-bottom: 10px; background: rgba(255, 253, 240, 0.8); transition: background 0.3s; cursor: pointer; }
+        #drop-zone.dragover { background: #fff4a3; border-color: #000; }
+
+        .list-group { list-style: none; padding: 0; margin: 0; border: 1px solid #ddd; background: #fff; max-height: 400px; overflow-y: auto; }
+        .list-item { display: flex; align-items: center; padding: 4px 8px; border-bottom: 1px solid #eee; }
+        .list-item:hover { background: #fffacd; }
+        .list-item a { text-decoration: none; color: #0056b3; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .folder-link { color: #e24329 !important; font-weight: bold; cursor: pointer; }
+        .msg { background: #fff3cd; padding: 4px; margin-bottom: 5px; text-align: center; border-radius: 3px; font-weight: bold; }
+        .loader { display: none; color: var(--gold-dark); font-weight: bold; margin-left: 10px; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .footer { margin-top: 10px; text-align: center; font-size: 0.45rem; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h3 style="margin:0;">✨ HubLab vC - 雙視窗整合寫入版 ✨</h3>
+        <button class="btn" onclick="downloadSource()">⬇️ 下載源碼</button>
+    </div>
+
+    <!-- Token 管理 -->
+    <div class="config-box">
+        <span>🔑 GitHub Token:</span>
+        <input type="password" id="gh-token" placeholder="輸入 PAT 即可開啟 GitHub 寫入權限" />
+        <button class="btn" onclick="saveToken()">儲存 Token</button>
+    </div>
+
+    <!-- 拖拉區 (情境感知) -->
+    <div id="drop-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <strong>📂 拖入檔案上傳至 <span id="current-platform-name">GitHub</span>: <span id="current-target-path">/</span></strong>
+    </div>
+
+    <!-- 資料夾操作 -->
+    <div class="action-row">
+        <input type="text" id="new-folder-name" placeholder="新資料夾名稱" />
+        <button class="btn" onclick="createNewFolder()">建立資料夾</button>
+        <span id="loading-spinner" class="loader">⚙️ 處理中...</span>
+    </div>
+
+    <div class="tabs">
+        <div class="tab-btn active" onclick="switchTab(event, 'gh-tab')">🐙 GitHub</div>
+        <div class="tab-btn" onclick="switchTab(event, 'gl-tab')">🦊 GitLab (anly13)</div>
+    </div>
+
+    <!-- GitHub 視窗 -->
+    <div id="gh-tab" class="tab-content active">
+        <div class="msg" id="gh-msg">GitHub 載入中...</div>
+        <div style="margin-bottom:5px; display: flex; gap: 5px;">
+            <button class="btn" onclick="fetchGH('')">🏠 根目錄</button>
+            <button class="btn" onclick="goBackGH()">🔙 回上一層</button>
+        </div>
+        <ul id="gh-list" class="list-group"></ul>
+    </div>
+
+    <!-- GitLab 視窗 -->
+    <div id="gl-tab" class="tab-content">
+        <div class="msg" id="gl-msg">GitLab 載入中...</div>
+        <div style="margin-bottom:5px; display: flex; gap: 5px; align-items: center;">
+            <button class="btn" onclick="fetchGL('')">🏠 根目錄</button>
+            <button class="btn" onclick="goBackGL()">🔙 回上一層</button>
+            <span id="gl-path-display" style="color:#666;">/</span>
+        </div>
+        <ul id="gl-list" class="list-group"></ul>
+    </div>
+
+    <div class="footer">
+        Powered by Oeye | 支援雙平台導覽與 GitHub 實際寫入
+    </div>
+</div>
+
+<script>
+// 2. Fixed Data
+const CFG = {
+    GH: { OWNER: 'orlandotigereye', REPO: 'mytestweb' },
+    GL: { BASE: 'https://gitlab.com/api/v4', PID: 'orlandotigereye%2Fanly13', REF: 'main' }
+};
+
+// 3. Script
+let currentGHPath = "";
+let currentGLPath = "";
+let activeTab = 'gh'; // 'gh' or 'gl'
+let githubToken = localStorage.getItem('gh_token') || "";
+
+if(githubToken) document.getElementById('gh-token').value = githubToken;
+
+function saveToken() {
+    githubToken = document.getElementById('gh-token').value;
+    localStorage.setItem('gh_token', githubToken);
+    alert('Token 已儲存，現可進行 GitHub 實際操作。');
+    if(activeTab === 'gh') fetchGH(currentGHPath);
+}
+
+function switchTab(e, id) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    e.currentTarget.classList.add('active');
+    activeTab = (id === 'gh-tab') ? 'gh' : 'gl';
+    updateDropZoneTitle();
+}
+
+function updateDropZoneTitle() {
+    const platform = activeTab === 'gh' ? 'GitHub' : 'GitLab';
+    const path = activeTab === 'gh' ? (currentGHPath || '/') : (currentGLPath || '/');
+    document.getElementById('current-platform-name').innerText = platform;
+    document.getElementById('current-target-path').innerText = path === "" ? "/" : `/${path}`;
+}
+
+// --- GitHub 邏輯 ---
+async function fetchGH(path) {
+    currentGHPath = path;
+    updateDropZoneTitle();
+    const list = document.getElementById('gh-list');
+    const msg = document.getElementById('gh-msg');
+    list.innerHTML = ''; msg.innerText = `讀取 GitHub: /${path}`;
+    try {
+        const headers = githubToken ? { 'Authorization': `token ${githubToken}` } : {};
+        const res = await fetch(`https://api.github.com/repos/${CFG.GH.OWNER}/${CFG.GH.REPO}/contents/${path}?t=${Date.now()}`, { headers });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.message);
+        data.sort((a,b)=> (a.type==='dir'?-1:1)).forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'list-item';
+            if(item.type==='dir') {
+                li.innerHTML = `📁&nbsp;<a class="folder-link" onclick="fetchGH('${item.path}')">${item.name}</a>`;
+            } else {
+                li.innerHTML = `📄&nbsp;<a href="https://${CFG.GH.OWNER}.github.io/${CFG.GH.REPO}/${item.path}" target="_blank">${item.name}</a>`;
+            }
+            list.appendChild(li);
+        });
+        msg.innerText = `GitHub: OK (${data.length})`;
+    } catch(e) { msg.innerText = `GH 錯誤: ${e.message}`; }
+}
+
+function goBackGH() {
+    if (currentGHPath === "") return;
+    const parts = currentGHPath.split('/');
+    parts.pop();
+    fetchGH(parts.join('/'));
+}
+
+// --- GitLab 邏輯 ---
+async function fetchGL(path) {
+    currentGLPath = path;
+    updateDropZoneTitle();
+    const list = document.getElementById('gl-list');
+    const msg = document.getElementById('gl-msg');
+    const pathLabel = document.getElementById('gl-path-display');
+    list.innerHTML = ''; msg.innerText = `讀取 GitLab...`;
+    pathLabel.innerText = path === "" ? "/" : `/${path}`;
+
+    const url = `${CFG.GL.BASE}/projects/${CFG.GL.PID}/repository/tree?path=${encodeURIComponent(path)}&ref=${CFG.GL.REF}&per_page=100&t=${Date.now()}`;
+    try {
+        const res = await fetch(url);
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        data.sort((a,b)=> (a.type==='tree'?-1:1)).forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'list-item';
+            if(item.type==='tree') {
+                li.innerHTML = `📁&nbsp;<a class="folder-link" onclick="fetchGL('${item.path}')">${item.name}</a>`;
+            } else {
+                const fileUrl = `https://gitlab.com/orlandotigereye/anly13/-/blob/${CFG.GL.REF}/${item.path}`;
+                li.innerHTML = `📄&nbsp;<a href="${fileUrl}" target="_blank">${item.name}</a>`;
+            }
+            list.appendChild(li);
+        });
+        msg.innerText = `GitLab: OK (${data.length})`;
+    } catch(e) { msg.innerText = `GL 錯誤: ${e.message}`; }
+}
+
+function goBackGL() {
+    if (currentGLPath === "") return;
+    const parts = currentGLPath.split('/');
+    parts.pop();
+    fetchGL(parts.join('/'));
+}
+
+// --- 實際寫入邏輯 (GitHub) ---
+async function createNewFolder() {
+    if(activeTab !== 'gh') return alert('目前僅支援 GitHub 實際建立資料夾。');
+    const folderName = document.getElementById('new-folder-name').value.trim();
+    if(!folderName) return alert('請輸入資料夾名稱');
+    if(!githubToken) return alert('請先設定 GitHub Token 以獲得寫入權限');
+
+    const path = currentGHPath ? `${currentGHPath}/${folderName}/.gitkeep` : `${folderName}/.gitkeep`;
+    toggleLoader(true);
+    try {
+        await uploadToGitHub(path, "Create folder", btoa("HubLab Sync"), null);
+        alert(`資料夾 ${folderName} 已建立。`);
+        document.getElementById('new-folder-name').value = '';
+        fetchGH(currentGHPath);
+    } catch(e) { alert('建立失敗: ' + e.message); }
+    finally { toggleLoader(false); }
+}
+
+function handleDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('dragover'); }
+function handleDragLeave(e) { document.getElementById('drop-zone').classList.remove('dragover'); }
+async function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('drop-zone').classList.remove('dragover');
+    if(activeTab !== 'gh') return alert('目前僅支援 GitHub 實際拖拉上傳。');
+    if(!githubToken) return alert('請先設定 GitHub Token 以獲得寫入權限');
+    
+    const files = e.dataTransfer.files;
+    toggleLoader(true);
+    for(let file of files) {
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+        await new Promise((resolve) => {
+            reader.onload = async () => {
+                const base64 = btoa(new Uint8Array(reader.result).reduce((data, byte) => data + String.fromCharCode(byte), ''));
+                const path = currentGHPath ? `${currentGHPath}/${file.name}` : file.name;
+                try { await uploadToGitHub(path, `Upload: ${file.name}`, base64); resolve(); } 
+                catch(err) { alert(`${file.name} 錯誤: ${err.message}`); resolve(); }
+            };
+        });
+    }
+    toggleLoader(false);
+    fetchGH(currentGHPath);
+}
+
+async function uploadToGitHub(path, message, content) {
+    const url = `https://api.github.com/repos/${CFG.GH.OWNER}/${CFG.GH.REPO}/contents/${path}`;
+    let sha = null;
+    const check = await fetch(url, { headers: { 'Authorization': `token ${githubToken}` } });
+    if(check.ok) { const d = await check.json(); sha = d.sha; }
+    const res = await fetch(url, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${githubToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, content, sha: sha || undefined })
+    });
+    if(!res.ok) { const err = await res.json(); throw new Error(err.message); }
+}
+
+function toggleLoader(show) { document.getElementById('loading-spinner').style.display = show ? 'inline-block' : 'none'; }
+function downloadSource() {
+    const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'Dir_GitHub_Lab_C.html' });
+    a.click();
+}
+
+// 初始加載
+fetchGH('');
+fetchGL('');
+</script>
+</body>
+</html>
