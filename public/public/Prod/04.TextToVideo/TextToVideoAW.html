@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8" />
+    <title>Shizuku 背景錄製引擎 (v5.8) - AW版 標題優化與自動動作</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script src="https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js"></script>
+    <style>
+        /* 1. CSS (精簡、RWD、小字模式) */
+        :root { --gold: #D4AF37; --bg: #FDFDFD; --dark: #333; }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; font-size: 10px; background: #f0f2f5; margin: 0; padding: 5px; color: var(--dark); display: flex; justify-content: center; }
+        .card { width: 100%; max-width: 854px; background: var(--bg); border-radius: 8px; border: 1px solid var(--gold); overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative; z-index: 10; }
+        .header { background: #fff; padding: 10px; text-align: center; border-bottom: 1px solid #eee; }
+        .header h2 { margin: 0; font-size: 13px; color: var(--gold); }
+        .tabs { display: flex; background: #eee; border-bottom: 1px solid var(--gold); }
+        .tab-btn { flex: 1; padding: 10px 5px; border: none; background: none; cursor: pointer; font-size: 10px; font-weight: bold; color: #666; transition: 0.3s; }
+        .tab-btn.active { background: #fff; color: var(--gold); border-bottom: 2px solid var(--gold); }
+        .tab-content { display: none; padding: 12px; min-height: 300px; box-sizing: border-box; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        .btn { background: linear-gradient(135deg, var(--gold), #f1c40f); color: #000; border: none; width: 100%; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; margin-top: 5px; touch-action: manipulation; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        #log { margin-top: 8px; padding: 8px; background: #fafafa; border-radius: 4px; border: 1px dashed #ccc; font-family: 'Consolas', monospace; font-size: 9px; white-space: pre-wrap; height: 110px; overflow-y: auto; }
+        #canvas-wrap { width: 100%; display: flex; justify-content: center; background: #222; padding: 4px; border-radius: 6px; margin-top: 5px; box-sizing: border-box; overflow: hidden; }
+        canvas { max-width: 100%; height: auto !important; border: 1px solid var(--gold); background: #fff; }
+        @media (max-width: 600px) { .btn { padding: 15px; font-size: 13px; } .header h2 { font-size: 11px; } }
+        /* Live2D 隔離 */
+        #l2d-isolate-zone { position: absolute; left: -5000px; top: -5000px; width: 300px; height: 400px; z-index: -9999; pointer-events: none; }
+        #live2d-widget, .live2d-widget-container { position: fixed !important; left: -5000px !important; top: -5000px !important; visibility: visible !important; opacity: 1 !important; }
+        .footer { padding: 8px; text-align: center; background: #f9f9f9; font-size: 8px; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <h2>Shizuku Studio AW (AL重製版 v5.8)</h2>
+        <div style="font-size:8px;color:#999;margin-top:2px">智慧標題縮放 · 3-6s 自動動作 · AL效能基準</div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'control')">1. 設定</button>
+        <button class="tab-btn" onclick="switchTab(event, 'progress')">2. 錄製</button>
+        <button class="tab-btn" onclick="switchTab(event, 'preview')">3. 預覽</button>
+    </div>
+
+    <div id="control" class="tab-content active">
+        <input type="file" id="f" accept=".txt,.md" multiple style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; font-size:10px" />
+        <div style="background:#f6ffed; padding:10px; border-radius:6px; border:1px solid #b7eb8f; line-height:1.5; font-size:9px; margin-top:10px">
+            <strong style="color:#389e0d">🛠️ AW 版修改重點：</strong>
+            <ul style="margin:3px 0 0 15px; padding:0">
+                <li><strong>標題自動分行</strong>：標題字數過多時自動分為兩行顯示。</li>
+                <li><strong>標題自動縮字</strong>：若分兩行仍過長，系統會自動調降字體至完全適配。</li>
+                <li><strong>動作自動誘發</strong>：錄製中每 3-6 秒隨機觸發角色互動動作。</li>
+                <li><strong>其餘功能</strong>：完全沿襲 AL 版的高效能錄製邏輯。</li>
+            </ul>
+        </div>
+        <button class="btn" id="start-btn" onclick="startProduction()" disabled>正在準備引擎...</button>
+    </div>
+
+    <div id="progress" class="tab-content">
+        <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:10px">
+            <span id="status-text">準備錄製...</span>
+            <span id="percent-text">0%</span>
+        </div>
+        <div style="width:100%; height:6px; background:#eee; border-radius:3px; overflow:hidden; margin:8px 0">
+            <div id="p-bar-fill" style="width:0%; height:100%; background:var(--gold); transition:0.3s"></div>
+        </div>
+        <div id="log">系統就緒。</div>
+    </div>
+
+    <div id="preview" class="tab-content">
+        <div id="canvas-wrap"><canvas id="master-canvas" width="854" height="480"></canvas></div>
+    </div>
+
+    <div class="footer">
+        <button onclick="downloadSource()" style="background:none; border:1px solid #ccc; padding:3px 10px; font-size:8px; color:#aaa; border-radius:4px; cursor:pointer">下載源碼 (AW版)</button>
+    </div>
+</div>
+
+<div id="l2d-isolate-zone"></div>
+
+<script>
+// 2. Fixed Data & Buffers
+const CONFIG = {
+    SEC_PER_SLIDE: 6,
+    TRANSITION_SEC: 1.0,
+    FPS: 20,
+    MODEL_PATH: "https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json",
+    CANVAS_WIDTH: 854,
+    CANVAS_HEIGHT: 480,
+    TEXT_MARGIN_X: 85,
+    TEXT_MARGIN_Y: 185,
+    TEXT_MAX_WIDTH: 450,
+    LINE_HEIGHT: 48,
+    AVATAR_RADIUS: 125,
+    CHAR_HARD_LIMIT: 100 // 單頁文字上限，防止溢出
+};
+
+let slides = [];
+let mediaRecorder;
+let recordedChunks = [];
+let isModelReady = false;
+let l2dCanvasReference = null;
+let rafId = null;
+let actionTimer = null; // 新增：自動動作計時器
+
+const prevBuffer = document.createElement('canvas');
+const nextBuffer = document.createElement('canvas');
+[prevBuffer, nextBuffer].forEach(c => { c.width = CONFIG.CANVAS_WIDTH; c.height = CONFIG.CANVAS_HEIGHT; });
+
+window.onload = () => {
+    addLog("🚀 AW 版啟動：重製標題縮放與自動動作機制。");
+    initLive2D();
+};
+
+function addLog(msg) {
+    const log = document.getElementById("log");
+    log.textContent += `\n[${new Date().toLocaleTimeString()}] ${msg}`;
+    log.scrollTop = log.scrollHeight;
+}
+
+function switchTab(e, id) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if(e) e.currentTarget.classList.add('active');
+    else document.querySelector(`[onclick*="${id}"]`).classList.add('active');
+}
+
+function initLive2D() {
+    try {
+        L2Dwidget.init({
+            model: { jsonPath: CONFIG.MODEL_PATH, scale: 1 },
+            display: { superBase: document.getElementById('l2d-isolate-zone'), width: 300, height: 400 },
+            mobile: { show: true, scale: 0.5 },
+            react: { opacity: 1 }
+        });
+        let attempts = 0;
+        const check = setInterval(() => {
+            const canvas = document.querySelector('#live2d-widget canvas') || document.querySelector('#l2d-isolate-zone canvas');
+            if (canvas) {
+                clearInterval(check);
+                l2dCanvasReference = canvas;
+                isModelReady = true;
+                addLog("✅ 引擎就緒。自動動作計時器已待命。");
+                document.getElementById("start-btn").disabled = false;
+                document.getElementById("start-btn").textContent = "啟動智慧錄製模式";
+            }
+            if (++attempts > 150) clearInterval(check);
+        }, 200);
+    } catch (e) { addLog("❌ 錯誤: " + e.message); }
+}
+
+// 新增：自動觸發 Live2D 動作 (3-6秒)
+function triggerAutoAction() {
+    if (!l2dCanvasReference) return;
+    const rect = l2dCanvasReference.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 3;
+    l2dCanvasReference.dispatchEvent(new MouseEvent("mousedown", { clientX: x, clientY: y, bubbles: true }));
+    l2dCanvasReference.dispatchEvent(new MouseEvent("mouseup", { clientX: x, clientY: y, bubbles: true }));
+    
+    const nextSec = Math.random() * (6 - 3) + 3;
+    actionTimer = setTimeout(triggerAutoAction, nextSec * 1000);
+}
+
+async function startProduction() {
+    const fileInput = document.getElementById("f");
+    if (!fileInput.files.length) { alert("請提供教材檔案"); return; }
+    switchTab(null, 'progress');
+    document.getElementById("start-btn").disabled = true;
+    addLog("📡 正在解析內容並執行雙重切割檢查...");
+
+    slides = [];
+    let fileTitles = [];
+    for (let file of fileInput.files) {
+        const decoder = new TextDecoder('utf-8');
+        const text = decoder.decode(await file.arrayBuffer());
+        let lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length > 0) {
+            let title = lines[0].replace(/^#+\s*/, '').trim();
+            fileTitles.push(title);
+            const fullBody = lines.slice(1).join(" ").replace(/\s+/g, ' ');
+            
+            // 第一層：按句號切割
+            const rawSentences = fullBody.match(/[^。.]*[。.]/g) || [fullBody];
+            
+            // 第二層：防溢出切割 (Hard Limit)
+            let processedSentences = [];
+            rawSentences.forEach(s => {
+                if (s.length > CONFIG.CHAR_HARD_LIMIT) {
+                    for (let i = 0; i < s.length; i += CONFIG.CHAR_HARD_LIMIT) {
+                        processedSentences.push(s.substring(i, i + CONFIG.CHAR_HARD_LIMIT));
+                    }
+                } else {
+                    processedSentences.push(s);
+                }
+            });
+
+            let temp = "";
+            processedSentences.forEach(s => {
+                if ((temp + s).length > CONFIG.CHAR_HARD_LIMIT) {
+                    if (temp) slides.push({ title, body: temp });
+                    temp = s;
+                } else {
+                    temp += s;
+                }
+            });
+            if (temp) slides.push({ title, body: temp });
+        }
+    }
+    const summaryList = fileTitles.map((t, idx) => `${idx + 1}. ${t}`).join("\n");
+    slides.push({ title: "課程內容總結", body: `今天討論的主題包含：\n${summaryList}\n\n今天討論的內容如上，下次見。我是 Oeye (Orlandotigereye)。` });
+
+    addLog(`📝 解析完成：${slides.length} 個分鏡已就緒。開始錄製。`);
+    prepareRecording();
+}
+
+function getMimeType() {
+    const types = ['video/webm;codecs=vp9', 'video/webm', 'video/mp4'];
+    for (let t of types) if (MediaRecorder.isTypeSupported(t)) return t;
+    return '';
+}
+
+function prepareRecording() {
+    const master = document.getElementById("master-canvas");
+    const stream = master.captureStream(CONFIG.FPS);
+    recordedChunks = [];
+    const mime = getMimeType();
+    addLog(`🎬 錄製編碼: ${mime || '預設'}`);
+    
+    try { mediaRecorder = new MediaRecorder(stream, mime ? { mimeType: mime } : {}); } 
+    catch(e) { mediaRecorder = new MediaRecorder(stream); }
+    
+    mediaRecorder.ondataavailable = (e) => { if(e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = exportVideo;
+    mediaRecorder.start();
+    
+    triggerAutoAction(); // 啟動自動動作
+    renderLoopRAF(master.getContext("2d"), 0);
+}
+
+function renderLoopRAF(ctx, slideIdx) {
+    if (slideIdx >= slides.length) { mediaRecorder.stop(); return; }
+
+    const s = slides[slideIdx];
+    const totalFrames = CONFIG.SEC_PER_SLIDE * CONFIG.FPS;
+    const transitionFrames = CONFIG.TRANSITION_SEC * CONFIG.FPS;
+    let currentFrame = 0;
+    let lastTime = 0;
+    const frameInterval = 1000 / CONFIG.FPS;
+
+    if (slideIdx > 0) drawSlide(prevBuffer.getContext('2d'), slides[slideIdx - 1]);
+    drawSlide(nextBuffer.getContext('2d'), s);
+
+    function frame(time) {
+        const delta = time - lastTime;
+        if (delta >= frameInterval) {
+            lastTime = time - (delta % frameInterval);
+            
+            ctx.clearRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+            if (slideIdx > 0 && currentFrame < transitionFrames) {
+                const wipeX = CONFIG.CANVAS_WIDTH * (currentFrame / transitionFrames);
+                ctx.drawImage(prevBuffer, 0, 0);
+                ctx.save();
+                ctx.beginPath(); ctx.rect(0, 0, wipeX, CONFIG.CANVAS_HEIGHT); ctx.clip();
+                ctx.drawImage(nextBuffer, 0, 0);
+                ctx.restore();
+                ctx.fillStyle = "rgba(212, 175, 55, 0.8)"; ctx.fillRect(wipeX - 4, 0, 8, CONFIG.CANVAS_HEIGHT);
+                ctx.shadowBlur = 15; ctx.shadowColor = "var(--gold)"; ctx.fillRect(wipeX - 1, 0, 2, CONFIG.CANVAS_HEIGHT);
+                ctx.shadowBlur = 0;
+            } else {
+                ctx.drawImage(nextBuffer, 0, 0);
+            }
+            drawHost(ctx);
+            
+            const total = slides.length * totalFrames;
+            const prog = ((slideIdx * totalFrames + currentFrame) / total) * 100;
+            document.getElementById("p-bar-fill").style.width = prog + "%";
+            document.getElementById("percent-text").textContent = Math.round(prog) + "%";
+
+            currentFrame++;
+            if (currentFrame >= totalFrames) {
+                renderLoopRAF(ctx, slideIdx + 1);
+                return;
+            }
+        }
+        rafId = requestAnimationFrame(frame);
+    }
+    rafId = requestAnimationFrame(frame);
+}
+
+function drawSlide(tCtx, slide) {
+    tCtx.fillStyle = "#FFFFFF"; tCtx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    tCtx.strokeStyle = "#D4AF37"; tCtx.lineWidth = 14; tCtx.strokeRect(7, 7, CONFIG.CANVAS_WIDTH - 14, CONFIG.CANVAS_HEIGHT - 14);
+    
+    // 修改：智慧標題繪製 (智慧分行 + 自動縮字)
+    drawSmartTitle(tCtx, slide.title, 60, 50, 500);
+    
+    tCtx.fillStyle = "#333";
+    if (slide.title === "課程內容總結") {
+        tCtx.font = "19px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+        drawWrappedText(tCtx, slide.body, CONFIG.TEXT_MARGIN_X, CONFIG.TEXT_MARGIN_Y - 20, CONFIG.TEXT_MAX_WIDTH, 34);
+    } else {
+        tCtx.font = "22px 'PingFang TC', 'Microsoft JhengHei', sans-serif";
+        drawWrappedText(tCtx, slide.body, CONFIG.TEXT_MARGIN_X, CONFIG.TEXT_MARGIN_Y, CONFIG.TEXT_MAX_WIDTH, CONFIG.LINE_HEIGHT);
+    }
+}
+
+function drawSmartTitle(ctx, title, x, y, maxBoxWidth) {
+    let fontSize = 26;
+    ctx.font = `bold ${fontSize}px 'PingFang TC', 'Microsoft JhengHei', sans-serif`;
+    let limit = maxBoxWidth - 70;
+    
+    if (ctx.measureText(title).width <= limit) {
+        // 單行顯示
+        ctx.fillStyle = "#D4AF37"; ctx.fillRect(x, y, maxBoxWidth, 55);
+        ctx.fillStyle = "#FFF"; ctx.fillText(title, x + 35, y + 38);
+    } else {
+        // 分兩行顯示，並執行自動縮字邏輯
+        fontSize = 22;
+        ctx.font = `bold ${fontSize}px 'PingFang TC', 'Microsoft JhengHei', sans-serif`;
+        let mid = Math.ceil(title.length / 2);
+        let l1 = title.substring(0, mid), l2 = title.substring(mid);
+        
+        // 持續縮小字體直到適配
+        while ((ctx.measureText(l1).width > limit || ctx.measureText(l2).width > limit) && fontSize > 12) {
+            fontSize--;
+            ctx.font = `bold ${fontSize}px 'PingFang TC', 'Microsoft JhengHei', sans-serif`;
+        }
+        
+        ctx.fillStyle = "#D4AF37"; ctx.fillRect(x, y, maxBoxWidth, 80);
+        ctx.fillStyle = "#FFF";
+        ctx.fillText(l1, x + 35, y + 32);
+        ctx.fillText(l2, x + 35, y + 62);
+    }
+}
+
+function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
+    const lines = text.split('\n');
+    let curY = y;
+    lines.forEach(l => {
+        const chars = l.split('');
+        let lineText = '';
+        let curX = x;
+        for (let char of chars) {
+            const w = ctx.measureText(char).width;
+            if (ctx.measureText(lineText + char).width > maxWidth) {
+                curY += lineHeight; curX = x; lineText = '';
+            }
+            ctx.fillText(char, curX, curY);
+            curX += w + 1.5; lineText += char;
+        }
+        curY += lineHeight;
+    });
+}
+
+function drawHost(ctx) {
+    if (!l2dCanvasReference) return;
+    const cx = CONFIG.CANVAS_WIDTH - 160, cy = CONFIG.CANVAS_HEIGHT - 160, radius = CONFIG.AVATAR_RADIUS;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.drawImage(l2dCanvasReference, cx - radius, cy - radius - 35, radius * 2, radius * 2.8);
+    ctx.restore();
+    ctx.strokeStyle = "#D4AF37"; ctx.lineWidth = 6; ctx.stroke();
+}
+
+function exportVideo() {
+    cancelAnimationFrame(rafId);
+    clearTimeout(actionTimer); // 停止自動動作
+    const blob = new Blob(recordedChunks, { type: recordedChunks[0].type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `Studio_AW_ALRef_${Date.now()}.mp4`;
+    a.click();
+    addLog("✨ 智慧錄製完成，影片已下載。");
+    document.getElementById("start-btn").disabled = false;
+}
+
+function downloadSource() {
+    const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'TextToVideoAW.html' });
+    a.click();
+}
+</script>
+</body>
+</html>
