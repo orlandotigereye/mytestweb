@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>黃金 AI 簡筆草圖工作站</title>
+    <!-- 核心繪圖與拖曳庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.1.2/dist/svg.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.draggable.js@3.0.2/dist/svg.draggable.min.js"></script>
+    <!-- 圖像轉換庫 (UMD版) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.10/lib/umd.js"></script>
+    <style>
+        :root {
+            --gold-primary: #ffd700;
+            --gold-light: #fff3b0;
+            --gold-dark: #b8860b;
+            --text-size: 0.5rem;
+            --bg-pattern: url('https://www.transparenttextures.com/patterns/gold-glitter.png');
+        }
+
+        * {
+            box-sizing: border-box;
+            font-size: var(--text-size);
+            font-family: "Microsoft JhengHei", sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        body {
+            margin: 0;
+            padding: 5px;
+            background: var(--gold-dark) var(--bg-pattern) fixed;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .main-card {
+            width: 100%;
+            max-width: 600px;
+            height: 98vh;
+            background: linear-gradient(135deg, #fff9e6 0%, #ffeb99 100%);
+            border: 4px ridge var(--gold-primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 12px;
+            padding: 4px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            padding: 2px;
+            border-bottom: 2px solid var(--gold-primary);
+            margin-bottom: 4px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 0.7rem;
+            color: #7a5d00;
+            text-shadow: 1px 1px 0px white;
+        }
+
+        /* 分頁 */
+        .tabs {
+            display: flex;
+            margin-bottom: 4px;
+            background: rgba(184, 134, 11, 0.2);
+            border-radius: 4px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 3px 1px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: #555;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--gold-primary);
+            color: #000;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 2px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 4px;
+            margin-bottom: 2px;
+            border: 1px inset var(--gold-primary);
+        }
+
+        .tab-content.active { display: block; }
+
+        /* 工具列 */
+        .toolbar {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2px;
+        }
+
+        .tool-btn {
+            background: linear-gradient(to bottom, #fff, #ffd700);
+            border: 1px solid var(--gold-dark);
+            border-radius: 3px;
+            padding: 2px 0;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 26px;
+        }
+
+        .tool-btn span { font-size: 0.5rem; transform: scale(0.95); }
+
+        .tool-btn.selected {
+            background: #ff4500 !important;
+            color: white !important;
+            border-color: #8b0000;
+        }
+
+        /* 畫布 */
+        #viewport {
+            flex: 1;
+            width: 100%;
+            background: white;
+            border: 2px double var(--gold-dark);
+            border-radius: 4px;
+            position: relative;
+            touch-action: none;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        #canvas-inner { width: 100%; height: 100%; }
+
+        /* 狀態列 */
+        .status-msg {
+            background: white;
+            border-radius: 8px;
+            padding: 2px 6px;
+            margin: 2px 0;
+            border: 1px solid var(--gold-primary);
+            text-align: center;
+            font-weight: bold;
+            min-height: 0.8rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 存檔列表 */
+        .archive-list {
+            max-height: 120px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .archive-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.95);
+            padding: 2px;
+            border-radius: 3px;
+            border: 1px solid var(--gold-primary);
+            gap: 4px;
+        }
+
+        /* Loading */
+        #loading-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: var(--gold-dark);
+            font-weight: bold;
+            flex-direction: column;
+        }
+
+        .line-counter {
+            position: absolute;
+            bottom: 4px; right: 8px; color: #7a5d00; font-size: 0.5rem; pointer-events: none;
+        }
+
+        input, textarea { 
+            width: 100%; padding: 3px; border: 1px solid var(--gold-dark); border-radius: 3px; background: #fff;
+        }
+
+        .source-btn {
+            position: absolute;
+            top: 2px; right: 4px; background: #000; color: #ffd700; padding: 1px 4px; border-radius: 3px; text-decoration: none; z-index: 100; font-size: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-card">
+    <a href="javascript:void(0)" class="source-btn" onclick="downloadCode()">💾 下載程式</a>
+    
+    <div class="header">
+        <h1>🏆 黃金 AI 簡筆草圖工作站</h1>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="setTab(0)">🎨 繪製</button>
+        <button class="tab-btn" onclick="setTab(1)">📐 筆觸</button>
+        <button class="tab-btn" onclick="setTab(2)">🪄 AI 生成</button>
+        <button class="tab-btn" onclick="setTab(3)">📦 珍藏庫</button>
+    </div>
+
+    <!-- 繪圖工具 -->
+    <div id="tab-0" class="tab-content active">
+        <div class="toolbar">
+            <div id="btn-draw" class="tool-btn selected" onclick="setTool('draw')"><span>🖋️ 手繪</span></div>
+            <div id="btn-move" class="tool-btn" onclick="setTool('move')"><span>🖐️ 移動</span></div>
+            <div class="tool-btn" onclick="undo()"><span>↩️ 上一步</span></div>
+            <div class="tool-btn" onclick="cloneSelected()"><span>👯 複製</span></div>
+            <div class="tool-btn" onclick="mirrorSelected()"><span>↔️ 翻轉</span></div>
+            <div class="tool-btn" onclick="setTool('erase')"><span>🧽 橡皮</span></div>
+        </div>
+        <div class="toolbar" style="margin-top:2px;">
+            <div class="tool-btn" onclick="clearCanvas()"><span>🚫 清空</span></div>
+            <div class="tool-btn" onclick="saveToArchive()"><span>💾 存檔</span></div>
+            <div class="tool-btn" onclick="exportImg()"><span>📤 匯出</span></div>
+        </div>
+    </div>
+
+    <!-- 筆觸設定 -->
+    <div id="tab-1" class="tab-content">
+        <div style="display:grid; grid-template-columns: 1fr 3fr; gap:4px; align-items:center;">
+            <span>筆色:</span><input type="color" id="colorPicker" value="#000000">
+            <span>粗細:</span><input type="range" id="sizeSlider" min="1" max="20" value="2">
+            <span>透明:</span><input type="range" id="opacitySlider" min="1" max="10" value="10" oninput="adjustOpacity(this.value)">
+        </div>
+        <p style="margin:2px 0; color:#666; font-size:0.5rem;">* 透明度影響選中物件，方便描圖。</p>
+    </div>
+
+    <!-- AI 生成 -->
+    <div id="tab-2" class="tab-content">
+        <div style="display:flex; flex-direction:column; gap:3px;">
+            <textarea id="aiPrompt" rows="1" placeholder="留空則依畫生成，或輸入：戴帽子、變長髮..."></textarea>
+            <div class="toolbar" style="grid-template-columns: 1fr 1fr;">
+                <button class="tool-btn" onclick="generateFromCanvas()">🖼️ 依畫圖生成 (白底簡筆)</button>
+                <button class="tool-btn" onclick="generateAISketch()">✨ 文生簡筆圖</button>
+            </div>
+            <div id="ai-preview-panel" style="display:none; text-align:center; padding:3px; border:1px dashed var(--gold-primary); background:#fff; border-radius:4px;">
+                <img id="ai-preview-img" style="max-height:100px; border:1px solid #ccc;">
+                <div style="display:flex; gap:2px; margin-top:2px;">
+                    <button class="tool-btn" style="flex:1" onclick="applyPreviewToCanvas()">📥 載入畫布</button>
+                    <button class="tool-btn" style="flex:1" onclick="saveToArchiveFromAI()">📦 存入珍藏</button>
+                    <button class="tool-btn" style="flex:0.2" onclick="closePreview()">❌</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 珍藏庫 -->
+    <div id="tab-3" class="tab-content">
+        <div id="archive-list" class="archive-list"></div>
+        <button class="tool-btn" style="width:100%; color:red; margin-top:4px; border-color:red;" onclick="clearArchive()">🔥 清空本機紀錄</button>
+    </div>
+
+    <div id="status" class="status-msg">就緒。</div>
+
+    <div id="viewport">
+        <div id="loading-overlay">
+            <div style="font-size:1rem;">✨</div>
+            <span>AI 繪製簡筆圖...</span>
+        </div>
+        <div id="canvas-inner"></div>
+    </div>
+
+    <div id="line-info" class="line-counter">Lines: 0</div>
+</div>
+
+<script>
+    const apiKey = ""; // 自動注入
+    const V_W = 800, V_H = 1000, STORAGE_KEY = "SIMPLE_SKETCH_V2";
+    let mainDraw, toolMode = 'draw', isMouseDown = false, activeStroke = null, sceneObjects = [], selectedElement = null;
+    let undoStack = [], lastGeneratedB64 = "";
+
+    window.onload = () => {
+        mainDraw = SVG().addTo('#canvas-inner').viewbox(0, 0, V_W, V_H).size('100%', '100%');
+        initInteraction();
+        renderArchive();
+        updateLineCount();
+    };
+
+    function updateLineCount() {
+        const lines = document.documentElement.outerHTML.split('\n').length;
+        document.getElementById('line-info').innerText = `Lines: ${lines}`;
+    }
+
+    // --- 撤銷系統 ---
+    function pushUndo() {
+        undoStack.push(mainDraw.svg());
+        if(undoStack.length > 30) undoStack.shift();
+    }
+
+    function undo() {
+        if(undoStack.length > 0) {
+            const last = undoStack.pop();
+            mainDraw.clear();
+            mainDraw.svg(last);
+            sceneObjects = Array.from(mainDraw.children());
+            refreshEventHandlers();
+            msg("已回退。");
+        } else {
+            msg("無紀錄。");
+        }
+    }
+
+    // --- 工具與選取 ---
+    function setTab(i) {
+        document.querySelectorAll('.tab-btn').forEach((b,idx)=>b.classList.toggle('active', idx===i));
+        document.querySelectorAll('.tab-content').forEach((c,idx)=>c.classList.toggle('active', idx===i));
+    }
+
+    function msg(m) { document.getElementById('status').innerText = m; }
+
+    function setTool(t) {
+        toolMode = t;
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('selected'));
+        if(document.getElementById('btn-' + t)) document.getElementById('btn-' + t).classList.add('selected');
+        const isMove = (t === 'move');
+        msg(isMove ? "移動模式：點選物件並拖曳。" : "繪圖模式中。");
+        refreshEventHandlers();
+    }
+
+    function refreshEventHandlers() {
+        const isMove = (toolMode === 'move');
+        sceneObjects.forEach(obj => {
+            if (obj && typeof obj.draggable === 'function') {
+                obj.draggable(isMove);
+                if(isMove) {
+                    obj.off('click').on('click', function(e) { e.stopPropagation(); selectElement(this); });
+                } else {
+                    obj.off('click');
+                }
+            }
+        });
+    }
+
+    function selectElement(el) {
+        if(selectedElement) selectedElement.attr('stroke-dasharray', null);
+        selectedElement = el;
+        selectedElement.attr('stroke-dasharray', '8,4');
+        msg("已選取。");
+    }
+
+    function cloneSelected() {
+        if(!selectedElement) { msg("請先選取。"); return; }
+        pushUndo();
+        const clone = selectedElement.clone();
+        clone.move(selectedElement.x() + 20, selectedElement.y() + 20);
+        mainDraw.add(clone);
+        sceneObjects.push(clone);
+        refreshEventHandlers();
+        selectElement(clone);
+        msg("已複製。");
+    }
+
+    function mirrorSelected() {
+        if(!selectedElement) return;
+        pushUndo();
+        const box = selectedElement.bbox();
+        selectedElement.transform({ flip: 'x', origin: [box.cx, box.cy] }, true);
+        msg("已翻轉。");
+    }
+
+    function adjustOpacity(val) {
+        if(selectedElement) selectedElement.opacity(val / 10);
+    }
+
+    // --- 繪圖互動 ---
+    function initInteraction() {
+        const viewport = document.getElementById('viewport');
+        const getXY = (e) => {
+            const r = viewport.getBoundingClientRect();
+            const cx = (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX;
+            const cy = (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY;
+            return { x: (cx - r.left) * (V_W / r.width), y: (cy - r.top) * (V_H / r.height) };
+        };
+
+        const onStart = (e) => {
+            if(toolMode === 'move') return;
+            pushUndo();
+            isMouseDown = true;
+            const p = getXY(e);
+            if (toolMode === 'draw') {
+                const color = document.getElementById('colorPicker').value;
+                const width = document.getElementById('sizeSlider').value;
+                activeStroke = mainDraw.path(`M ${p.x} ${p.y}`).fill('none').stroke({ color, width, linecap: 'round', linejoin: 'round' });
+                sceneObjects.push(activeStroke);
+            }
+        };
+
+        const onMove = (e) => {
+            if(!isMouseDown || toolMode !== 'draw' || !activeStroke) return;
+            e.preventDefault();
+            const p = getXY(e);
+            const arr = activeStroke.array();
+            const lastPt = arr[arr.length - 1];
+            if (Math.hypot(p.x - lastPt[1], p.y - lastPt[2]) > 3) { 
+                arr.push(['L', p.x, p.y]);
+                activeStroke.plot(arr);
+            }
+        };
+
+        const onEnd = () => { isMouseDown = false; activeStroke = null; updateLineCount(); };
+
+        viewport.addEventListener('mousedown', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        viewport.addEventListener('touchstart', onStart, {passive:false});
+        window.addEventListener('touchmove', onMove, {passive:false});
+        window.addEventListener('touchend', onEnd);
+    }
+
+    // --- AI 生成 ---
+    async function generateAISketch() {
+        const userPrompt = document.getElementById('aiPrompt').value || "cute object";
+        const loading = document.getElementById('loading-overlay');
+        loading.style.display = 'flex';
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
+            const res = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify({
+                    instances: [{ prompt: `Minimalist simple line art, rough hand-drawn sketch, black lines on PURE WHITE background, high contrast, NO DARK BACKGROUND, NO SHADING, NO COLOR, ${userPrompt}` }],
+                    parameters: { sampleCount: 1 }
+                })
+            });
+            const data = await res.json();
+            if(data.predictions) {
+                lastGeneratedB64 = data.predictions[0].bytesBase64Encoded;
+                showPreview(`data:image/png;base64,${lastGeneratedB64}`);
+                msg("文生圖成功。");
+            } else { throw new Error("無數據"); }
+        } catch (e) { msg("生成失敗。"); } finally { loading.style.display = 'none'; }
+    }
+
+    async function generateFromCanvas() {
+        const loading = document.getElementById('loading-overlay');
+        loading.style.display = 'flex';
+        msg("正在依圖優化為白底簡筆...");
+
+        try {
+            const svgStr = mainDraw.svg();
+            const canvas = document.createElement('canvas');
+            canvas.width = V_W; canvas.height = V_H;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = "white"; ctx.fillRect(0, 0, V_W, V_H);
+            
+            const v = await canvg.Canvg.fromString(ctx, svgStr);
+            await v.render();
+            const b64 = canvas.toDataURL('image/png').split(',')[1];
+
+            let userPrompt = document.getElementById('aiPrompt').value;
+            // 強化提示詞：絕對不要黑背景
+            let finalPrompt = userPrompt 
+                ? `Modify this sketch based on: "${userPrompt}". OUTPUT: Simple minimalist line art, pure black lines, PURE WHITE BACKGROUND ONLY. ABSOLUTELY NO BLACK OR DARK BACKGROUNDS.`
+                : `Refine this sketch. OUTPUT: Clean minimalist line art, simple hand-drawn style, black lines, PURE WHITE BACKGROUND. NO SHADING, NO TEXTURE, NO BLACK BACKGROUND.`;
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+            const res = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: finalPrompt }, { inlineData: { mimeType: "image/png", data: b64 } }] }],
+                    generationConfig: { responseModalities: ['IMAGE'] }
+                })
+            });
+            const data = await res.json();
+            const resultPart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+            if(resultPart) {
+                lastGeneratedB64 = resultPart.inlineData.data;
+                showPreview(`data:image/png;base64,${lastGeneratedB64}`);
+                msg("生成完畢（已校正背景）。");
+            } else { msg("AI 無法處理。"); }
+        } catch (e) { console.error(e); msg("轉換失敗。"); } finally { loading.style.display = 'none'; }
+    }
+
+    function showPreview(src) {
+        document.getElementById('ai-preview-img').src = src;
+        document.getElementById('ai-preview-panel').style.display = 'block';
+    }
+
+    function applyPreviewToCanvas() {
+        if(!lastGeneratedB64) return;
+        pushUndo();
+        const img = mainDraw.image(`data:image/png;base64,${lastGeneratedB64}`).size(500, 500).center(V_W/2, V_H/2);
+        sceneObjects.push(img);
+        refreshEventHandlers();
+        closePreview();
+        setTool('move');
+        selectElement(img);
+        msg("已匯入畫布。");
+    }
+
+    function saveToArchiveFromAI() {
+        if(!lastGeneratedB64) return;
+        const tempDraw = SVG().size(V_W, V_H);
+        tempDraw.image(`data:image/png;base64,${lastGeneratedB64}`).size(500, 500).center(V_W/2, V_H/2);
+        saveData(tempDraw.svg(), "AI 草圖");
+        closePreview();
+    }
+
+    function closePreview() { document.getElementById('ai-preview-panel').style.display = 'none'; }
+
+    // --- 存檔與匯出 ---
+    function saveToArchive() { saveData(mainDraw.svg(), "手繪存檔"); }
+
+    function saveData(svg, label) {
+        const archives = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        archives.unshift({ id: Date.now(), svg: svg, label: label, time: new Date().toLocaleTimeString() });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(archives.slice(0, 30)));
+        renderArchive();
+        msg(`「${label}」已存。`);
+    }
+
+    function renderArchive() {
+        const list = document.getElementById('archive-list');
+        const archives = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        list.innerHTML = archives.length === 0 ? "<div style='text-align:center; font-size:0.5rem; color:#888;'>無存檔</div>" : "";
+        archives.forEach(item => {
+            const div = document.createElement('div');
+            div.className = "archive-item";
+            div.innerHTML = `
+                <div style="flex:1;"><b>${item.label}</b> <span style="font-size:0.5rem; color:#666;">${item.time}</span></div>
+                <div>
+                    <button class="tool-btn" style="min-height:auto; padding:2px 6px;" onclick="loadArchive(${item.id})">載入</button>
+                    <button class="tool-btn" style="min-height:auto; padding:2px 6px; border-color:red; color:red;" onclick="deleteArchive(${item.id})">刪</button>
+                </div>`;
+            list.appendChild(div);
+        });
+    }
+
+    function loadArchive(id) {
+        const archives = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        const item = archives.find(a => a.id === id);
+        if(item) { 
+            pushUndo(); mainDraw.clear(); mainDraw.svg(item.svg); 
+            sceneObjects = Array.from(mainDraw.children()); 
+            refreshEventHandlers();
+            msg("已載入。"); 
+            setTool('move'); 
+        }
+    }
+
+    function deleteArchive(id) {
+        let archives = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        archives = archives.filter(a => a.id !== id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(archives));
+        renderArchive();
+    }
+
+    function clearArchive() { localStorage.removeItem(STORAGE_KEY); renderArchive(); msg("紀錄已清空。"); }
+
+    function clearCanvas() { 
+        if(confirm("確定清空畫布嗎？")) { pushUndo(); mainDraw.clear(); sceneObjects = []; selectedElement = null; msg("畫布已清空。"); }
+    }
+
+    function exportImg() {
+        const svgStr = mainDraw.svg();
+        const canvas = document.createElement('canvas'); canvas.width = V_W; canvas.height = V_H;
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.onload = () => {
+            ctx.fillStyle = 'white'; ctx.fillRect(0,0,V_W,V_H); ctx.drawImage(img, 0, 0);
+            const a = document.createElement('a'); a.href = canvas.toDataURL(); a.download = 'sketch.png'; a.click();
+        };
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
+    }
+
+    function downloadCode() {
+        const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'golden_sketch_studio.html'; a.click();
+    }
+</script>
+</body>
+</html>
+
