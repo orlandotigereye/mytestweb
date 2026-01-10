@@ -153,10 +153,12 @@
             border: 1px solid var(--gold-primary);
             text-align: center;
             font-weight: bold;
-            min-height: 0.8rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            min-height: 1.2rem;
+            white-space: normal;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* 存檔列表 */
@@ -253,7 +255,7 @@
     <!-- AI 生成 -->
     <div id="tab-2" class="tab-content">
         <div style="display:flex; flex-direction:column; gap:3px;">
-            <textarea id="aiPrompt" rows="1" placeholder="留空則依畫生成，或輸入：戴帽子、變長髮..."></textarea>
+            <textarea id="aiPrompt" rows="1" placeholder="留空則依畫生成，或輸入指令修改..."></textarea>
             <div class="toolbar" style="grid-template-columns: 1fr 1fr;">
                 <button class="tool-btn" onclick="generateFromCanvas()">🖼️ 依畫圖生成 (白底簡筆)</button>
                 <button class="tool-btn" onclick="generateAISketch()">✨ 文生簡筆圖</button>
@@ -275,12 +277,12 @@
         <button class="tool-btn" style="width:100%; color:red; margin-top:4px; border-color:red;" onclick="clearArchive()">🔥 清空本機紀錄</button>
     </div>
 
-    <div id="status" class="status-msg">就緒。</div>
+    <div id="status" class="status-msg">系統就緒。</div>
 
     <div id="viewport">
         <div id="loading-overlay">
             <div style="font-size:1rem;">✨</div>
-            <span>AI 繪製簡筆圖...</span>
+            <span>AI 運算中，請稍候...</span>
         </div>
         <div id="canvas-inner"></div>
     </div>
@@ -289,8 +291,8 @@
 </div>
 
 <script>
-    const apiKey = ""; // 自動注入
-    const V_W = 800, V_H = 1000, STORAGE_KEY = "SIMPLE_SKETCH_V2";
+    const apiKey = ""; // 系統自動注入
+    const V_W = 800, V_H = 1000, STORAGE_KEY = "SIMPLE_SKETCH_V3";
     let mainDraw, toolMode = 'draw', isMouseDown = false, activeStroke = null, sceneObjects = [], selectedElement = null;
     let undoStack = [], lastGeneratedB64 = "";
 
@@ -306,6 +308,28 @@
         document.getElementById('line-info').innerText = `Lines: ${lines}`;
     }
 
+    // --- 指數退避請求機制 ---
+    async function fetchWithRetry(url, options, maxRetries = 5) {
+        let delay = 1000;
+        for (let i = 0; i < maxRetries; i++) {
+            try {
+                const response = await fetch(url, options);
+                if (response.ok) return await response.json();
+                if (response.status >= 500 || response.status === 429) {
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                    continue;
+                }
+                const errData = await response.json();
+                throw new Error(errData.error?.message || `HTTP ${response.status}`);
+            } catch (err) {
+                if (i === maxRetries - 1) throw err;
+                await new Promise(res => setTimeout(res, delay));
+                delay *= 2;
+            }
+        }
+    }
+
     // --- 撤銷系統 ---
     function pushUndo() {
         undoStack.push(mainDraw.svg());
@@ -319,13 +343,12 @@
             mainDraw.svg(last);
             sceneObjects = Array.from(mainDraw.children());
             refreshEventHandlers();
-            msg("已回退。");
+            msg("已復原。");
         } else {
-            msg("無紀錄。");
+            msg("無更多紀錄。");
         }
     }
 
-    // --- 工具與選取 ---
     function setTab(i) {
         document.querySelectorAll('.tab-btn').forEach((b,idx)=>b.classList.toggle('active', idx===i));
         document.querySelectorAll('.tab-content').forEach((c,idx)=>c.classList.toggle('active', idx===i));
@@ -337,8 +360,6 @@
         toolMode = t;
         document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('selected'));
         if(document.getElementById('btn-' + t)) document.getElementById('btn-' + t).classList.add('selected');
-        const isMove = (t === 'move');
-        msg(isMove ? "移動模式：點選物件並拖曳。" : "繪圖模式中。");
         refreshEventHandlers();
     }
 
@@ -360,11 +381,11 @@
         if(selectedElement) selectedElement.attr('stroke-dasharray', null);
         selectedElement = el;
         selectedElement.attr('stroke-dasharray', '8,4');
-        msg("已選取。");
+        msg("物件已選取。");
     }
 
     function cloneSelected() {
-        if(!selectedElement) { msg("請先選取。"); return; }
+        if(!selectedElement) { msg("請先選取物件。"); return; }
         pushUndo();
         const clone = selectedElement.clone();
         clone.move(selectedElement.x() + 20, selectedElement.y() + 20);
@@ -372,7 +393,7 @@
         sceneObjects.push(clone);
         refreshEventHandlers();
         selectElement(clone);
-        msg("已複製。");
+        msg("物件已複製。");
     }
 
     function mirrorSelected() {
@@ -380,7 +401,7 @@
         pushUndo();
         const box = selectedElement.bbox();
         selectedElement.transform({ flip: 'x', origin: [box.cx, box.cy] }, true);
-        msg("已翻轉。");
+        msg("物件已水平翻轉。");
     }
 
     function adjustOpacity(val) {
@@ -432,34 +453,36 @@
         window.addEventListener('touchend', onEnd);
     }
 
-    // --- AI 生成 ---
+    // --- AI 生成 核心功能 ---
     async function generateAISketch() {
-        const userPrompt = document.getElementById('aiPrompt').value || "cute object";
+        const userPrompt = document.getElementById('aiPrompt').value || "a cute animal";
         const loading = document.getElementById('loading-overlay');
         loading.style.display = 'flex';
+        msg("文生圖請求中...");
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`;
-            const res = await fetch(url, {
+            const data = await fetchWithRetry(url, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    instances: [{ prompt: `Minimalist simple line art, rough hand-drawn sketch, black lines on PURE WHITE background, high contrast, NO DARK BACKGROUND, NO SHADING, NO COLOR, ${userPrompt}` }],
+                    instances: [{ prompt: `Minimalist simple line art, rough hand-drawn sketch, black lines, pure white background, no shading, no colors, high contrast, ${userPrompt}` }],
                     parameters: { sampleCount: 1 }
                 })
             });
-            const data = await res.json();
-            if(data.predictions) {
+            if(data.predictions && data.predictions[0]) {
                 lastGeneratedB64 = data.predictions[0].bytesBase64Encoded;
                 showPreview(`data:image/png;base64,${lastGeneratedB64}`);
-                msg("文生圖成功。");
-            } else { throw new Error("無數據"); }
-        } catch (e) { msg("生成失敗。"); } finally { loading.style.display = 'none'; }
+                msg("生成成功！");
+            } else { throw new Error("AI 回傳格式不正確"); }
+        } catch (e) { 
+            msg(`生成失敗: ${e.message}`); 
+        } finally { loading.style.display = 'none'; }
     }
 
     async function generateFromCanvas() {
         const loading = document.getElementById('loading-overlay');
         loading.style.display = 'flex';
-        msg("正在依圖優化為白底簡筆...");
-
+        msg("解析畫布並提交 AI...");
         try {
             const svgStr = mainDraw.svg();
             const canvas = document.createElement('canvas');
@@ -472,27 +495,28 @@
             const b64 = canvas.toDataURL('image/png').split(',')[1];
 
             let userPrompt = document.getElementById('aiPrompt').value;
-            // 強化提示詞：絕對不要黑背景
             let finalPrompt = userPrompt 
-                ? `Modify this sketch based on: "${userPrompt}". OUTPUT: Simple minimalist line art, pure black lines, PURE WHITE BACKGROUND ONLY. ABSOLUTELY NO BLACK OR DARK BACKGROUNDS.`
-                : `Refine this sketch. OUTPUT: Clean minimalist line art, simple hand-drawn style, black lines, PURE WHITE BACKGROUND. NO SHADING, NO TEXTURE, NO BLACK BACKGROUND.`;
+                ? `Redraw this sketch based on instruction: "${userPrompt}". Style: Minimalist simple line art, black lines, PURE WHITE BACKGROUND. NO DARK BACKGROUND.`
+                : `Refine this sketch into clean minimalist line art. Output: black lines, pure white background, simple hand-drawn style. No textures.`;
 
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
-            const res = await fetch(url, {
+            const data = await fetchWithRetry(url, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: finalPrompt }, { inlineData: { mimeType: "image/png", data: b64 } }] }],
                     generationConfig: { responseModalities: ['IMAGE'] }
                 })
             });
-            const data = await res.json();
             const resultPart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
             if(resultPart) {
                 lastGeneratedB64 = resultPart.inlineData.data;
                 showPreview(`data:image/png;base64,${lastGeneratedB64}`);
-                msg("生成完畢（已校正背景）。");
-            } else { msg("AI 無法處理。"); }
-        } catch (e) { console.error(e); msg("轉換失敗。"); } finally { loading.style.display = 'none'; }
+                msg("依圖生成完畢。");
+            } else { throw new Error("AI 無法識別內容"); }
+        } catch (e) { 
+            msg(`處理失敗: ${e.message}`); 
+        } finally { loading.style.display = 'none'; }
     }
 
     function showPreview(src) {
@@ -516,35 +540,35 @@
         if(!lastGeneratedB64) return;
         const tempDraw = SVG().size(V_W, V_H);
         tempDraw.image(`data:image/png;base64,${lastGeneratedB64}`).size(500, 500).center(V_W/2, V_H/2);
-        saveData(tempDraw.svg(), "AI 草圖");
+        saveData(tempDraw.svg(), "AI 生成草圖");
         closePreview();
     }
 
     function closePreview() { document.getElementById('ai-preview-panel').style.display = 'none'; }
 
-    // --- 存檔與匯出 ---
-    function saveToArchive() { saveData(mainDraw.svg(), "手繪存檔"); }
+    // --- 存檔與管理 ---
+    function saveToArchive() { saveData(mainDraw.svg(), "手繪作品"); }
 
     function saveData(svg, label) {
         const archives = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
         archives.unshift({ id: Date.now(), svg: svg, label: label, time: new Date().toLocaleTimeString() });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(archives.slice(0, 30)));
         renderArchive();
-        msg(`「${label}」已存。`);
+        msg(`「${label}」已存入珍藏庫。`);
     }
 
     function renderArchive() {
         const list = document.getElementById('archive-list');
         const archives = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        list.innerHTML = archives.length === 0 ? "<div style='text-align:center; font-size:0.5rem; color:#888;'>無存檔</div>" : "";
+        list.innerHTML = archives.length === 0 ? "<div style='text-align:center; color:#888;'>暫無存檔</div>" : "";
         archives.forEach(item => {
             const div = document.createElement('div');
             div.className = "archive-item";
             div.innerHTML = `
-                <div style="flex:1;"><b>${item.label}</b> <span style="font-size:0.5rem; color:#666;">${item.time}</span></div>
+                <div style="flex:1;"><b>${item.label}</b> <span style="color:#666;">${item.time}</span></div>
                 <div>
                     <button class="tool-btn" style="min-height:auto; padding:2px 6px;" onclick="loadArchive(${item.id})">載入</button>
-                    <button class="tool-btn" style="min-height:auto; padding:2px 6px; border-color:red; color:red;" onclick="deleteArchive(${item.id})">刪</button>
+                    <button class="tool-btn" style="min-height:auto; padding:2px 6px; border-color:red; color:red;" onclick="deleteArchive(${item.id})">刪除</button>
                 </div>`;
             list.appendChild(div);
         });
@@ -557,7 +581,7 @@
             pushUndo(); mainDraw.clear(); mainDraw.svg(item.svg); 
             sceneObjects = Array.from(mainDraw.children()); 
             refreshEventHandlers();
-            msg("已載入。"); 
+            msg("存檔載入成功。"); 
             setTool('move'); 
         }
     }
@@ -569,10 +593,23 @@
         renderArchive();
     }
 
-    function clearArchive() { localStorage.removeItem(STORAGE_KEY); renderArchive(); msg("紀錄已清空。"); }
+    function clearArchive() { 
+        if(confirm("確定要清空所有紀錄嗎？")) {
+            localStorage.removeItem(STORAGE_KEY); 
+            renderArchive(); 
+            msg("珍藏庫已清空。"); 
+        }
+    }
 
     function clearCanvas() { 
-        if(confirm("確定清空畫布嗎？")) { pushUndo(); mainDraw.clear(); sceneObjects = []; selectedElement = null; msg("畫布已清空。"); }
+        if(confirm("確定清空畫布嗎？")) { 
+            pushUndo(); 
+            mainDraw.clear(); 
+            sceneObjects = []; 
+            selectedElement = null; 
+            msg("畫布已清空。"); 
+            updateLineCount();
+        }
     }
 
     function exportImg() {
@@ -582,14 +619,14 @@
         const img = new Image();
         img.onload = () => {
             ctx.fillStyle = 'white'; ctx.fillRect(0,0,V_W,V_H); ctx.drawImage(img, 0, 0);
-            const a = document.createElement('a'); a.href = canvas.toDataURL(); a.download = 'sketch.png'; a.click();
+            const a = document.createElement('a'); a.href = canvas.toDataURL(); a.download = 'sketch_export.png'; a.click();
         };
         img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgStr)));
     }
 
     function downloadCode() {
         const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'golden_sketch_studio.html'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'golden_ai_sketch.html'; a.click();
     }
 </script>
 </body>
