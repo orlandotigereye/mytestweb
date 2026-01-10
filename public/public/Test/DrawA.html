@@ -2,117 +2,166 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>Joint Skeleton → Skin → Comic SVG</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Universal Skeleton → Skin → Comic Line System</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background: #111;
-  color: #eee;
+/* ===========================
+   GLOBAL
+=========================== */
+:root{
+  --bg:#111;
+  --panel:#1e1e1e;
+  --line:#000;
+  --ui:#333;
+  --ui-hover:#444;
 }
-#topbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px;
-  background: #222;
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:#eee;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont;
 }
-button {
-  background: #333;
-  color: #fff;
-  border: 1px solid #555;
-  padding: 6px 10px;
-  border-radius: 6px;
+button,select,input{
+  background:var(--ui);
+  color:#fff;
+  border:1px solid #555;
+  border-radius:6px;
+  padding:6px 10px;
 }
-button:hover { background:#444; }
-canvas {
-  touch-action: none;
-  display: block;
-  background: #fafafa;
+button:hover{background:var(--ui-hover)}
+#toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  padding:8px;
+  background:var(--panel);
+}
+canvas{
+  display:block;
+  background:#fafafa;
+  touch-action:none;
+}
+
+/* ===========================
+   UI GROUPS
+=========================== */
+.group{
+  display:flex;
+  gap:4px;
+  padding-right:8px;
+  border-right:1px solid #333;
 }
 </style>
 </head>
 
 <body>
 
-<div id="topbar">
-  <button onclick="addJoint()">＋關節</button>
-  <button onclick="addBone()">＋骨架連線</button>
-  <button onclick="generateSkin()">骨架→包皮</button>
-  <button onclick="refineComic()">包皮→漫畫線</button>
-  <button onclick="savePose()">儲存姿勢</button>
-  <button onclick="loadPose()">讀取姿勢</button>
-  <button onclick="exportSVG()">匯出 SVG</button>
+<div id="toolbar">
+  <div class="group">
+    <button onclick="mode='addJoint'">＋Joint</button>
+    <button onclick="mode='move'">Move</button>
+    <button onclick="addBone()">＋Bone</button>
+  </div>
+  <div class="group">
+    <button onclick="generateSkin()">Skeleton→Skin</button>
+    <button onclick="refineComic()">Skin→Comic</button>
+  </div>
+  <div class="group">
+    <button onclick="savePose()">Save Pose</button>
+    <button onclick="loadPose()">Load Pose</button>
+  </div>
+  <div class="group">
+    <button onclick="exportSVG()">Export SVG</button>
+    <button onclick="clearAll()">Clear</button>
+  </div>
 </div>
 
-<canvas id="c"></canvas>
+<canvas id="canvas"></canvas>
 
 <script>
-/* ================= 基本設定 ================= */
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-resize();
-window.addEventListener('resize', resize);
-
+/* =========================================================
+   CORE CANVAS
+========================================================= */
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
 function resize(){
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight - 52;
-  draw();
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight-document.getElementById('toolbar').offsetHeight;
 }
+window.addEventListener('resize',resize);
+resize();
 
-/* ================= 資料結構 ================= */
-let joints = [];     // {x,y,r}
-let bones = [];      // [i,j]
-let skinPaths = [];  // [{points:[]}]
-let selectedJoint = null;
-let mode = 'move';
+/* =========================================================
+   DATA STRUCTURES
+========================================================= */
+let joints=[];        // {x,y,r,type,lock}
+let bones=[];         // {a,b,width}
+let skins=[];         // {points:[],bezier:[]}
+let comicLines=[];    // refined paths
+let mode='move';
+let selected=null;
+let boneTemp=null;
 
-/* ================= 互動 ================= */
-canvas.addEventListener('pointerdown', e=>{
-  const p = getPos(e);
-  selectedJoint = joints.find(j=>dist(j,p)<j.r+5);
-  if(!selectedJoint && mode==='addJoint'){
-    joints.push({x:p.x,y:p.y,r:6});
-  }
-  draw();
-});
-canvas.addEventListener('pointermove', e=>{
-  if(selectedJoint){
-    const p = getPos(e);
-    selectedJoint.x = p.x;
-    selectedJoint.y = p.y;
-    draw();
-  }
-});
-canvas.addEventListener('pointerup', ()=>selectedJoint=null);
-
+/* =========================================================
+   UTILS
+========================================================= */
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function getPos(e){
-  const r = canvas.getBoundingClientRect();
+  const r=canvas.getBoundingClientRect();
   return {x:e.clientX-r.left,y:e.clientY-r.top};
 }
-function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
 
-/* ================= 操作 ================= */
-function addJoint(){ mode='addJoint'; }
-function addBone(){
-  if(joints.length>=2){
-    bones.push([joints.length-2,joints.length-1]);
-    draw();
+/* =========================================================
+   INPUT HANDLING
+========================================================= */
+canvas.addEventListener('pointerdown',e=>{
+  const p=getPos(e);
+  selected=null;
+  for(let j of joints){
+    if(dist(j,p)<j.r+6){selected=j;break;}
   }
+  if(mode==='addJoint'&&!selected){
+    joints.push({x:p.x,y:p.y,r:6,type:'generic',lock:false});
+  }
+  if(mode==='addBone'&&selected){
+    if(!boneTemp) boneTemp=selected;
+    else{
+      bones.push({a:boneTemp,b:selected,width:14});
+      boneTemp=null;
+    }
+  }
+});
+canvas.addEventListener('pointermove',e=>{
+  if(selected&&!selected.lock){
+    const p=getPos(e);
+    selected.x=p.x;
+    selected.y=p.y;
+  }
+});
+canvas.addEventListener('pointerup',()=>selected=null);
+
+/* =========================================================
+   CORE FUNCTIONS
+========================================================= */
+function addBone(){mode='addBone'}
+function clearAll(){
+  joints=[];bones=[];skins=[];comicLines=[];
 }
 
-/* ================= 骨架→包皮 ================= */
+/* =========================================================
+   SKELETON → SKIN
+========================================================= */
 function generateSkin(){
-  skinPaths=[];
-  bones.forEach(b=>{
-    const a=joints[b[0]], c=joints[b[1]];
-    const dx=c.x-a.x, dy=c.y-a.y;
-    const len=Math.hypot(dx,dy);
-    const nx=-dy/len, ny=dx/len;
-    const w = 12;
-    skinPaths.push({
+  skins=[];
+  for(let b of bones){
+    const a=b.a,c=b.b;
+    const dx=c.x-a.x,dy=c.y-a.y;
+    const len=Math.hypot(dx,dy)||1;
+    const nx=-dy/len,ny=dx/len;
+    const w=b.width;
+    skins.push({
       points:[
         {x:a.x+nx*w,y:a.y+ny*w},
         {x:c.x+nx*w,y:c.y+ny*w},
@@ -120,94 +169,138 @@ function generateSkin(){
         {x:a.x-nx*w,y:a.y-ny*w}
       ]
     });
-  });
-  draw();
+  }
 }
 
-/* ================= 包皮→漫畫線（AI風） ================= */
+/* =========================================================
+   SKIN → COMIC LINE (ALGO)
+========================================================= */
 function refineComic(){
-  skinPaths.forEach(p=>{
-    p.points = p.points.map(pt=>({
-      x: pt.x + (Math.random()-0.5)*2,
-      y: pt.y + (Math.random()-0.5)*2
-    }));
-  });
-  draw();
+  comicLines=[];
+  for(let s of skins){
+    let pts=[];
+    for(let i=0;i<s.points.length;i++){
+      const p=s.points[i];
+      const jitter=1.5;
+      pts.push({
+        x:p.x+(Math.random()-0.5)*jitter,
+        y:p.y+(Math.random()-0.5)*jitter
+      });
+    }
+    comicLines.push(pts);
+  }
 }
 
-/* ================= 姿勢儲存 ================= */
+/* =========================================================
+   POSE LIBRARY
+========================================================= */
 function savePose(){
-  localStorage.setItem('pose',JSON.stringify({joints,bones}));
-  alert('姿勢已存');
+  const data={
+    joints:joints.map(j=>({...j})),
+    bones:bones.map(b=>({
+      a:joints.indexOf(b.a),
+      b:joints.indexOf(b.b),
+      width:b.width
+    }))
+  };
+  let lib=JSON.parse(localStorage.getItem('poseLib')||'[]');
+  lib.push(data);
+  localStorage.setItem('poseLib',JSON.stringify(lib));
 }
 function loadPose(){
-  const d=localStorage.getItem('pose');
-  if(!d)return;
-  const o=JSON.parse(d);
-  joints=o.joints; bones=o.bones;
-  draw();
+  let lib=JSON.parse(localStorage.getItem('poseLib')||'[]');
+  if(!lib.length)return;
+  const d=lib[lib.length-1];
+  joints=d.joints.map(j=>({...j}));
+  bones=d.bones.map(b=>({
+    a:joints[b.a],
+    b:joints[b.b],
+    width:b.width
+  }));
+  skins=[];comicLines=[];
 }
 
-/* ================= SVG 匯出 ================= */
+/* =========================================================
+   SVG EXPORT
+========================================================= */
 function exportSVG(){
   let paths='';
-  skinPaths.forEach(p=>{
-    let d=`M ${p.points[0].x} ${p.points[0].y}`;
-    for(let i=1;i<p.points.length;i++){
-      d+=` L ${p.points[i].x} ${p.points[i].y}`;
+  for(let l of comicLines){
+    let d=`M ${l[0].x} ${l[0].y}`;
+    for(let i=1;i<l.length;i++){
+      d+=` L ${l[i].x} ${l[i].y}`;
     }
     d+=' Z';
     paths+=`<path d="${d}" fill="none" stroke="black" stroke-width="2"/>`;
-  });
+  }
   const svg=
 `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">
 ${paths}
 </svg>`;
-  download(svg,'sketch.svg');
-}
-function download(t,n){
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([t],{type:'image/svg+xml'}));
-  a.download=n; a.click();
+  a.href=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
+  a.download='comic.svg';
+  a.click();
 }
 
-/* ================= 繪製 ================= */
+/* =========================================================
+   RENDER LOOP
+========================================================= */
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   // bones
-  ctx.strokeStyle='#888';
+  ctx.strokeStyle='#999';
   ctx.lineWidth=2;
-  bones.forEach(b=>{
-    const a=joints[b[0]], c=joints[b[1]];
+  for(let b of bones){
     ctx.beginPath();
-    ctx.moveTo(a.x,a.y);
-    ctx.lineTo(c.x,c.y);
+    ctx.moveTo(b.a.x,b.a.y);
+    ctx.lineTo(b.b.x,b.b.y);
     ctx.stroke();
-  });
+  }
 
   // joints
-  joints.forEach(j=>{
-    ctx.fillStyle='#000';
+  for(let j of joints){
+    ctx.fillStyle=j===selected?'#f00':'#000';
     ctx.beginPath();
     ctx.arc(j.x,j.y,j.r,0,Math.PI*2);
     ctx.fill();
-  });
+  }
 
   // skin
   ctx.strokeStyle='#000';
   ctx.lineWidth=2;
-  skinPaths.forEach(p=>{
+  for(let s of skins){
     ctx.beginPath();
-    p.points.forEach((pt,i)=>{
-      if(i===0)ctx.moveTo(pt.x,pt.y);
-      else ctx.lineTo(pt.x,pt.y);
+    s.points.forEach((p,i)=>{
+      if(i===0)ctx.moveTo(p.x,p.y);
+      else ctx.lineTo(p.x,p.y);
     });
     ctx.closePath();
     ctx.stroke();
-  });
+  }
+
+  // comic
+  ctx.strokeStyle='#000';
+  ctx.lineWidth=3;
+  for(let l of comicLines){
+    ctx.beginPath();
+    l.forEach((p,i)=>{
+      if(i===0)ctx.moveTo(p.x,p.y);
+      else ctx.lineTo(p.x,p.y);
+    });
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  requestAnimationFrame(draw);
 }
 draw();
+
+/* =========================================================
+   END
+========================================================= */
 </script>
+
 </body>
 </html>
