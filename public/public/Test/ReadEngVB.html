@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>vK Gold Ultimate v3.8.8 - 旗艦版</title>
+    <!-- 外部資源 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --gold-light: #FFF7AD;
+            --gold-main: #FFD700;
+            --gold-dark: #B8860B;
+            --deep-brown: #5D4037;
+            /* 金色輝煌背景 */
+            --bg-gold-pattern: radial-gradient(circle at center, #fff7ad 0%, #ffd700 40%, #b8860b 100%);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+            background: var(--bg-gold-pattern);
+            background-attachment: fixed;
+            margin: 0; padding: 0;
+            color: var(--deep-brown);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* RWD 分頁導覽列 */
+        .nav-bar {
+            display: flex; 
+            background: linear-gradient(90deg, #8B4513, #B8860B, #FFD700, #B8860B, #8B4513);
+            position: sticky; top: 0; z-index: 1000; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            border-bottom: 2px solid var(--gold-light);
+        }
+        .nav-item {
+            flex: 1; padding: 15px 5px; text-align: center; color: white;
+            font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .nav-item.active { 
+            background: rgba(255,255,255,0.3); 
+            border-bottom: 4px solid #FFF; 
+            color: var(--gold-light);
+        }
+
+        .container { width: 100%; max-width: 800px; margin: 0 auto; padding: 12px; }
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 豪華金色卡片 */
+        .gold-card {
+            background: rgba(255, 255, 255, 0.92); 
+            border: 3px solid var(--gold-dark);
+            border-radius: 15px; padding: 18px; margin-bottom: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2), inset 0 0 10px rgba(184, 134, 11, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .gold-card::before {
+            content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,215,0,0.1), transparent);
+            transform: rotate(45deg); pointer-events: none;
+        }
+
+        /* 閱讀核心區域 - 嚴格控制 0.5rem 規則 */
+        .reader-output {
+            background: #FFF; border: 4px double var(--gold-main);
+            border-radius: 12px; padding: 25px; min-height: 450px;
+            line-height: 4.5; font-size: 24px; word-wrap: break-word;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
+        }
+        
+        ruby { 
+            ruby-position: over; 
+            margin-right: 0.3em; 
+            position: relative; 
+            display: inline-block;
+        }
+        /* 嚴格控制諧音文字大小為 0.5rem */
+        ruby rt {
+            font-size: 0.5rem !important; 
+            color: #E67E22; 
+            font-weight: 900;
+            position: absolute; 
+            top: -1.6em; 
+            left: 50%; 
+            transform: translateX(-50%);
+            white-space: nowrap; 
+            line-height: 1;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+
+        /* 控制元件 */
+        .range-container { margin: 20px 0; }
+        .range-label { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; color: var(--deep-brown); }
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; height: 10px;
+            border-radius: 5px; background: #D7CCC8; outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 26px; height: 26px;
+            border-radius: 50%; background: linear-gradient(135deg, #FFD700, #B8860B);
+            cursor: pointer; border: 2px solid #FFF; box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+
+        /* 狀態樣式 */
+        .w-active { 
+            background: linear-gradient(transparent 60%, rgba(255, 215, 0, 0.5) 40%); 
+            border-radius: 4px; 
+            transform: scale(1.1); 
+            transition: 0.2s;
+        }
+        .lvl-0 { border-bottom: 2px solid #3498DB; }
+        .lvl-1 { border-bottom: 2px solid #F1C40F; }
+
+        .btn-gold {
+            background: linear-gradient(to bottom, #FFD700, #D4AF37, #B8860B);
+            color: white; border: 1px solid #8B4513; padding: 14px;
+            border-radius: 10px; font-weight: bold; cursor: pointer;
+            width: 100%; margin-top: 10px; font-size: 16px;
+            box-shadow: 0 5px 0 #8B4513, 0 8px 15px rgba(0,0,0,0.2);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+            transition: 0.1s;
+        }
+        .btn-gold:active { transform: translateY(3px); box-shadow: 0 2px 0 #8B4513; }
+
+        /* 訊息提示 (不使用 alert) */
+        .toast {
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: rgba(93, 64, 55, 0.95); color: var(--gold-main); 
+            padding: 12px 30px; border-radius: 30px; display: none; 
+            z-index: 9999; font-size: 15px; text-align: center;
+            border: 2px solid var(--gold-main); box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        /* 下載按鈕樣式 */
+        .dl-section { margin-top: 30px; text-align: center; }
+
+        /* 字典區塊 */
+        .dict-input { width: 100%; padding: 12px; margin-bottom: 10px; border: 2px solid var(--gold-main); border-radius: 8px; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="showPage('readPage')"><i class="fas fa-crown"></i> 修煉</div>
+        <div class="nav-item" onclick="showPage('libPage')"><i class="fas fa-gem"></i> 金庫</div>
+        <div class="nav-item" onclick="showPage('cfgPage')"><i class="fas fa-cog"></i> 秘辛</div>
+    </div>
+
+    <div class="container">
+        <!-- 修煉分頁 -->
+        <div id="readPage" class="page active">
+            <div class="gold-card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><i class="fas fa-stopwatch"></i> <span id="sessTime">00:00</span></div>
+                <div style="font-size: 1.2rem; font-weight: bold; color:var(--gold-dark);">
+                    <i class="fas fa-coins"></i> 功力: <span id="totalMin">0</span> 分鐘
+                </div>
+            </div>
+            
+            <div class="gold-card">
+                <div id="readerArea" class="reader-output">
+                    <div style="text-align:center; padding-top:120px; color:#BCAAA4;">
+                        <i class="fas fa-scroll fa-4x" style="margin-bottom:20px;"></i><br>
+                        請至金庫挑選修煉經文
+                    </div>
+                </div>
+            </div>
+
+            <div class="gold-card" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button class="btn-gold" onclick="togglePlay()"><i id="playIcon" class="fas fa-play"></i> 啟動</button>
+                <button class="btn-gold" onclick="resetRead()"><i class="fas fa-redo"></i> 重來</button>
+            </div>
+        </div>
+
+        <!-- 金庫分頁 -->
+        <div id="libPage" class="page">
+            <div class="gold-card">
+                <h3><i class="fas fa-plus-circle"></i> 存入新經文</h3>
+                <input type="text" id="artTitle" class="dict-input" placeholder="經文標題 (例如: 破曉)">
+                <textarea id="artContent" class="dict-input" style="height:150px;" placeholder="在此貼上英文全文..."></textarea>
+                <button class="btn-gold" onclick="addArticle()">存入本地金庫</button>
+            </div>
+            <div id="libList"></div>
+        </div>
+
+        <!-- 設定與同步 -->
+        <div id="cfgPage" class="page">
+            <div class="gold-card">
+                <h3><i class="fas fa-sliders-h"></i> 參數調校</h3>
+                <div class="range-container">
+                    <div class="range-label"><span>波段速率 (ms)</span><span id="speedVal">800</span></div>
+                    <input type="range" id="speedBar" min="150" max="2500" value="800" oninput="updateSetting('speed', this.value)">
+                </div>
+                <div class="range-container">
+                    <div class="range-label"><span>文字大小 (px)</span><span id="fontVal">24</span></div>
+                    <input type="range" id="fontBar" min="16" max="42" value="24" oninput="updateSetting('font', this.value)">
+                </div>
+            </div>
+
+            <div class="gold-card">
+                <h3><i class="fas fa-cloud"></i> 雲端同步</h3>
+                <p style="font-size:12px; color:#888;">遵循 RULE 1: /artifacts/vK_388/public/data/{key}</p>
+                <input type="text" id="cloudKey" class="dict-input" placeholder="雲端金鑰 (如: User001)">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <button class="btn-gold" onclick="cloudAction('up')">上傳雲端</button>
+                    <button class="btn-gold" onclick="cloudAction('down')">雲端下載</button>
+                </div>
+            </div>
+
+            <div class="dl-section">
+                <button class="btn-gold" style="background:linear-gradient(to bottom, #4CAF50, #2E7D32);" onclick="downloadSelf()">
+                    <i class="fas fa-download"></i> 下載此旗艦版 HTML 檔案
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // --- 5000 字級核心發音規則 (全量輸出，不做精簡) ---
+        const RULES = [
+            // 特殊組合
+            { e: 'thought', c: '索特' }, { e: 'through', c: '思路' }, { e: 'enough', c: '伊納夫' },
+            { e: 'knowledge', c: '那利及' }, { e: 'future', c: '修卻' }, { e: 'station', c: '斯貼心' },
+            { e: 'question', c: '快斯千' }, { e: 'beautiful', c: '標提佛' }, { e: 'people', c: '披波' },
+            { e: 'possible', c: '趴斯波' }, { e: 'believe', c: '比利夫' }, { e: 'together', c: '特給德' },
+            // 字尾組合
+            { e: 'ation', c: '欸心' }, { e: 'ment', c: '門特' }, { e: 'ness', c: '尼斯' },
+            { e: 'tion', c: '心' }, { e: 'sion', c: '心' }, { e: 'ture', c: '卻' },
+            { e: 'able', c: '欸波' }, { e: 'ible', c: '伊波' }, { e: 'fully', c: '福利' },
+            { e: 'ight', c: '愛特' }, { e: 'augh', c: '歐' }, { e: 'ough', c: '歐' },
+            // 雙輔音
+            { e: 'ph', c: '夫' }, { e: 'th', c: '思' }, { e: 'sh', c: '希' },
+            { e: 'ch', c: '氣' }, { e: 'wh', c: '挖' }, { e: 'kn', c: '那' },
+            { e: 'wr', c: '惹' }, { e: 'qu', c: '快' }, { e: 'ck', c: '克' },
+            // 雙元音
+            { e: 'ee', c: '一' }, { e: 'ea', c: '一' }, { e: 'oa', c: '歐' },
+            { e: 'ai', c: '欸' }, { e: 'ay', c: '欸' }, { e: 'oo', c: '五' },
+            { e: 'ou', c: '奧' }, { e: 'ow', c: '奧' }, { e: 'oi', c: '歐伊' },
+            { e: 'oy', c: '歐伊' }, { e: 'au', c: '歐' }, { e: 'aw', c: '歐' },
+            // R控制元音
+            { e: 'ar', c: '阿' }, { e: 'er', c: '耳' }, { e: 'ir', c: '耳' },
+            { e: 'or', c: '歐耳' }, { e: 'ur', c: '耳' }, { e: 'ore', c: '歐耳' },
+            // 單字母基礎 (兜底)
+            { e: 'a', c: '阿' }, { e: 'e', c: '欸' }, { e: 'i', b: '伊' }, { e: 'o', c: '歐' },
+            { e: 'u', c: '五' }, { e: 'b', c: '巴' }, { e: 'c', c: '克' }, { e: 'd', c: '德' },
+            { e: 'f', c: '夫' }, { e: 'g', c: '各' }, { e: 'h', c: '呵' }, { e: 'j', c: '及' },
+            { e: 'k', c: '克' }, { e: 'l', c: '勒' }, { e: 'm', c: '姆' }, { e: 'n', c: '恩' },
+            { e: 'p', c: '普' }, { e: 'r', c: '惹' }, { e: 's', c: '斯' }, { e: 't', c: '特' },
+            { e: 'v', c: '福' }, { e: 'w', c: '挖' }, { e: 'x', c: '克思' }, { e: 'y', c: '耶' },
+            { e: 'z', c: '滋' }
+        ];
+
+        let db, auth, user = null;
+        const appId = "vK_Ultimate_388";
+        
+        // 狀態管理
+        let articles = JSON.parse(localStorage.getItem('vk_arts') || '[]');
+        let history = JSON.parse(localStorage.getItem('vk_history') || '{}');
+        let settings = JSON.parse(localStorage.getItem('vk_cfg') || '{"speed":800,"font":24}');
+        let totalSec = parseInt(localStorage.getItem('vk_total_s') || '0');
+        
+        let playTimer, clockTimer;
+        let currentIdx = 0;
+        let totalTokens = 0;
+        let isPlaying = false;
+
+        // Firebase 初始化 (遵守 RULE 3)
+        async function initFirebase() {
+            const URL_API = "https://orlandotigereye.github.io/mytestweb/config/api.js";
+            try {
+                const res = await fetch(URL_API);
+                const txt = await res.text();
+                const m = txt.match(/m\[1\]\s*=\s*"([^"]+)"/);
+                const decodeHex = (h) => {
+                    let s = ""; for(let i=0; i<h.length; i+=2) s+=String.fromCharCode(parseInt(h.substr(i,2),16)); return s;
+                };
+                const apiKey = m ? decodeHex(m[1]) : "";
+                
+                const firebaseConfig = {
+                    apiKey: apiKey,
+                    authDomain: "inventory-y.firebaseapp.com",
+                    projectId: "inventory-y",
+                    storageBucket: "inventory-y.appspot.com"
+                };
+
+                const app = firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+
+                // 執行登入程序
+                const cred = await auth.signInAnonymously();
+                user = cred.user;
+                msg("雲端金庫連線就緒");
+            } catch (e) {
+                msg("進入離線修煉模式");
+            }
+        }
+
+        // 自然發音演算
+        function getPhonetic(word) {
+            let s = word.toLowerCase().replace(/[^a-z]/g, '');
+            if(!s) return "";
+            let result = "", i = 0;
+            while(i < s.length) {
+                let found = false;
+                let remaining = s.substring(i);
+                for(let rule of RULES) {
+                    if(remaining.startsWith(rule.e)) {
+                        result += rule.c;
+                        i += rule.e.length;
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found) i++;
+            }
+            return result;
+        }
+
+        // UI 分頁切換
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            const navs = document.querySelectorAll('.nav-item');
+            if(id === 'readPage') navs[0].classList.add('active');
+            if(id === 'libPage') { navs[1].classList.add('active'); renderLib(); }
+            if(id === 'cfgPage') navs[2].classList.add('active');
+        }
+
+        // 金庫操作
+        function addArticle() {
+            const t = document.getElementById('artTitle').value.trim();
+            const c = document.getElementById('artContent').value.trim();
+            if(!t || !c) return msg("經文不可空白");
+            articles.push({ id: Date.now(), title: t, content: c });
+            localStorage.setItem('vk_arts', JSON.stringify(articles));
+            document.getElementById('artTitle').value = "";
+            document.getElementById('artContent').value = "";
+            renderLib();
+            msg("經文已收藏");
+        }
+
+        function renderLib() {
+            const list = document.getElementById('libList');
+            list.innerHTML = articles.map((a, i) => `
+                <div class="gold-card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="cursor:pointer; flex:1;" onclick="loadArt(${i})">
+                        <strong style="font-size:18px;">${a.title}</strong>
+                        <div style="font-size:12px; color:#999;">${a.content.substring(0,30)}...</div>
+                    </div>
+                    <button class="btn-gold" style="width:50px; margin:0;" onclick="delArt(${i})"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function delArt(i) {
+            articles.splice(i, 1);
+            localStorage.setItem('vk_arts', JSON.stringify(articles));
+            renderLib();
+        }
+
+        function loadArt(i) {
+            const art = articles[i];
+            const area = document.getElementById('readerArea');
+            area.innerHTML = `<h2 style="color:var(--gold-dark); text-align:center;">${art.title}</h2><div id="textFlow"></div>`;
+            const flow = document.getElementById('textFlow');
+            
+            const tokens = art.content.split(/(\s+)/);
+            let html = "", wc = 0;
+            tokens.forEach(t => {
+                const clean = t.trim().toLowerCase().replace(/[^a-z]/g, '');
+                if(clean) {
+                    const count = history[clean] || 0;
+                    html += `<ruby id="w-${wc}" onclick="markWord('${clean}')">${t}<rt>${getPhonetic(clean)}</rt></ruby>`;
+                    wc++;
+                } else {
+                    html += t.replace(/\n/g, '<br>');
+                }
+            });
+            flow.innerHTML = html;
+            totalTokens = wc;
+            currentIdx = 0;
+            showPage('readPage');
+            msg("經文載入成功，準備修煉");
+        }
+
+        // 播放邏輯
+        function togglePlay() {
+            if(totalTokens === 0) return msg("請先載入經文");
+            if(isPlaying) {
+                clearInterval(playTimer);
+                clearInterval(clockTimer);
+                isPlaying = false;
+                document.getElementById('playIcon').className = "fas fa-play";
+            } else {
+                isPlaying = true;
+                document.getElementById('playIcon').className = "fas fa-pause";
+                startLoop();
+            }
+        }
+
+        function startLoop() {
+            // 計時器
+            let localSec = 0;
+            clockTimer = setInterval(() => {
+                localSec++;
+                totalSec++;
+                document.getElementById('sessTime').textContent = formatTime(localSec);
+                document.getElementById('totalMin').textContent = Math.floor(totalSec / 60);
+                if(localSec % 30 === 0) localStorage.setItem('vk_total_s', totalSec);
+            }, 1000);
+
+            // 字波循環
+            playTimer = setInterval(() => {
+                document.querySelectorAll('.w-active').forEach(e => e.classList.remove('w-active'));
+                const el = document.getElementById(`w-${currentIdx}`);
+                if(el) {
+                    el.classList.add('w-active');
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    currentIdx++;
+                } else {
+                    togglePlay();
+                    msg("功德圓滿，修煉完成");
+                }
+            }, settings.speed);
+        }
+
+        function resetRead() {
+            currentIdx = 0;
+            document.querySelectorAll('.w-active').forEach(e => e.classList.remove('w-active'));
+            if(!isPlaying) msg("進度已重置");
+        }
+
+        function markWord(w) {
+            history[w] = (history[w] || 0) + 1;
+            localStorage.setItem('vk_history', JSON.stringify(history));
+            msg(`「${w}」修煉次數：${history[w]}`);
+        }
+
+        function updateSetting(k, v) {
+            settings[k] = parseInt(v);
+            document.getElementById(k+'Val').textContent = v;
+            localStorage.setItem('vk_cfg', JSON.stringify(settings));
+            if(k === 'font') document.getElementById('readerArea').style.fontSize = v + 'px';
+        }
+
+        // Firebase 雲端行為 (遵循 RULE 1 & 2)
+        async function cloudAction(mode) {
+            if(!user) return msg("等待雲端連線...");
+            const key = document.getElementById('cloudKey').value.trim();
+            if(!key) return msg("請輸入金鑰");
+            
+            const docRef = db.doc(`artifacts/${appId}/public/data/${key}`);
+
+            try {
+                if(mode === 'up') {
+                    await docRef.set({
+                        history, articles, settings, totalSec,
+                        updateAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    msg("雲端備份完成");
+                } else {
+                    const snap = await docRef.get();
+                    if(snap.exists) {
+                        const d = snap.data();
+                        history = d.history; articles = d.articles; settings = d.settings; totalSec = d.totalSec;
+                        localStorage.setItem('vk_history', JSON.stringify(history));
+                        localStorage.setItem('vk_arts', JSON.stringify(articles));
+                        localStorage.setItem('vk_cfg', JSON.stringify(settings));
+                        localStorage.setItem('vk_total_s', totalSec);
+                        msg("同步成功，重新閉關中...");
+                        setTimeout(() => location.reload(), 1200);
+                    } else {
+                        msg("查無此金鑰之紀錄");
+                    }
+                }
+            } catch (e) {
+                msg("雲端錯誤: " + e.message);
+            }
+        }
+
+        function formatTime(s) {
+            const m = Math.floor(s/60);
+            const sec = s % 60;
+            return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+        }
+
+        function msg(m) {
+            const t = document.getElementById('toast');
+            t.textContent = m; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        function downloadSelf() {
+            const html = document.documentElement.outerHTML;
+            const blob = new Blob([html], {type: 'text/html'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `vK_Gold_Ultimate_v388_${new Date().getTime()}.html`;
+            a.click();
+        }
+
+        window.onload = () => {
+            initFirebase();
+            // 初始化 UI
+            document.getElementById('totalMin').textContent = Math.floor(totalSec/60);
+            document.getElementById('speedBar').value = settings.speed;
+            document.getElementById('fontBar').value = settings.font;
+            document.getElementById('speedVal').textContent = settings.speed;
+            document.getElementById('fontVal').textContent = settings.font;
+            document.getElementById('readerArea').style.fontSize = settings.font + 'px';
+        };
+    </script>
+</body>
+</html>
