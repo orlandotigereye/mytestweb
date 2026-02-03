@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart English Reader - vK Gold Ultimate v3.8.8</title>
+    <!-- 引入外部套件 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-gold: #FFD700;
+            --dark-gold: #B8860B;
+            --deep-brown: #5d4037;
+            --bg-gold-coin: radial-gradient(circle at center, #fff7ad 0%, #ffd700 30%, #b8860b 100%);
+            --card-glass: rgba(255, 255, 255, 0.96);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+            background: var(--bg-gold-coin);
+            background-attachment: fixed;
+            margin: 0; padding: 0;
+            color: var(--deep-brown);
+        }
+
+        /* Tabs UI */
+        .nav-bar {
+            display: flex; background: linear-gradient(90deg, #8b4513, #b8860b, #ffd700, #b8860b, #8b4513);
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .nav-item {
+            flex: 1; padding: 15px 5px; text-align: center; color: white;
+            font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 14px;
+        }
+        .nav-item.active { background: rgba(255,255,255,0.2); border-bottom: 4px solid #fff; }
+
+        /* Container & RWD */
+        .container { max-width: 1200px; margin: 0 auto; padding: 15px; width: 100%; }
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Card Design */
+        .gold-card {
+            background: var(--card-glass); border: 2px solid var(--dark-gold);
+            border-radius: 20px; padding: 20px; margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15), inset 0 0 10px rgba(255,215,0,0.2);
+            position: relative;
+        }
+
+        /* 5000字級發音顯示 - 嚴格 0.5rem */
+        .reader-output {
+            background: white; border: 3px inset var(--primary-gold);
+            border-radius: 15px; padding: 25px; min-height: 500px;
+            line-height: 4.5; font-size: 24px; word-wrap: break-word;
+        }
+        ruby { ruby-position: over; margin-right: 0.5em; position: relative; }
+        ruby rt {
+            font-size: 0.5rem !important; color: #e67e22; font-weight: 900;
+            position: absolute; top: -1.8em; left: 50%; transform: translateX(-50%);
+            white-space: nowrap; line-height: 1;
+        }
+
+        /* Slide Bar (Slider) 樣式 */
+        .range-container { margin: 20px 0; }
+        .range-label { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; }
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; height: 10px;
+            border-radius: 5px; background: #ddd; outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 25px; height: 25px;
+            border-radius: 50%; background: var(--dark-gold); cursor: pointer;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3); border: 2px solid white;
+        }
+
+        /* 詞頻色標 */
+        .w-0 { color: #0000FF; text-decoration: underline; font-weight: bold; } /* New */
+        .w-1, .w-2, .w-3 { color: #8B4513; } /* Learning */
+        .w-high { color: #2c3e50; opacity: 0.8; } /* Mastered */
+        .w-active { background: #fff176; border-radius: 5px; transform: scale(1.1); transition: 0.2s; box-shadow: 0 0 10px gold; }
+
+        /* Buttons */
+        .btn-gold {
+            background: linear-gradient(to bottom, #FFD700, #B8860B); color: white;
+            border: 1px solid #8b4513; padding: 12px 20px; border-radius: 10px;
+            font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px;
+            box-shadow: 0 4px 0 #8b4513;
+        }
+        .btn-gold:active { transform: translateY(2px); box-shadow: 0 2px 0 #8b4513; }
+
+        /* Timer & Stats */
+        .badge { background: #fff; border: 2px solid var(--dark-gold); padding: 5px 15px; border-radius: 20px; font-weight: bold; }
+        
+        .toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: gold; padding: 12px 30px;
+            border-radius: 30px; display: none; z-index: 9999;
+        }
+
+        /* 文章列表 */
+        .art-item {
+            padding: 15px; border: 1px solid #eee; margin-bottom: 10px; border-radius: 10px;
+            background: #fff; display: flex; justify-content: space-between; align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="showPage('readPage')"><i class="fas fa-play"></i> 閱讀器</div>
+        <div class="nav-item" onclick="showPage('libraryPage')"><i class="fas fa-book"></i> 金庫</div>
+        <div class="nav-item" onclick="showPage('configPage')"><i class="fas fa-cog"></i> 設定</div>
+    </div>
+
+    <div class="container">
+        <!-- 閱讀分頁 -->
+        <div id="readPage" class="page active">
+            <div class="gold-card" style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="badge"><i class="fas fa-clock"></i> <span id="sessTime">00:00</span></div>
+                <div class="badge"><i class="fas fa-coins"></i> 總閱讀: <span id="totalTime">0</span> 分</div>
+            </div>
+            <div class="gold-card">
+                <div id="readerArea" class="reader-output">
+                    <div style="text-align:center; padding-top:100px; color:#ccc;">
+                        <i class="fas fa-piggy-bank fa-4x"></i><br><br>請載入文章開始修煉
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文庫分頁 -->
+        <div id="libraryPage" class="page">
+            <div class="gold-card">
+                <h3>新增黃金教材</h3>
+                <input type="text" id="artTitle" placeholder="文章標題" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:5px;">
+                <textarea id="artContent" placeholder="貼上英文內容..." style="width:100%; height:150px; padding:10px; border:1px solid #ccc; border-radius:5px;"></textarea>
+                <button class="btn-gold" onclick="addArticle()">存入本地文庫</button>
+            </div>
+            <div class="gold-card">
+                <h3>我的文庫清單</h3>
+                <div id="libList"></div>
+            </div>
+        </div>
+
+        <!-- 設定分頁 -->
+        <div id="configPage" class="page">
+            <div class="gold-card">
+                <h3>播放與控制滑桿</h3>
+                
+                <div class="range-container">
+                    <div class="range-label"><span>播放速度 (ms/字)</span><span id="speedVal">800</span></div>
+                    <input type="range" id="speedRange" min="200" max="3000" value="800" oninput="updateRange('speed', this.value)">
+                </div>
+
+                <div class="range-container">
+                    <div class="range-label"><span>文章字體大小</span><span id="fontVal">24</span></div>
+                    <input type="range" id="fontRange" min="16" max="48" value="24" oninput="updateRange('font', this.value)">
+                </div>
+
+                <div class="range-container">
+                    <div class="range-label"><span>換行靈敏度</span><span id="breakVal">50</span></div>
+                    <input type="range" id="breakRange" min="10" max="100" value="50" oninput="updateRange('break', this.value)">
+                </div>
+            </div>
+
+            <div class="gold-card">
+                <h3>Firebase 雲端同步</h3>
+                <input type="text" id="syncKey" placeholder="輸入自定義金鑰" style="width:100%; padding:10px; border:1px solid #ccc; margin-bottom:10px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <button class="btn-gold" onclick="cloudAction('up')">備份至雲端</button>
+                    <button class="btn-gold" onclick="cloudAction('down')">從雲端同步</button>
+                </div>
+            </div>
+
+            <div class="gold-card">
+                <button class="btn-gold" onclick="downloadApp()"><i class="fas fa-download"></i> 下載離線 HTML 版</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // --- 5000 字級自然發音規則引擎 (完整補齊版) ---
+        const PHONETIC_RULES = [
+            // [高優先級] 特殊字組 & 複合字
+            { en: 'through', cn: '思路' }, { en: 'thought', cn: '索特' }, { en: 'enough', cn: '以那夫' },
+            { en: 'knowledge', cn: '那利及' }, { en: 'special', cn: '斯別秀' }, { en: 'future', cn: '修卻' },
+            { en: 'measure', cn: '美熱' }, { en: 'station', cn: '斯貼心' }, { en: 'action', cn: '愛克心' },
+            { en: 'question', cn: '快斯千' }, { en: 'adventure', cn: '艾德凡卻' },
+            // [字尾規則]
+            { en: 'ation', cn: '欸心' }, { en: 'ition', cn: '伊心' }, { en: 'sion', cn: '心' },
+            { en: 'ment', cn: '門特' }, { en: 'ness', cn: '尼斯' }, { en: 'ship', cn: '夕普' },
+            { en: 'able', cn: '欸波' }, { en: 'ible', cn: '伊波' }, { en: 'less', cn: '勒斯' },
+            { en: 'full', cn: '夫' }, { en: 'tive', cn: '提福' }, { en: 'sive', cn: '夕福' },
+            { en: 'ally', cn: '爾利' }, { en: 'logy', cn: '拉機' }, { en: 'wise', cn: '外斯' },
+            // [雙元音 & 複合子音]
+            { en: 'ight', cn: '愛特' }, { en: 'augh', cn: '歐' }, { en: 'ough', cn: '歐' },
+            { en: 'tion', cn: '心' }, { en: 'cian', cn: '心' }, { en: 'tial', cn: '修' },
+            { en: 'cial', cn: '修' }, { en: 'ture', cn: '卻' }, { en: 'ph', cn: '夫' },
+            { en: 'th', cn: '思' }, { en: 'sh', cn: '希' }, { en: 'ch', cn: '氣' },
+            { en: 'wh', cn: '五' }, { en: 'qu', cn: '快' }, { en: 'kn', cn: '那' },
+            { en: 'wr', cn: '日' }, { en: 'ck', cn: '克' }, { en: 'ng', cn: '嗯' },
+            { en: 'ee', cn: '一' }, { en: 'ea', cn: '一' }, { en: 'oo', cn: '五' },
+            { en: 'ou', cn: '奧' }, { en: 'ow', cn: '奧' }, { en: 'ai', cn: '欸' },
+            { en: 'ay', cn: '欸' }, { en: 'oa', cn: '歐' }, { en: 'oi', cn: '歐伊' },
+            { en: 'oy', cn: '歐伊' }, { en: 'ir', cn: '耳' }, { en: 'er', cn: '耳' },
+            { en: 'ur', cn: '耳' }, { en: 'ar', cn: '阿' }, { en: 'or', cn: '歐耳' },
+            // [基礎母音]
+            { en: 'a', cn: '阿' }, { en: 'e', cn: '欸' }, { en: 'i', cn: '伊' }, { en: 'o', cn: '歐' }, { en: 'u', cn: '五' },
+            // [基礎子音]
+            { en: 'b', cn: '巴' }, { en: 'c', cn: '可' }, { en: 'd', cn: '德' }, { en: 'f', cn: '夫' },
+            { en: 'g', cn: '各' }, { en: 'h', cn: '哈' }, { en: 'j', cn: '居' }, { en: 'k', cn: '克' },
+            { en: 'l', cn: '勒' }, { en: 'm', cn: '姆' }, { en: 'n', cn: '恩' }, { en: 'p', cn: '普' },
+            { en: 'r', cn: '日' }, { en: 's', cn: '斯' }, { en: 't', cn: '特' }, { en: 'v', cn: '福' },
+            { en: 'w', cn: '五' }, { en: 'x', cn: '克斯' }, { en: 'y', cn: '耶' }, { en: 'z', cn: '日' }
+        ];
+
+        // 核心狀態
+        let db, auth;
+        let articles = JSON.parse(localStorage.getItem('vk_arts') || '[]');
+        let history = JSON.parse(localStorage.getItem('vk_history') || '{}');
+        let settings = JSON.parse(localStorage.getItem('vk_setting') || '{"speed":800,"font":24,"break":50}');
+        let totalReadingSec = parseInt(localStorage.getItem('vk_total_time') || '0');
+        let currentSessSec = 0;
+        let playTimer, sessClock;
+
+        // 初始化 Firebase
+        async function initFB() {
+            const URL_API = "https://orlandotigereye.github.io/mytestweb/config/api.js";
+            try {
+                const res = await fetch(URL_API);
+                const text = await res.text();
+                const m = text.match(/m\[1\]\s*=\s*"([^"]+)"/);
+                const decodeHex = (hex) => {
+                    let s = "";
+                    for (let i = 0; i < hex.length; i += 2) s += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+                    return s;
+                };
+                const API_KEY = m ? decodeHex(m[1]) : "";
+                
+                const firebaseConfig = {
+                    apiKey: API_KEY,
+                    authDomain: "inventory-y.firebaseapp.com",
+                    projectId: "inventory-y",
+                    databaseURL: "https://inventory-y-default-rtdb.firebaseio.com",
+                    storageBucket: "inventory-y.appspot.com",
+                };
+
+                const app = firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+
+                await auth.signInAnonymously();
+                showToast("Firebase 聯網成功");
+            } catch (e) { showToast("離線模式運行"); }
+        }
+
+        // 自然發音轉換邏輯
+        function getPhonetic(word) {
+            let str = word.toLowerCase().replace(/[^a-z]/g, '');
+            if (!str) return "";
+            let result = "";
+            let i = 0;
+            while (i < str.length) {
+                let found = false;
+                let sub = str.substring(i);
+                for (let rule of PHONETIC_RULES) {
+                    if (sub.startsWith(rule.en)) {
+                        result += rule.cn;
+                        i += rule.en.length;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) { i++; }
+            }
+            return result;
+        }
+
+        // 顯示頁面
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.currentTarget.classList.add('active');
+            if (id === 'libraryPage') renderLibrary();
+        }
+
+        // 設定滑桿更新
+        function updateRange(type, val) {
+            settings[type] = parseInt(val);
+            document.getElementById(type + 'Val').textContent = val;
+            localStorage.setItem('vk_setting', JSON.stringify(settings));
+            if (type === 'font') document.getElementById('readerArea').style.fontSize = val + 'px';
+        }
+
+        // 新增文章
+        function addArticle() {
+            const t = document.getElementById('artTitle').value;
+            const c = document.getElementById('artContent').value;
+            if (!t || !c) return showToast("標題與內容必填");
+            articles.push({ id: Date.now(), title: t, content: c });
+            localStorage.setItem('vk_arts', JSON.stringify(articles));
+            document.getElementById('artTitle').value = "";
+            document.getElementById('artContent').value = "";
+            renderLibrary();
+            showToast("已存入金庫");
+        }
+
+        function renderLibrary() {
+            const list = document.getElementById('libList');
+            list.innerHTML = articles.map((a, i) => `
+                <div class="art-item">
+                    <span style="font-weight:bold; cursor:pointer;" onclick="loadArticle(${i})">${a.title}</span>
+                    <button class="btn-gold" style="width:auto; margin:0; padding:5px 10px;" onclick="deleteArt(${i})"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function deleteArt(i) {
+            articles.splice(i, 1);
+            localStorage.setItem('vk_arts', JSON.stringify(articles));
+            renderLibrary();
+        }
+
+        // 載入文章至閱讀器
+        function loadArticle(i) {
+            const art = articles[i];
+            const area = document.getElementById('readerArea');
+            area.innerHTML = `<h3>${art.title}</h3>`;
+            
+            const words = art.content.split(/(\s+|[,.!?;:])/);
+            let html = "";
+            let wordCount = 0;
+            words.forEach(token => {
+                const clean = token.trim().toLowerCase().replace(/[^a-z]/g, '');
+                if (clean && /[a-z]/.test(clean)) {
+                    const lv = history[clean] || 0;
+                    const cls = lv > 10 ? 'w-high' : `w-${lv}`;
+                    html += `<ruby id="word-${wordCount}" class="${cls}" onclick="markWord('${clean}')">${token}<rt>${getPhonetic(clean)}</rt></ruby>`;
+                    wordCount++;
+                } else {
+                    html += token.replace(/\n/g, '<br>');
+                }
+            });
+            area.innerHTML += `<div>${html}</div>`;
+            showPage('readPage');
+            startReader(wordCount);
+        }
+
+        function markWord(w) {
+            history[w] = (history[w] || 0) + 1;
+            localStorage.setItem('vk_history', JSON.stringify(history));
+            showToast(`單字「${w}」修煉次數: ${history[w]}`);
+        }
+
+        function startReader(max) {
+            clearInterval(playTimer);
+            clearInterval(sessClock);
+            currentSessSec = 0;
+            let currentIdx = 0;
+
+            sessClock = setInterval(() => {
+                currentSessSec++;
+                totalReadingSec++;
+                document.getElementById('sessTime').textContent = formatTime(currentSessSec);
+                document.getElementById('totalTime').textContent = Math.floor(totalReadingSec / 60);
+                if (currentSessSec % 10 === 0) localStorage.setItem('vk_total_time', totalReadingSec);
+            }, 1000);
+
+            playTimer = setInterval(() => {
+                document.querySelectorAll('.w-active').forEach(el => el.classList.remove('w-active'));
+                const target = document.getElementById(`word-${currentIdx}`);
+                if (target) {
+                    target.classList.add('w-active');
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    currentIdx++;
+                } else {
+                    clearInterval(playTimer);
+                    showToast("閱讀完畢！");
+                }
+            }, settings.speed);
+        }
+
+        function formatTime(s) {
+            let m = Math.floor(s / 60);
+            let sec = s % 60;
+            return `${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        // Firebase 雲端操作 (遵循 RULE 1/2/3)
+        async function cloudAction(mode) {
+            const key = document.getElementById('syncKey').value.trim() || "default_gold";
+            if (!auth.currentUser) return showToast("未連線 Firebase");
+            const appId = "vK_Ultimate_388";
+            const docRef = db.doc(`artifacts/${appId}/public/data/${key}`);
+
+            try {
+                if (mode === 'up') {
+                    await docRef.set({ history, articles, settings, totalReadingSec });
+                    showToast("備份完畢");
+                } else {
+                    const snap = await docRef.get();
+                    if (snap.exists) {
+                        const data = snap.data();
+                        history = data.history;
+                        articles = data.articles;
+                        settings = data.settings;
+                        totalReadingSec = data.totalReadingSec;
+                        localStorage.setItem('vk_history', JSON.stringify(history));
+                        localStorage.setItem('vk_arts', JSON.stringify(articles));
+                        localStorage.setItem('vk_setting', JSON.stringify(settings));
+                        showToast("同步成功");
+                        location.reload();
+                    } else { showToast("查無備份檔"); }
+                }
+            } catch (e) { showToast("連線錯誤: " + e.message); }
+        }
+
+        function showToast(m) {
+            const t = document.getElementById('toast');
+            t.textContent = m; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        function downloadApp() {
+            const html = document.documentElement.outerHTML;
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `vK_Gold_Ultimate_v388.html`;
+            a.click();
+        }
+
+        window.onload = () => {
+            initFB();
+            // 初始化滑桿文字
+            document.getElementById('speedVal').textContent = settings.speed;
+            document.getElementById('fontVal').textContent = settings.font;
+            document.getElementById('breakVal').textContent = settings.break;
+            document.getElementById('speedRange').value = settings.speed;
+            document.getElementById('fontRange').value = settings.font;
+            document.getElementById('breakRange').value = settings.break;
+            document.getElementById('totalTime').textContent = Math.floor(totalReadingSec / 60);
+        };
+    </script>
+</body>
+</html>
