@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>vK Gold Ultimate Fusion v4.0</title>
+
+    <!-- 外部資源 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --gold-light: #FFF7AD;
+            --gold-main: #FFD700;
+            --gold-dark: #B8860B;
+            --deep-brown: #5D4037;
+            --bg-gold-pattern: radial-gradient(circle at center, #fff7ad 0%, #ffd700 40%, #b8860b 100%);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+            background: var(--bg-gold-pattern);
+            background-attachment: fixed;
+            margin: 0; padding: 0;
+            color: var(--deep-brown);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* 導覽列 */
+        .nav-bar {
+            display: flex; 
+            background: linear-gradient(90deg, #8B4513, #FFD700, #8B4513);
+            position: sticky; top: 0; z-index: 1000; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .nav-item {
+            flex: 1; padding: 15px 5px; text-align: center; color: white;
+            font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .nav-item.active { background: rgba(255,255,255,0.3); border-bottom: 4px solid #FFF; }
+
+        .container { width: 100%; max-width: 800px; margin: 0 auto; padding: 12px; }
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* 卡片與輸出 */
+        .gold-card {
+            background: rgba(255, 255, 255, 0.95); 
+            border: 3px solid var(--gold-dark);
+            border-radius: 12px; padding: 18px; margin-bottom: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .reader-output {
+            background: #FFF; border: 4px double var(--gold-main);
+            border-radius: 10px; padding: 25px; min-height: 450px;
+            line-height: 4.8; font-size: 26px; word-wrap: break-word;
+        }
+        
+        /* 諧音字體規則 - 嚴格 0.5rem */
+        ruby { ruby-position: over; margin-right: 0.35em; position: relative; display: inline-block; }
+        ruby rt {
+            font-size: 0.5rem !important; 
+            color: #E67E22; 
+            font-weight: 900;
+            position: absolute; 
+            top: -1.8em; 
+            left: 50%; 
+            transform: translateX(-50%);
+            white-space: nowrap; 
+            line-height: 1;
+            letter-spacing: 0;
+        }
+
+        .btn-gold {
+            background: linear-gradient(to bottom, #FFD700, #B8860B);
+            color: white; border: none; padding: 14px;
+            border-radius: 8px; font-weight: bold; cursor: pointer;
+            width: 100%; margin-top: 8px; font-size: 16px;
+            box-shadow: 0 4px 0 #8B4513; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .btn-gold:active { transform: translateY(2px); box-shadow: 0 2px 0 #8B4513; }
+
+        .w-active { background: linear-gradient(transparent 60%, rgba(255, 215, 0, 0.6) 40%); border-radius: 4px; font-weight: bold; }
+        .toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: #5D4037; color: #FFD700; padding: 12px 25px; 
+            border-radius: 25px; display: none; z-index: 9999; border: 1px solid #FFD700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 8px; border: 2px solid var(--gold-main); border-radius: 8px; font-size: 16px; }
+        canvas { background: #fff; border-radius: 8px; margin-top: 10px; border: 2px solid var(--gold-main); }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="showPage('readPage')"><i class="fas fa-scroll"></i> 修煉</div>
+        <div class="nav-item" onclick="showPage('libPage')"><i class="fas fa-vault"></i> 金庫</div>
+        <div class="nav-item" onclick="showPage('cfgPage')"><i class="fas fa-chart-line"></i> 秘辛</div>
+    </div>
+
+    <div class="container">
+        <!-- 修煉分頁 -->
+        <div id="readPage" class="page active">
+            <div class="gold-card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><i class="fas fa-clock"></i> <span id="sessTime">00:00</span></div>
+                <div style="font-weight:bold; color:var(--gold-dark);">
+                    <i class="fas fa-medal"></i> 總功力: <span id="totalMin">0</span> 分鐘
+                </div>
+            </div>
+            
+            <div class="gold-card">
+                <div id="readerArea" class="reader-output">
+                    <div style="text-align:center; padding-top:120px; color:#aaa;">
+                        <i class="fas fa-book-open fa-3x"></i><br>請至金庫挑選修煉經文
+                    </div>
+                </div>
+            </div>
+
+            <div class="gold-card" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                <button class="btn-gold" onclick="togglePlay()"><i id="playIcon" class="fas fa-play"></i></button>
+                <button class="btn-gold" onclick="togglePause()"><i id="pauseIcon" class="fas fa-pause"></i></button>
+                <button class="btn-gold" onclick="resetRead()"><i class="fas fa-redo"></i></button>
+            </div>
+            
+            <div class="gold-card">
+                <label>修煉速度 (毫秒): <span id="speedVal">800</span>ms</label>
+                <input type="range" min="300" max="2000" step="50" value="800" oninput="changeSpeed(this.value)">
+            </div>
+        </div>
+
+        <!-- 金庫分頁 -->
+        <div id="libPage" class="page">
+            <div class="gold-card">
+                <h3><i class="fas fa-plus-circle"></i> 存入新經文</h3>
+                <input type="text" id="artTitle" placeholder="經文標題 (例如: 今日要聞)">
+                <textarea id="artContent" placeholder="請貼上英文新聞或文章內容..." style="height: 150px;"></textarea>
+                <button class="btn-gold" onclick="addArticle()">存入本地金庫</button>
+            </div>
+            <div id="libList"></div>
+        </div>
+
+        <!-- 秘辛分頁 -->
+        <div id="cfgPage" class="page">
+            <div class="gold-card">
+                <h3><i class="fas fa-brain"></i> 修煉成效分析</h3>
+                <canvas id="progressChart" height="200"></canvas>
+                <button class="btn-gold" onclick="exportData()" style="margin-top:15px;"><i class="fas fa-file-export"></i> 匯出修煉紀錄 (JSON)</button>
+            </div>
+
+            <div class="gold-card">
+                <h3><i class="fas fa-cloud"></i> 雲端同步</h3>
+                <input type="text" id="cloudKey" placeholder="輸入同步金鑰 (自定義 ID)">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <button class="btn-gold" onclick="cloudAction('up')"><i class="fas fa-cloud-upload-alt"></i> 上傳</button>
+                    <button class="btn-gold" onclick="cloudAction('down')"><i class="fas fa-cloud-download-alt"></i> 下載</button>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 20px 0;">
+                <button class="btn-gold" style="background:linear-gradient(#4CAF50, #2E7D32);" onclick="downloadSelf()">
+                    <i class="fas fa-file-code"></i> 下載本旗艦版 HTML 檔案
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // --- 核心擴充發音規則庫 (針對 5000 字級文章優化) ---
+        // 優先順序：長組合 -> 短組合 -> 單音
+        const RULES = [
+            // 特殊字尾與長組合
+            {e:'tional',c:'心諾'},{e:'tional',c:'心諾'},{e:'tion',c:'心'},{e:'sion',c:'心'},
+            {e:'ment',c:'門特'},{e:'ness',c:'尼斯'},{e:'ship',c:'希普'},{e:'able',c:'欸波'},
+            {e:'ible',c:'伊波'},{e:'ture',c:'卻'},{e:'sure',c:'修'},{e:'ough',c:'歐'},
+            {e:'ought',c:'歐特'},{e:'ought',c:'歐特'},{e:'fully',c:'佛利'},{e:'less',c:'利斯'},
+            {e:'ance',c:'恩斯'},{e:'ence',c:'恩斯'},{e:'ious',c:'一兒斯'},{e:'cial',c:'秀'},
+            {e:'tial',c:'秀'},{e:'logy',c:'羅及'},{e:'graph',c:'古拉夫'},{e:'ph',c:'夫'},
+
+            // 常見二重音
+            {e:'th',c:'思'},{e:'sh',c:'希'},{e:'ch',c:'氣'},{e:'wh',c:'挖'},{e:'qu',c:'快'},
+            {e:'ee',c:'一'},{e:'ea',c:'一'},{e:'oa',c:'歐'},{e:'ai',c:'欸'},{e:'ay',c:'欸'},
+            {e:'oo',c:'五'},{e:'ou',c:'奧'},{e:'ow',c:'奧'},{e:'ar',c:'阿'},{e:'er',c:'耳'},
+            {e:'ir',c:'耳'},{e:'or',c:'歐耳'},{e:'ur',c:'耳'},{e:'ng',c:'恩'},{e:'nk',c:'恩克'},
+            
+            // 基礎發音 (Fallback)
+            {e:'a',c:'阿'},{e:'e',c:'欸'},{e:'i',c:'伊'},{e:'o',c:'歐'},{e:'u',c:'五'},
+            {e:'b',c:'巴'},{e:'c',c:'克'},{e:'d',c:'德'},{e:'f',c:'夫'},{e:'g',c:'各'},
+            {e:'h',c:'呵'},{e:'j',c:'及'},{e:'k',c:'克'},{e:'l',c:'勒'},{e:'m',c:'姆'},
+            {e:'n',c:'恩'},{e:'p',c:'普'},{e:'r',c:'惹'},{e:'s',c:'斯'},{e:'t',c:'特'},
+            {e:'v',c:'福'},{e:'w',c:'挖'},{e:'x',c:'克斯'},{e:'y',c:'耶'},{e:'z',c:'滋'}
+        ];
+
+        let db, auth, user = null;
+        const appId = "vK_Ultimate_Fusion_40";
+        
+        let articles = JSON.parse(localStorage.getItem('vk_arts') || '[]');
+        let history = JSON.parse(localStorage.getItem('vk_history') || '{}');
+        let totalSec = parseInt(localStorage.getItem('vk_total_s') || '0');
+        let settings = { speed: 800 };
+        let playTimer, clockTimer, currentIdx = 0, totalTokens = 0, isPlaying = false, isPaused = false;
+        let chartInstance = null;
+
+        // --- Firebase 初始化 ---
+        async function initFirebase() {
+            const URL_API = "https://orlandotigereye.github.io/mytestweb/config/api.js";
+            try {
+                const res = await fetch(URL_API);
+                const txt = await res.text();
+                const m = txt.match(/m\[1\]\s*=\s*"([^"]+)"/);
+                const decodeHex = (h) => {
+                    let s = ""; for(let i=0; i<h.length; i+=2) s+=String.fromCharCode(parseInt(h.substr(i,2),16)); return s;
+                };
+                const apiKey = m ? decodeHex(m[1]) : "";
+                
+                const firebaseConfig = {
+                    apiKey: apiKey,
+                    authDomain: "inventory-y.firebaseapp.com",
+                    projectId: "inventory-y",
+                    storageBucket: "inventory-y.appspot.com"
+                };
+
+                firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                db = firebase.firestore();
+
+                const cred = await auth.signInAnonymously();
+                user = cred.user;
+                msg("雲端金庫連線成功");
+            } catch (e) {
+                msg("進入離線修煉模式");
+            }
+        }
+
+        // 優化的發音轉換演算法
+        function getPhonetic(word) {
+            let s = word.toLowerCase().replace(/[^a-z]/g, '');
+            if(!s) return "";
+            
+            // 處理常見閉音節 E 規則：字尾是 e 且前面有子音
+            let res = "", i = 0;
+            while(i < s.length) {
+                let found = false;
+                let sub = s.substring(i);
+                
+                for(let rule of RULES) {
+                    if(sub.startsWith(rule.e)) {
+                        res += rule.c;
+                        i += rule.e.length;
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found) i++; // 略過未知符號
+            }
+            return res;
+        }
+
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(id === 'libPage') renderLib();
+            if(id === 'cfgPage') setTimeout(drawChart, 300);
+            
+            const idx = id === 'readPage' ? 0 : (id === 'libPage' ? 1 : 2);
+            document.querySelectorAll('.nav-item')[idx].classList.add('active');
+        }
+
+        function changeSpeed(val) {
+            settings.speed = parseInt(val);
+            document.getElementById('speedVal').textContent = val;
+            if(isPlaying) {
+                clearInterval(playTimer);
+                startPlayLoop();
+            }
+        }
+
+        function addArticle() {
+            const t = document.getElementById('artTitle').value.trim();
+            const c = document.getElementById('artContent').value.trim();
+            if(!t || !c) return msg("標題與內容不可空白");
+            articles.push({ id: Date.now(), title: t, content: c });
+            localStorage.setItem('vk_arts', JSON.stringify(articles));
+            document.getElementById('artTitle').value = "";
+            document.getElementById('artContent').value = "";
+            renderLib();
+            msg("經文已存入金庫");
+        }
+
+        function renderLib() {
+            const list = document.getElementById('libList');
+            if(articles.length === 0) {
+                list.innerHTML = `<div style="text-align:center; color:#888;">目前金庫空空如也</div>`;
+                return;
+            }
+            list.innerHTML = articles.map((a, i) => `
+                <div class="gold-card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <b style="cursor:pointer; flex:1; font-size:18px;" onclick="loadArt(${i})">${a.title}</b>
+                    <button class="btn-gold" style="width:50px; margin:0;" onclick="delArt(${i})"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function delArt(i) {
+            articles.splice(i, 1);
+            localStorage.setItem('vk_arts', JSON.stringify(articles));
+            renderLib();
+        }
+
+        function loadArt(i) {
+            const art = articles[i];
+            const area = document.getElementById('readerArea');
+            area.innerHTML = `
+                <div style="text-align:center; margin-bottom:15px;">
+                    <h2 style="margin:0; color:var(--gold-dark);">${art.title}</h2>
+                    <span style="font-size:14px; color:#E67E22;">🔥 經文解析完畢</span>
+                </div>
+                <div id="flow"></div>
+            `;
+            const flow = document.getElementById('flow');
+            const tokens = art.content.split(/(\s+)/);
+            let html = "", wc = 0;
+            tokens.forEach(t => {
+                const clean = t.trim().toLowerCase().replace(/[^a-z]/g, '');
+                if(clean) {
+                    html += `<ruby id="w-${wc}" onclick="markWord('${clean}')">${t}<rt>${getPhonetic(clean)}</rt></ruby>`;
+                    wc++;
+                } else {
+                    html += t.replace(/\n/g, '<br>');
+                }
+            });
+            flow.innerHTML = html;
+            totalTokens = wc;
+            currentIdx = 0;
+            showPage('readPage');
+            msg("經文載入成功，開始修煉");
+        }
+
+        function togglePlay() {
+            if(totalTokens === 0) return msg("請先載入經文");
+            if(isPlaying) {
+                stopAllTimers();
+                isPlaying = false;
+                document.getElementById('playIcon').className = "fas fa-play";
+            } else {
+                isPlaying = true;
+                isPaused = false;
+                document.getElementById('playIcon').className = "fas fa-pause";
+                document.getElementById('pauseIcon').className = "fas fa-pause";
+                startClockLoop();
+                startPlayLoop();
+            }
+        }
+
+        function togglePause() {
+            if(!isPlaying) return;
+            isPaused = !isPaused;
+            document.getElementById('pauseIcon').className = isPaused ? "fas fa-play" : "fas fa-pause";
+            msg(isPaused ? "暫停修煉" : "繼續前行");
+        }
+
+        function stopAllTimers() {
+            clearInterval(playTimer);
+            clearInterval(clockTimer);
+        }
+
+        function startClockLoop() {
+            let localSec = 0;
+            clockTimer = setInterval(() => {
+                if(isPaused) return;
+                localSec++;
+                totalSec++;
+                document.getElementById('sessTime').textContent = formatTime(localSec);
+                document.getElementById('totalMin').textContent = Math.floor(totalSec / 60);
+                if(localSec % 30 === 0) localStorage.setItem('vk_total_s', totalSec);
+            }, 1000);
+        }
+
+        function startPlayLoop() {
+            playTimer = setInterval(() => {
+                if(isPaused) return;
+                document.querySelectorAll('.w-active').forEach(e => e.classList.remove('w-active'));
+                const el = document.getElementById(`w-${currentIdx}`);
+                if(el) {
+                    el.classList.add('w-active');
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    currentIdx++;
+                } else {
+                    togglePlay();
+                    msg("功德圓滿，修煉結束");
+                }
+            }, settings.speed);
+        }
+
+        function resetRead() {
+            currentIdx = 0;
+            document.querySelectorAll('.w-active').forEach(e => e.classList.remove('w-active'));
+            msg("修煉進度已重置");
+        }
+
+        function markWord(w) {
+            history[w] = (history[w] || 0) + 1;
+            localStorage.setItem('vk_history', JSON.stringify(history));
+            msg(`「${w}」修煉次數: ${history[w]}`);
+        }
+
+        function drawChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy();
+            
+            // 抓取修煉次數最高的前 15 個單字
+            const sortedKeys = Object.keys(history).sort((a,b) => history[b] - history[a]).slice(0, 15);
+            const data = sortedKeys.map(k => history[k]);
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedKeys,
+                    datasets: [{
+                        label: '單字修煉深度',
+                        data: data,
+                        backgroundColor: 'rgba(255, 215, 0, 0.7)',
+                        borderColor: '#B8860B',
+                        borderWidth: 2
+                    }]
+                },
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        async function cloudAction(mode) {
+            if(!user) return msg("雲端尚未連線");
+            const key = document.getElementById('cloudKey').value.trim();
+            if(!key) return msg("請輸入金鑰 ID");
+            
+            const docRef = db.doc(`artifacts/${appId}/public/data/${key}`);
+
+            try {
+                if(mode === 'up') {
+                    await docRef.set({
+                        history, articles, totalSec,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    msg("雲端金庫存檔成功");
+                } else {
+                    const snap = await docRef.get();
+                    if(snap.exists) {
+                        const d = snap.data();
+                        history = d.history; articles = d.articles; totalSec = d.totalSec;
+                        localStorage.setItem('vk_history', JSON.stringify(history));
+                        localStorage.setItem('vk_arts', JSON.stringify(articles));
+                        localStorage.setItem('vk_total_s', totalSec);
+                        msg("同步成功，正在重新啟動...");
+                        setTimeout(() => location.reload(), 1200);
+                    } else {
+                        msg("查無此金鑰之紀錄");
+                    }
+                }
+            } catch (e) {
+                msg("連線異常: " + e.message);
+            }
+        }
+
+        function exportData() {
+            const data = JSON.stringify({ history, articles, totalSec }, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vk_gold_export_${new Date().getTime()}.json`;
+            a.click();
+        }
+
+        function downloadSelf() {
+            const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            const blob = new Blob([html], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `vK_Gold_Fusion_v40.html`;
+            a.click();
+        }
+
+        function formatTime(s) {
+            const m = Math.floor(s/60);
+            const sec = s % 60;
+            return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+        }
+
+        function msg(m) {
+            const t = document.getElementById('toast');
+            t.textContent = m; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        window.onload = () => {
+            initFirebase();
+            document.getElementById('totalMin').textContent = Math.floor(totalSec/60);
+            renderLib();
+        };
+    </script>
+</body>
+</html>
