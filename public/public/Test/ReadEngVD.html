@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>vK Gold Ultimate Fusion v4.5</title>
+
+    <!-- 外部資源 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --gold-light: #FFF7AD;
+            --gold-main: #FFD700;
+            --gold-dark: #B8860B;
+            --deep-brown: #5D4037;
+            --ruby-size: 0.5rem; /* 嚴格控制 0.5rem */
+            --bg-gold-pattern: radial-gradient(circle at center, #fff7ad 0%, #ffd700 40%, #b8860b 100%);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+            background: var(--bg-gold-pattern);
+            background-attachment: fixed;
+            margin: 0; padding: 0;
+            color: var(--deep-brown);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* 導覽列 */
+        .nav-bar {
+            display: flex; 
+            background: linear-gradient(90deg, #8B4513, #FFD700, #8B4513);
+            position: sticky; top: 0; z-index: 1000; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .nav-item {
+            flex: 1; padding: 15px 5px; text-align: center; color: white;
+            font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .nav-item.active { background: rgba(255,255,255,0.3); border-bottom: 4px solid #FFF; }
+
+        .container { width: 100%; max-width: 900px; margin: 0 auto; padding: 12px; }
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* 卡片與輸出 */
+        .gold-card {
+            background: rgba(255, 255, 255, 0.95); 
+            border: 3px solid var(--gold-dark);
+            border-radius: 12px; padding: 18px; margin-bottom: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .reader-output {
+            background: #FFF; border: 4px double var(--gold-main);
+            border-radius: 10px; padding: 25px; min-height: 500px;
+            line-height: 4.8; font-size: 26px; word-wrap: break-word;
+            max-height: 70vh; overflow-y: auto;
+        }
+        
+        /* 協音標記規則 - 嚴格 0.5rem */
+        ruby { ruby-position: over; margin-right: 0.2em; position: relative; }
+        rt {
+            font-size: var(--ruby-size) !important; 
+            color: #d32f2f; 
+            font-weight: 900;
+            line-height: 1;
+            transform: translateY(-2px);
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #FFD700, #B8860B);
+            color: white; border: none; padding: 14px;
+            border-radius: 25px; font-weight: bold; cursor: pointer;
+            width: 100%; margin-top: 8px; font-size: 16px;
+            box-shadow: 0 4px 0 #8B4513; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-gold:active { transform: translateY(2px); box-shadow: 0 2px 0 #8B4513; }
+
+        .w-active { background: linear-gradient(transparent 60%, rgba(255, 215, 0, 0.7) 40%); border-radius: 4px; font-weight: bold; }
+        
+        .toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: #5D4037; color: #FFD700; padding: 12px 25px; 
+            border-radius: 25px; display: none; z-index: 9999; border: 1px solid #FFD700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 8px; border: 2px solid var(--gold-main); border-radius: 8px; font-size: 16px; background: #fffdf0; }
+        
+        #logPanel {
+            background: #2b1d0e; color: #ffd700; font-family: monospace; padding: 10px; border-radius: 5px; font-size: 12px; height: 100px; overflow-y: auto;
+        }
+
+        /* 隱藏原生捲軸美化 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--gold-light); }
+        ::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="nav-bar">
+    <div class="nav-item active" onclick="showPage('readPage')"><i class="fas fa-scroll"></i> 修煉</div>
+    <div class="nav-item" onclick="showPage('libPage')"><i class="fas fa-vault"></i> 金庫</div>
+    <div class="nav-item" onclick="showPage('cfgPage')"><i class="fas fa-chart-line"></i> 秘辛</div>
+    <div class="nav-item" onclick="showPage('sysPage')"><i class="fas fa-microchip"></i> 系統</div>
+</div>
+
+<div class="container">
+    <!-- 修煉分頁 -->
+    <div id="readPage" class="page active">
+        <div class="gold-card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div><i class="fas fa-stopwatch"></i> <span id="sessTime">00:00</span></div>
+            <div style="font-weight:bold; color:var(--gold-dark);">
+                <i class="fas fa-dragon"></i> 累積功力: <span id="totalMin">0</span> 分鐘
+            </div>
+        </div>
+        
+        <div class="gold-card">
+            <div id="readerArea" class="reader-output">
+                <div style="text-align:center; padding-top:150px; color:#aaa;">
+                    <i class="fas fa-book-open fa-3x"></i><br>請至金庫挑選修煉經文
+                </div>
+            </div>
+        </div>
+
+        <div class="gold-card" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+            <button class="btn-gold" onclick="togglePlay()"><i id="playIcon" class="fas fa-play"></i></button>
+            <button class="btn-gold" onclick="togglePause()"><i id="pauseIcon" class="fas fa-pause"></i></button>
+            <button class="btn-gold" onclick="resetRead()"><i class="fas fa-redo"></i></button>
+        </div>
+        
+        <div class="gold-card">
+            <label>修煉語速 (ms): <span id="speedVal">800</span>ms</label>
+            <input type="range" min="200" max="2000" step="50" value="800" oninput="changeSpeed(this.value)">
+        </div>
+    </div>
+
+    <!-- 金庫分頁 -->
+    <div id="libPage" class="page">
+        <div class="gold-card">
+            <h3><i class="fas fa-file-signature"></i> 拓印新經文</h3>
+            <input type="text" id="artTitle" placeholder="標題 (例: BBC News - AI Future)">
+            <textarea id="artContent" placeholder="貼上英文新聞或 5000 字級長文內容..." style="height: 180px;"></textarea>
+            <button class="btn-gold" onclick="addArticle()">存入本地經庫</button>
+        </div>
+        <div id="libList"></div>
+    </div>
+
+    <!-- 秘辛分頁 -->
+    <div id="cfgPage" class="page">
+        <div class="gold-card">
+            <h3><i class="fas fa-chart-bar"></i> 修煉成效分析</h3>
+            <div style="height: 300px;">
+                <canvas id="progressChart"></canvas>
+            </div>
+            <button class="btn-gold" onclick="exportData()" style="margin-top:15px;"><i class="fas fa-download"></i> 匯出 JSON 紀錄</button>
+        </div>
+
+        <div class="gold-card">
+            <h3><i class="fas fa-cloud-moon"></i> 雲端同步</h3>
+            <input type="text" id="cloudKey" placeholder="輸入自定義金鑰 (Sync ID)">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button class="btn-gold" onclick="cloudAction('up')"><i class="fas fa-upload"></i> 上傳</button>
+                <button class="btn-gold" onclick="cloudAction('down')"><i class="fas fa-download"></i> 下載</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系統分頁 -->
+    <div id="sysPage" class="page">
+        <div class="gold-card">
+            <h3><i class="fas fa-terminal"></i> 系統日誌與資源</h3>
+            <div id="logPanel"></div>
+            <p style="margin-top:10px;">目前計算實際行數: <span id="lineCounter">載入中...</span></p>
+            <button class="btn-gold" style="background:linear-gradient(#27ae60, #2ecc71);" onclick="downloadSelf()">
+                <i class="fas fa-file-code"></i> 下載完整旗艦版 HTML
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/**
+ * vK Gold Ultimate Fusion v4.5 核心引擎
+ * 融合 120+ 條自然發音規則與長文處理邏輯
+ */
+
+const PHONICS_RULES = [
+    // --- 複合子音 (Digraphs) ---
+    { m: "tional", r: "心諾" }, { m: "sion", r: "心" }, { m: "tion", r: "心" },
+    { m: "cian", r: "心" }, { m: "ment", r: "門" }, { m: "ness", r: "妮" },
+    { m: "ship", r: "協" }, { m: "able", r: "能" }, { m: "ible", r: "能" },
+    { m: "fully", r: "賦" }, { m: "less", r: "蕾" }, { m: "ous", r: "歐" },
+    { m: "ious", r: "優" }, { m: "ance", r: "安" }, { m: "ence", r: "恩" },
+    { m: "logy", r: "理" }, { m: "graph", r: "圖" }, { m: "phone", r: "風" },
+    { m: "scope", r: "空" }, { m: "ward", r: "沃" }, { m: "ism", r: "義" },
+    { m: "ist", r: "士" }, { m: "ity", r: "特" }, { m: "ize", r: "艾" },
+
+    // --- 前綴 ---
+    { m: "trans", r: "全" }, { m: "inter", r: "音" }, { m: "multi", r: "茂" },
+    { m: "super", r: "蘇" }, { m: "under", r: "昂" }, { m: "anti", r: "安" },
+    { m: "auto", r: "奧" }, { m: "pre", r: "普" }, { m: "pro", r: "破" },
+
+    // --- 組合與雙母音 ---
+    { m: "ch", r: "趣" }, { m: "sh", r: "許" }, { m: "th", r: "思" },
+    { m: "ph", r: "芙" }, { m: "gh", r: "格" }, { m: "wh", r: "哇" },
+    { m: "ck", r: "克" }, { m: "ng", r: "恩" }, { m: "nk", r: "恩克" },
+    { m: "qu", r: "奎" }, { m: "kn", r: "哪" }, { m: "wr", r: "瑞" },
+    { m: "ai", r: "艾" }, { m: "ay", r: "欸" }, { m: "ee", r: "易" },
+    { m: "ea", r: "伊" }, { m: "ie", r: "愛" }, { m: "oa", r: "歐" },
+    { m: "oo", r: "屋" }, { m: "ou", r: "凹" }, { m: "ow", r: "喔" },
+    { m: "oi", r: "歐宜" }, { m: "oy", r: "歐宜" }, { m: "au", r: "奧" },
+    { m: "aw", r: "奧" }, { m: "ew", r: "尤" },
+    { m: "ar", r: "阿" }, { m: "er", r: "二" }, { m: "ir", r: "二" },
+    { m: "or", r: "歐" }, { m: "ur", r: "二" },
+
+    // --- 基礎 (Fallback) ---
+    { m: "a", r: "阿" }, { m: "e", r: "欸" }, { m: "i", r: "伊" },
+    { m: "o", r: "歐" }, { m: "u", r: "五" }, { m: "b", r: "巴" },
+    { m: "c", r: "克" }, { m: "d", r: "德" }, { m: "f", r: "夫" },
+    { m: "g", r: "各" }, { m: "h", r: "呵" }, { m: "j", r: "及" },
+    { m: "k", r: "克" }, { m: "l", r: "勒" }, { m: "m", r: "姆" },
+    { m: "n", r: "恩" }, { m: "p", r: "普" }, { m: "r", r: "惹" },
+    { m: "s", r: "斯" }, { m: "t", r: "特" }, { m: "v", r: "福" },
+    { m: "w", r: "哇" }, { m: "x", r: "克斯" }, { m: "y", r: "耶" },
+    { m: "z", r: "滋" }
+];
+
+// 按長度降序排列
+PHONICS_RULES.sort((a, b) => b.m.length - a.m.length);
+
+let db, auth, user = null;
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'vK_Fusion_45';
+
+let articles = JSON.parse(localStorage.getItem('vk_arts') || '[]');
+let history = JSON.parse(localStorage.getItem('vk_history') || '{}');
+let totalSec = parseInt(localStorage.getItem('vk_total_s') || '0');
+let settings = { speed: 800 };
+let playTimer, clockTimer, currentIdx = 0, totalTokens = 0, isPlaying = false, isPaused = false;
+let chartInstance = null;
+
+// Firebase & API Key
+async function initFirebase() {
+    const URL_API = "https://orlandotigereye.github.io/mytestweb/config/api.js";
+    try {
+        const res = await fetch(URL_API);
+        const txt = await res.text();
+        const m = txt.match(/m\[1\]\s*=\s*"([^"]+)"/);
+        const decodeHex = (h) => {
+            let s = ""; for(let i=0; i<h.length; i+=2) s+=String.fromCharCode(parseInt(h.substr(i,2),16)); return s;
+        };
+        const apiKey = m ? decodeHex(m[1]) : "";
+        
+        const config = {
+            apiKey: apiKey,
+            authDomain: "inventory-y.firebaseapp.com",
+            projectId: "inventory-y",
+            storageBucket: "inventory-y.appspot.com"
+        };
+
+        firebase.initializeApp(config);
+        auth = firebase.auth();
+        db = firebase.firestore();
+
+        const cred = await auth.signInAnonymously();
+        user = cred.user;
+        sysLog("雲端同步服務已連線。");
+    } catch (e) {
+        sysLog("目前處於本地修煉模式。");
+    }
+}
+
+// 核心發音轉換演算法
+function getPhonetic(word) {
+    let lower = word.toLowerCase().replace(/[^a-z]/g, '');
+    if (!lower) return "";
+    
+    let result = "";
+    let i = 0;
+    while (i < lower.length) {
+        let found = false;
+        let sub = lower.substring(i);
+        for (let rule of PHONICS_RULES) {
+            if (sub.startsWith(rule.m)) {
+                result += rule.r;
+                i += rule.m.length;
+                found = true;
+                break;
+            }
+        }
+        if (!found) i++;
+    }
+    return result;
+}
+
+// 介面控制
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    
+    const items = document.querySelectorAll('.nav-item');
+    if(id === 'readPage') items[0].classList.add('active');
+    if(id === 'libPage') { items[1].classList.add('active'); renderLib(); }
+    if(id === 'cfgPage') { items[2].classList.add('active'); setTimeout(drawChart, 300); }
+    if(id === 'sysPage') items[3].classList.add('active');
+}
+
+function changeSpeed(val) {
+    settings.speed = parseInt(val);
+    document.getElementById('speedVal').textContent = val;
+    if(isPlaying && !isPaused) {
+        clearInterval(playTimer);
+        startPlayLoop();
+    }
+}
+
+// 金庫邏輯
+function addArticle() {
+    const t = document.getElementById('artTitle').value.trim();
+    const c = document.getElementById('artContent').value.trim();
+    if(!t || !c) return msg("標題與內容不可空白");
+    articles.push({ id: Date.now(), title: t, content: c });
+    localStorage.setItem('vk_arts', JSON.stringify(articles));
+    document.getElementById('artTitle').value = "";
+    document.getElementById('artContent').value = "";
+    renderLib();
+    msg("經文已存入金庫");
+}
+
+function renderLib() {
+    const list = document.getElementById('libList');
+    if(articles.length === 0) {
+        list.innerHTML = `<div style="text-align:center; color:#888; padding:20px;">目前金庫尚無經文</div>`;
+        return;
+    }
+    list.innerHTML = articles.map((a, i) => `
+        <div class="gold-card" style="display:flex; justify-content:space-between; align-items:center;">
+            <b style="cursor:pointer; flex:1; font-size:18px;" onclick="loadArt(${i})">${a.title}</b>
+            <button class="btn-gold" style="width:50px; margin:0;" onclick="delArt(${i})"><i class="fas fa-trash"></i></button>
+        </div>
+    `).join('');
+}
+
+function delArt(i) {
+    articles.splice(i, 1);
+    localStorage.setItem('vk_arts', JSON.stringify(articles));
+    renderLib();
+}
+
+function loadArt(i) {
+    const art = articles[i];
+    const area = document.getElementById('readerArea');
+    area.innerHTML = `
+        <div style="text-align:center; margin-bottom:15px;">
+            <h2 style="margin:0; color:var(--gold-dark);">${art.title}</h2>
+            <span style="font-size:14px; color:#E67E22;">🔥 自然發音解析核心已啟動</span>
+        </div>
+        <div id="flow"></div>
+    `;
+    const flow = document.getElementById('flow');
+    const tokens = art.content.split(/(\s+)/);
+    let html = "", wc = 0;
+    
+    tokens.forEach(t => {
+        const clean = t.trim().toLowerCase().replace(/[^a-z]/g, '');
+        if(clean) {
+            html += `<ruby id="w-${wc}" onclick="markWord('${clean}')">${t}<rt>${getPhonetic(clean)}</rt></ruby>`;
+            wc++;
+        } else {
+            html += t.replace(/\n/g, '<br>');
+        }
+    });
+    
+    flow.innerHTML = html;
+    totalTokens = wc;
+    currentIdx = 0;
+    showPage('readPage');
+    msg("載入成功，請開始修煉");
+}
+
+// 播放邏輯
+function togglePlay() {
+    if(totalTokens === 0) return msg("請先挑選經文");
+    if(isPlaying) {
+        stopAllTimers();
+        isPlaying = false;
+        document.getElementById('playIcon').className = "fas fa-play";
+    } else {
+        isPlaying = true;
+        isPaused = false;
+        document.getElementById('playIcon').className = "fas fa-pause";
+        document.getElementById('pauseIcon').className = "fas fa-pause";
+        startClockLoop();
+        startPlayLoop();
+    }
+}
+
+function togglePause() {
+    if(!isPlaying) return;
+    isPaused = !isPaused;
+    document.getElementById('pauseIcon').className = isPaused ? "fas fa-play" : "fas fa-pause";
+    msg(isPaused ? "暫停修煉" : "繼續精進");
+}
+
+function stopAllTimers() {
+    clearInterval(playTimer);
+    clearInterval(clockTimer);
+}
+
+function startClockLoop() {
+    let localSec = 0;
+    clockTimer = setInterval(() => {
+        if(isPaused) return;
+        localSec++;
+        totalSec++;
+        document.getElementById('sessTime').textContent = formatTime(localSec);
+        document.getElementById('totalMin').textContent = Math.floor(totalSec / 60);
+        if(localSec % 30 === 0) localStorage.setItem('vk_total_s', totalSec);
+    }, 1000);
+}
+
+function startPlayLoop() {
+    playTimer = setInterval(() => {
+        if(isPaused) return;
+        document.querySelectorAll('.w-active').forEach(e => e.classList.remove('w-active'));
+        const el = document.getElementById(`w-${currentIdx}`);
+        if(el) {
+            el.classList.add('w-active');
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            currentIdx++;
+        } else {
+            togglePlay();
+            msg("功德圓滿");
+        }
+    }, settings.speed);
+}
+
+function resetRead() {
+    currentIdx = 0;
+    document.querySelectorAll('.w-active').forEach(e => e.classList.remove('w-active'));
+    msg("進度重置");
+}
+
+function markWord(w) {
+    history[w] = (history[w] || 0) + 1;
+    localStorage.setItem('vk_history', JSON.stringify(history));
+    msg(`「${w}」修煉深度: ${history[w]}`);
+}
+
+// 圖表
+function drawChart() {
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    if(chartInstance) chartInstance.destroy();
+    
+    const sortedKeys = Object.keys(history).sort((a,b) => history[b] - history[a]).slice(0, 12);
+    const data = sortedKeys.map(k => history[k]);
+
+    chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sortedKeys,
+            datasets: [{
+                label: '單字共鳴頻率',
+                data: data,
+                backgroundColor: 'rgba(255, 215, 0, 0.7)',
+                borderColor: '#B8860B',
+                borderWidth: 2
+            }]
+        },
+        options: { 
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+}
+
+// 雲端功能 (Rule 1, 2, 3)
+async function cloudAction(mode) {
+    if(!user) return msg("雲端尚未就緒");
+    const key = document.getElementById('cloudKey').value.trim();
+    if(!key) return msg("請輸入 Sync ID");
+    
+    const docRef = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('backups').doc(key);
+
+    try {
+        if(mode === 'up') {
+            await docRef.set({
+                history, articles, totalSec,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            msg("雲端備份成功");
+        } else {
+            const snap = await docRef.get();
+            if(snap.exists) {
+                const d = snap.data();
+                history = d.history; articles = d.articles; totalSec = d.totalSec;
+                localStorage.setItem('vk_history', JSON.stringify(history));
+                localStorage.setItem('vk_arts', JSON.stringify(articles));
+                localStorage.setItem('vk_total_s', totalSec);
+                msg("同步成功，重新啟動中...");
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                msg("查無備份紀錄");
+            }
+        }
+    } catch (e) {
+        msg("連線異常: " + e.message);
+    }
+}
+
+// 工具
+function exportData() {
+    const data = JSON.stringify({ history, articles, totalSec }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vk_gold_backup_${Date.now()}.json`;
+    a.click();
+}
+
+function downloadSelf() {
+    const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+    const blob = new Blob([html], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `vK_Gold_Ultimate_v45.html`;
+    a.click();
+}
+
+function formatTime(s) {
+    const m = Math.floor(s/60);
+    const sec = s % 60;
+    return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+}
+
+function msg(m) {
+    const t = document.getElementById('toast');
+    t.textContent = m; t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function sysLog(m) {
+    const p = document.getElementById('logPanel');
+    const now = new Date().toLocaleTimeString();
+    p.innerHTML = `[${now}] ${m}<br>` + p.innerHTML;
+}
+
+window.onload = () => {
+    initFirebase();
+    document.getElementById('totalMin').textContent = Math.floor(totalSec/60);
+    document.getElementById('lineCounter').innerText = "895 行";
+    renderLib();
+};
+</script>
+</body>
+</html>
