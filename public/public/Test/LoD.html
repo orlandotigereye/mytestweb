@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>刮刮樂掃描器 - 全模式</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+body { font-family:sans-serif; padding:12px; text-align:center; }
+.tab { display:inline-block; padding:8px 16px; margin:0 2px; cursor:pointer; border:1px solid #ccc; border-bottom:none; border-radius:5px 5px 0 0; background:#eee; }
+.tab.active { background:#fff; font-weight:bold; }
+.tabContent { display:none; border:1px solid #ccc; border-radius:0 5px 5px 5px; padding:12px; margin-top:-1px; }
+input { padding:6px; font-size:16px; width:180px; margin:5px; }
+button { padding:6px 12px; font-size:16px; margin:5px; }
+canvas { width:100%; max-width:600px; border:1px solid #ccc; margin-top:10px; }
+table { margin:12px auto; border-collapse: collapse; }
+th, td { border:1px solid #ccc; padding:6px 10px; }
+.result { font-size:18px; font-weight:bold; margin-top:8px; }
+.scanbox { position:absolute; border:3px solid #00ff88; border-radius:10px; width:60%; height:35%; left:20%; top:32.5%; box-shadow:0 0 0 9999px rgba(0,0,0,0.25); pointer-events:none; }
+.wrap { position:relative; display:inline-block; }
+</style>
+</head>
+<body>
+
+<h2>刮刮樂掃描器 - 全模式</h2>
+
+<!-- Tab 切換按鈕 -->
+<div>
+  <div class="tab active" onclick="openTab('tabSettings', this)">尾數設定</div>
+  <div class="tab" onclick="openTab('tabGallery', this)">相簿掃描</div>
+  <div class="tab" onclick="openTab('tabCamera', this)">現場相機掃描</div>
+</div>
+
+<!-- 尾數設定 -->
+<div id="tabSettings" class="tabContent" style="display:block;">
+  <h3>設定要掃描的尾數（用逗號分隔）</h3>
+  <input type="text" id="targetsInput" placeholder="例如 04,13,31,22" value="04,13,31,22">
+  <br>
+  <button onclick="saveTargets()">儲存尾數</button>
+  <p id="settingsMsg" style="color:green;"></p>
+</div>
+
+<!-- 相簿掃描 -->
+<div id="tabGallery" class="tabContent">
+  <div>
+    <button onclick="openGallery()">🖼 從相簿選擇多張</button>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
+  </div>
+  <canvas id="canvasGallery"></canvas>
+  <div id="outputGallery" class="result">請先設定尾數，再選擇相簿掃描</div>
+
+  <h4>命中統計：</h4>
+  <table id="hitTableGallery">
+    <tr><th>尾數</th><th>次數</th></tr>
+  </table>
+</div>
+
+<!-- 現場相機掃描 -->
+<div id="tabCamera" class="tabContent">
+  <div class="wrap">
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvasCamera" style="position:absolute; left:0; top:0;"></canvas>
+    <div class="scanbox"></div>
+  </div>
+  <div id="outputCamera" class="result">啟動相機中...</div>
+</div>
+
+<script>
+// ----------------- Tab 切換 -----------------
+function openTab(tabId, el){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  el.classList.add("active");
+  document.querySelectorAll(".tabContent").forEach(c=>c.style.display='none');
+  document.getElementById(tabId).style.display='block';
+}
+
+// ----------------- 尾數設定 -----------------
+let targets=["04","13","31","22"];
+let countsGallery={};
+function initGalleryHitTable(){
+  countsGallery={}; 
+  const hitTable=document.getElementById("hitTableGallery");
+  hitTable.innerHTML='<tr><th>尾數</th><th>次數</th></tr>';
+  targets.forEach(t=>{
+    countsGallery[t]=0;
+    const row=document.createElement("tr");
+    row.innerHTML=`<td>${t}</td><td id="countGallery${t}">0</td>`;
+    hitTable.appendChild(row);
+  });
+}
+initGalleryHitTable();
+
+function saveTargets(){
+  const val=document.getElementById("targetsInput").value.trim();
+  if(!val){ alert("請輸入尾數"); return; }
+  targets=val.split(",").map(s=>s.trim());
+  initGalleryHitTable();
+  document.getElementById("settingsMsg").innerText="尾數已儲存，可切換到掃描頁開始掃描";
+}
+
+// ----------------- 相簿批量掃描 -----------------
+const canvasGallery=document.getElementById("canvasGallery");
+const ctxGallery=canvasGallery.getContext("2d");
+const outputGallery=document.getElementById("outputGallery");
+document.getElementById("fileInput").addEventListener("change", handleImageFiles);
+let fileQueue=[];
+
+function openGallery(){ document.getElementById("fileInput").click(); }
+
+async function handleImageFiles(e){
+  if(targets.length===0){ alert("請先設定尾數！"); return; }
+  fileQueue=Array.from(e.target.files);
+  outputGallery.innerText="開始批量掃描...";
+  scanNextFile();
+}
+
+async function scanNextFile(){
+  if(fileQueue.length===0){ outputGallery.innerText="批量掃描完成！"; return; }
+  const file=fileQueue.shift();
+  const img=new Image();
+  img.onload=()=> scanUploadedImage(img);
+  img.src=URL.createObjectURL(file);
+}
+
+async function scanUploadedImage(img){
+  canvasGallery.width=img.width;
+  canvasGallery.height=img.height;
+  ctxGallery.clearRect(0,0,canvasGallery.width,canvasGallery.height);
+  ctxGallery.drawImage(img,0,0);
+
+  outputGallery.innerText="正在 OCR 掃描...";
+
+  const {data}=await Tesseract.recognize(canvasGallery,"eng",{tessedit_char_whitelist:"0123456789"});
+  let hit=false;
+  data.words.forEach(w=>{
+    const num=w.text.replace(/\D/g,"");
+    if(!num) return;
+    const last2=num.slice(-2).padStart(2,"0");
+    if(targets.includes(last2)){
+      hit=true;
+      const rx=w.bbox.x0, ry=w.bbox.y0, rw=w.bbox.x1-w.bbox.x0, rh=w.bbox.y1-w.bbox.y0;
+      ctxGallery.beginPath(); ctxGallery.lineWidth=4; ctxGallery.strokeStyle="red";
+      ctxGallery.rect(rx,ry,rw,rh); ctxGallery.stroke();
+      countsGallery[last2]++;
+      document.getElementById(`countGallery${last2}`).innerText=countsGallery[last2];
+    }
+  });
+  outputGallery.innerText = hit ? "命中！掃描下一張..." : "未命中，掃描下一張...";
+  setTimeout(scanNextFile,500);
+}
+
+// ----------------- 現場相機掃描 -----------------
+const video=document.getElementById("video");
+const canvasCamera=document.getElementById("canvasCamera");
+const ctxCamera=canvasCamera.getContext("2d");
+const outputCamera=document.getElementById("outputCamera");
+
+async function startCamera(){
+  if(targets.length===0){ alert("請先設定尾數！"); return; }
+  const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"environment", width:{ideal:1280}, height:{ideal:720} }});
+  video.srcObject=stream;
+
+  canvasCamera.width=video.clientWidth;
+  canvasCamera.height=video.clientHeight;
+
+  setInterval(scanCameraFrame,700);
+}
+
+function scanCameraFrame(){
+  if(!video.videoWidth) return;
+  canvasCamera.width=video.clientWidth;
+  canvasCamera.height=video.clientHeight;
+  ctxCamera.drawImage(video,0,0,canvasCamera.width,canvasCamera.height);
+
+  const tempCanvas=document.createElement("canvas");
+  tempCanvas.width=canvasCamera.width;
+  tempCanvas.height=canvasCamera.height;
+  const tctx=tempCanvas.getContext("2d");
+  tctx.drawImage(video,0,0,canvasCamera.width,canvasCamera.height);
+
+  Tesseract.recognize(tempCanvas,"eng",{tessedit_char_whitelist:"0123456789"}).then(({data})=>{
+    data.words.forEach(w=>{
+      const num=w.text.replace(/\D/g,"");
+      if(!num) return;
+      const last2=num.slice(-2).padStart(2,"0");
+      if(targets.includes(last2)){
+        const scaleX=canvasCamera.width/video.videoWidth;
+        const scaleY=canvasCamera.height/video.videoHeight;
+        const rx=w.bbox.x0*scaleX, ry=w.bbox.y0*scaleY;
+        const rw=(w.bbox.x1-w.bbox.x0)*scaleX, rh=(w.bbox.y1-w.bbox.y0)*scaleY;
+        ctxCamera.beginPath(); ctxCamera.lineWidth=4; ctxCamera.strokeStyle="red";
+        ctxCamera.rect(rx,ry,rw,rh); ctxCamera.stroke();
+        outputCamera.innerText="命中: "+last2;
+      }
+    });
+  });
+}
+</script>
+
+<!-- 啟動相機按鈕 -->
+<script>
+const cameraTab=document.querySelector("#tabCamera");
+cameraTab.addEventListener("click",()=>{ startCamera(); });
+</script>
+
+</body>
+</html>
