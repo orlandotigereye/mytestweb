@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>刮刮樂實戰掃描</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+body { font-family: sans-serif; text-align: center; padding: 12px; }
+.wrap { position: relative; display: inline-block; }
+video, canvas { width: 100%; max-width: 420px; border: 1px solid #ccc; }
+#overlay {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  pointer-events: none;
+}
+.scanbox {
+  position: absolute; border: 3px solid #00ff88; border-radius: 10px;
+  width: 60%; height: 35%;
+  left: 20%; top: 32.5%;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.25);
+}
+.result { margin-top: 8px; font-size: 20px; font-weight: bold; }
+.match { color: green; }
+.nomatch { color: red; }
+</style>
+</head>
+
+<body>
+
+<h3>現場掃描（對準框內）</h3>
+<p>尾數：04、13、31、22</p>
+
+<div class="wrap">
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" style="position:absolute; left:0; top:0;"></canvas>
+  <div id="overlay"><div class="scanbox"></div></div>
+</div>
+
+<div id="output" class="result">啟動相機中...</div>
+
+<script>
+const targets = ["04","13","31","22"];
+let scanning = true;
+let streamTrack;
+
+startCamera();
+
+async function startCamera(){
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: "environment",
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    }
+  });
+  video.srcObject = stream;
+  streamTrack = stream.getVideoTracks()[0];
+
+  await applyCameraTuning();
+  setInterval(scanFrame, 700);
+}
+
+async function applyCameraTuning(){
+  if (!streamTrack.getCapabilities) return;
+  const caps = streamTrack.getCapabilities();
+  const settings = {};
+
+  if (caps.focusMode && caps.focusMode.includes("continuous"))
+    settings.focusMode = "continuous";
+
+  if (caps.exposureMode && caps.exposureMode.includes("continuous"))
+    settings.exposureMode = "continuous";
+
+  if (caps.exposureCompensation){
+    const max = caps.exposureCompensation.max ?? 0;
+    settings.exposureCompensation = max; // 盡量提亮
+  }
+
+  try { await streamTrack.applyConstraints({ advanced: [settings] }); }
+  catch(e){ console.log("camera tuning not supported"); }
+}
+
+function scanFrame(){
+  if(!scanning || !video.videoWidth) return;
+
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+
+  // 對準框比例（跟 UI 一致）
+  const cropW = vw * 0.6;
+  const cropH = vh * 0.35;
+  const sx = vw * 0.2;
+  const sy = vh * 0.325;
+
+  canvas.width = video.clientWidth;
+  canvas.height = video.clientHeight;
+  const ctx = canvas.getContext("2d");
+
+  // 將 video 等比繪到 canvas（用於畫圈與截圖）
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  // 建立 OCR 小畫布（只掃框內）
+  const ocr = document.createElement("canvas");
+  ocr.width = 320; ocr.height = 180;
+  const octx = ocr.getContext("2d");
+  octx.drawImage(video, sx, sy, cropW, cropH, 0, 0, ocr.width, ocr.height);
+
+  // 二值化增強
+  const img = octx.getImageData(0,0,ocr.width,ocr.height);
+  const d = img.data;
+  for(let i=0;i<d.length;i+=4){
+    const g=(d[i]+d[i+1]+d[i+2])/3;
+    const v=g>140?255:0;
+    d[i]=d[i+1]=d[i+2]=v;
+  }
+  octx.putImageData(img,0,0);
+
+  // 簡單輪廓取樣 → 小區塊 OCR
+  const regions=[];
+  const step=20;
+  for(let y=0;y<ocr.height;y+=step){
+    for(let x=0;x<ocr.width;x+=step){
+      const i=(y*ocr.width+x)*4;
+      if(d[i]===255){
+        regions.push({x:x-30,y:y-20,w:120,h:60});
+      }
+    }
+  }
+  processRegions(ocr, regions.slice(0,5), sx, sy, cropW, cropH);
+}
+
+function processRegions(ocrCanvas, regions, sx, sy, cropW, cropH){
+  const drawCtx = canvas.getContext("2d");
+
+  regions.forEach(region=>{
+    if(!scanning) return;
+
+    const temp=document.createElement("canvas");
+    temp.width=region.w; temp.height=region.h;
+    const tctx=temp.getContext("2d");
+    tctx.drawImage(ocrCanvas,
+      region.x,region.y,region.w,region.h,
+      0,0,region.w,region.h);
+
+    Tesseract.recognize(temp,"eng",{ tessedit_char_whitelist:"0123456789" })
+    .then(({data})=>{
+      const nums=data.text.match(/\d+/g)||[];
+      nums.forEach(num=>{
+        const last2=num.slice(-2).padStart(2,"0");
+        if(targets.includes(last2)){
+          scanning=false;
+
+          // 將 OCR 區域座標映射回主畫面
+          const scaleX = canvas.width / video.videoWidth;
+          const scaleY = canvas.height / video.videoHeight;
+
+          const rx = (sx + (region.x/ocrCanvas.width)*cropW) * scaleX;
+          const ry = (sy + (region.y/ocrCanvas.height)*cropH) * scaleY;
+          const rw = (region.w/ocrCanvas.width)*cropW * scaleX;
+          const rh = (region.h/ocrCanvas.height)*cropH * scaleY;
+
+          drawCtx.beginPath();
+          drawCtx.lineWidth=4; drawCtx.strokeStyle="red";
+          drawCtx.arc(rx+rw/2, ry+rh/2, Math.max(rw,rh)/2, 0, Math.PI*2);
+          drawCtx.stroke();
+
+          output.innerText="命中："+last2;
+          output.className="result match";
+
+          autoSaveSnapshot();
+          if(navigator.vibrate) navigator.vibrate([200,100,200]);
+        }
+      });
+    });
+  });
+
+  if(scanning){
+    output.innerText="掃描中...";
+    output.className="result nomatch";
+  }
+}
+
+function autoSaveSnapshot(){
+  const link=document.createElement("a");
+  link.download="hit_"+Date.now()+".png";
+  link.href=canvas.toDataURL("image/png");
+  link.click();
+}
+</script>
+
+</body>
+</html>
