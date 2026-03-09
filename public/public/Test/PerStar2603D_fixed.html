@@ -1,0 +1,1452 @@
+<!--
+{
+  "AppID": "PerStar2603D",
+  "Version": "1.0.0",
+  "LastModified": "2024-03-09",
+  "Dependencies": ["public/00css/global.css", "public/01js/core.js", "public/0C.Template/AppShell.html"]
+}
+-->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Celestial V4 Ultimate - 4533 協易機專屬量化系統 (Normalized)</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        /* CSS from PerStar2603A.html */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Orbitron:wght@400;700&display=swap');
+        
+        :root {
+            --base-font-size: 0.5rem; /* Adjusted to 0.5rem as per test1.html */
+            --gold-primary: #FFD700;
+            --gold-secondary: #B8860B;
+            --gold-light: #FFF8DC;
+            --bg-pattern: url('https://www.transparenttextures.com/patterns/gold-scale.png');
+
+            /* From test1.html */
+            --text-size: 0.5rem;
+            --gold-bg: radial-gradient(circle, #fff7ad 0%, #ffd700 50%, #b8860b 100%);
+        }
+
+        /* 嚴格控制文字大小，統一為 0.5rem */
+        html, body {
+            font-size: var(--base-font-size); /* Removed !important for debugging */
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at center, #594300 0%, #1a1400 100%); /* Retain PerStar background */
+            background-image: var(--bg-pattern);
+            background-attachment: fixed;
+            color: #fffce0; /* PerStar text color */
+            font-family: 'Noto Sans TC', sans-serif;
+            overflow-x: hidden;
+        }
+
+        * {
+            font-size: var(--base-font-size); /* Removed !important for debugging */
+            box-sizing: border-box;
+        }
+
+        /* 特殊標題字體，但仍然受限於 0.5rem，僅透過字重與顏色區分 */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 900 !important;
+            color: var(--gold-primary);
+            text-transform: uppercase;
+            margin: 0 0 4px 0;
+            text-shadow: 0px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .rwd-container {
+            width: 100%;
+            max-width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .glass-panel {
+            width: 98%;
+            max-width: 600px;
+            background: rgba(20, 15, 0, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--gold-secondary);
+            box-shadow: inset 0 0 10px rgba(218, 165, 32, 0.2), 0 5px 15px rgba(0,0,0,0.6);
+            border-radius: 4px;
+            margin: 4px 0;
+            padding: 6px;
+        }
+
+        .gold-btn {
+            background: linear-gradient(180deg, #FFD700 0%, #B8860B 100%);
+            color: #111;
+            font-weight: 900;
+            border: 1px solid #FFF;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        
+        .gold-btn:active {
+            transform: scale(0.98);
+            background: linear-gradient(180deg, #B8860B 0%, #FFD700 100%);
+        }
+
+        /* App Shell Components */
+        .tabs-container {
+            display: flex; background: var(--accent-dark);
+            position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .tab-btn {
+            flex: 1; padding: var(--space-md); border: none; background: transparent;
+            color: rgba(255,255,255,0.8); font-size: 1rem; font-weight: bold;        /* Increased for debugging */
+            cursor: pointer; transition: 0.3s; text-align: center;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;    
+        }
+
+        .tab-btn.active {
+            color: #fff; background: rgba(255,255,255,0.15);
+            border-bottom: 3px solid #fff;
+        }
+
+        .content-section { display: none; padding: var(--space-md); animation: fadeIn 0.4s ease; }
+        .content-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Shared Layouts */
+        .card {
+            background: var(--card-bg);
+            border: 2px solid var(--accent-dark);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            box-shadow: 0 4px 15px rgba(184, 134, 11, 0.2);
+            margin-bottom: var(--space-md);
+        }
+
+        .card h2 {
+            margin-top: 0; font-size: 15px; color: var(--accent-dark);
+            border-bottom: 1px solid var(--accent-dark);
+            padding-bottom: var(--space-xs); margin-bottom: var(--space-md);
+        }
+
+        /* UI Elements */
+        textarea, input {
+            width: 100%; padding: var(--space-sm); border: 1px solid #ddd;
+            border-radius: var(--radius-sm); font-size: 14px; background: #fffdf0;   
+        }
+
+        /* Standard Helpers */
+        .toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);   
+            background: rgba(44, 62, 80, 0.95); color: white; padding: 10px 20px;    
+            border-radius: 25px; z-index: 3000; font-size: 12px; display: none;      
+        }
+
+        .spinner-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.7); display: none;
+            flex-direction: column; align-items: center; justify-content: center; z-index: 4000;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-dark);     
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Merged CSS from test1.html */
+        .main-app { /* Adapted to fit rwd-container */
+            width: 100%;
+            max-width: 420px; /* Constrain similar to test1 */
+            height: 720px; /* Constrain similar to test1 */
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 2px solid #b8860b;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            border-radius: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            margin: 0.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 0.5rem 字體控制, already handled by :root --base-font-size and * */
+        .text-tiny { font-size: var(--text-size); }
+        .text-small { font-size: 0.55rem; }
+        
+        /* 九宮格樣式 */
+        .grid-luoshu {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            background: #b8860b;
+            padding: 2px;
+            border-radius: 0.5rem;
+        }
+
+        .cell-luoshu {
+            background: white;
+            aspect-ratio: 1/1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .cell-luoshu:hover { background: #fffbeb; }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        
+        /* 滾動條美化 */
+        .logs-area::-webkit-scrollbar { width: 4px; }
+        .logs-area::-webkit-scrollbar-thumb { background: #b8860b; border-radius: 2px; }
+
+        .tab-active { /* This style is for test1.html, PerStar uses .tab-btn.active */
+            background: white !important;
+            color: #78350f !important;
+            border-top: 2px solid #b8860b;
+        }
+        
+        @keyframes shine {
+            from { background-position: -200% center; }
+            to { background-position: 200% center; }
+        }
+        .shine-effect {
+            background: linear-gradient(90deg, #b8860b, #ffd700, #b8860b);
+            background-size: 200% auto;
+            animation: shine 3s linear infinite;
+        }
+
+        /* Standard Helpers */
+        .error-log { color: #ff4444; }
+        .success-log { color: #44ff44; }
+        .info-log { color: #44aaff; }
+
+        /* 隱藏預設警告，由前端系統面板接管 */
+        .system-alert-overlay {
+            position: fixed; top: 10px; right: 10px; z-index: 9999;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        /**
+         * Core JS Library - Project Universal Logic
+         * Path: /public/01js/core.js
+         * V2.1.2 - Enhanced Global Availability & Local Compatibility
+         *
+         * IMPORTANT: All 'let'/'const' converted to 'var', arrow functions to 'function' for ES5 compatibility.
+         * Added APP_CORE.handleError for unified error logging and user notification.
+         */
+
+        // Ensure APP_CORE is globally available before any other script might try to use it
+        var APP_CORE = APP_CORE || {};
+
+        APP_CORE = {
+            version: "2.1.2",
+            // 1. Firebase Configuration (Centralized)
+            firebaseConfig: {
+                apiKey: "AIzaSyDRgBVUSuLlxsZiRCPUqfTUoHrNfZY70vs",
+                authDomain: "inventory-y.firebaseapp.com",
+                databaseURL: "https://inventory-y-default-rtdb.firebaseio.com",      
+                projectId: "inventory-y"
+            },
+            db: null,
+            _initialized: false,
+            
+            // 2. Initialization
+            init: function() {
+                if (APP_CORE._initialized) {
+                    return;
+                }
+                console.log("Core: Initializing v" + APP_CORE.version);
+                
+                if (typeof firebase !== 'undefined') {
+                    try {
+                        firebase.initializeApp(APP_CORE.firebaseConfig);
+                        APP_CORE.db = firebase.database();
+                        console.log("Core: Firebase Initialized");
+                    } catch (e) {
+                        console.error("Core: Firebase Init Error", e);
+                        APP_CORE.handleError(e, "Firebase Initialization");
+                    }   
+                }
+                
+                APP_CORE.setupTabs();
+                APP_CORE._initialized = true;
+                
+                // Notify any listeners that core is ready
+                if (typeof window.CustomEvent === 'function') {
+                    window.dispatchEvent(new CustomEvent('coreReady', { detail: { core: APP_CORE } }));
+                }
+            },
+
+            // 3. UI Components (No Alerts)
+            showToast: function(msg, duration) {
+                duration = duration || 3000;
+                var t = document.getElementById('toast');
+                if (!t) {
+                    t = document.createElement('div');
+                    t.id = 'toast';
+                    t.className = 'toast';
+                    document.body.appendChild(t);
+                }
+                if (t) { // Check for existence after creation
+                    t.textContent = msg;
+                    t.style.display = 'block';
+                    setTimeout(function() {
+                        if (t) t.style.display = 'none'; // Check again before manipulating
+                    }, duration);
+                }
+            },
+
+            toggleSpinner: function(show) {
+                var s = document.getElementById('spinner');
+                if (!s) {
+                    s = document.createElement('div');
+                    s.id = 'spinner';
+                    s.className = 'spinner-overlay';
+                    s.innerHTML = '<div class="loader"></div><p id="spinner-text" style="margin-top:10px; font-weight:bold; color:var(--accent-dark);">Processing...</p>';
+                    document.body.appendChild(s);
+                }
+                if (s) { // Check for existence after creation
+                    if (typeof show === 'string') {
+                        var spinnerText = document.getElementById('spinner-text');
+                        if (spinnerText) spinnerText.textContent = show;
+                    }
+                    s.style.display = show ? 'flex' : 'none';
+                }
+            },
+
+            // 4. Tab System
+            setupTabs: function() {
+                // The window.switchTab is now handled by initApp to manage appState
+                // This function can be used for initial setup or other tab-related utilities
+                // but should not redefine the global switchTab which relies on appState.
+            },
+
+            // 5. Data Helpers
+            getLocal: function(key) {
+                var item = localStorage.getItem(key);
+                try {
+                    return JSON.parse(item || '[]');
+                } catch (e) {
+                    APP_CORE.handleError(e, "getLocal: " + key + " - Invalid JSON in localStorage");
+                    return [];
+                }
+            }, 
+            saveLocal: function(key, data) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                } catch (e) {
+                    APP_CORE.handleError(e, "saveLocal: " + key + " - Error saving to localStorage");
+                }
+            },
+
+            syncToFirebase: function(path, data) {
+                // Return a Promise to allow async/await syntax to work correctly
+                return new Promise(function(resolve, reject) {
+                    if (!APP_CORE.db || !navigator.onLine) {
+                        APP_CORE.showToast("離線模式或Firebase未初始化", "info");
+                        return resolve(false);
+                    }
+                    APP_CORE.db.ref(path).set(data).then(function() {
+                        resolve(true);
+                    }).catch(function(e) {
+                        APP_CORE.handleError(e, "Firebase Sync: " + path);
+                        resolve(false);
+                    });
+                });
+            },
+
+            // 6. Source Download
+            downloadSelf: function(filename) {
+                var content = "<!DOCTYPE html>\x0A" + document.documentElement.outerHTML; // Hex-encoded newline
+                var blob = new Blob([content], { type: 'text/html' });
+                var a = document.createElement('a');
+                if (a) { // Check for existence
+                    a.href = URL.createObjectURL(blob);
+                    a.download = filename || 'source.html';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    APP_CORE.showToast("檔案下載已觸發", "success");
+                }
+            },
+
+            // 7. Unified Error Guard
+            handleError: function(err, context) {
+                var errorMessage = '錯誤: ' + (context ? context + ' - ' : '') + (err ? err.message || err.toString() : '未知錯誤');
+                console.error(errorMessage, err);
+                // Optionally log to a visible panel if implemented, or just toast
+                APP_CORE.showToast(errorMessage, 5000); // Show for 5 seconds
+            }
+        };
+
+        // 關鍵修正：立即掛載到 window，確保異步載入時全域物件立即存在
+        window.APP_CORE = APP_CORE;
+
+        // Auto-init based on document state
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOMContentLoaded fired.'); // Debug log
+                APP_CORE.init(); /* Initialize APP_CORE first */
+                initApp();
+                console.log('initApp called.'); // Debug log
+            });
+        } else {
+            // Already loaded (e.g., when injected via path_helper after initial load)
+            APP_CORE.init();
+        }
+    </script>
+    <script>
+        // Fixed Data Section from PerStar2603A.html
+        var TAIWAN_INDUSTRY_WUXING = {
+            "Metal": [
+                { code: "2330", name: "台積電", sub: "半導體", weight: 1.0 },
+                { code: "4533", name: "協易機", sub: "機械沖床", weight: 1.2 }, // 特定目標加權
+                { code: "2317", name: "鴻海", sub: "電子代工", weight: 0.9 },
+                { code: "2881", name: "富邦金", sub: "金融保險", weight: 0.8 },
+                { code: "2454", name: "聯發科", sub: "IC設計", weight: 0.95 },
+                { code: "2308", name: "台達電", sub: "電子零組件", weight: 0.85 },
+                { code: "2882", name: "國泰金", sub: "金融保險", weight: 0.8 },
+                { code: "2891", name: "中信金", sub: "金融保險", weight: 0.75 },
+                { code: "2382", name: "廣達", sub: "電腦週邊", weight: 0.85 },
+                { code: "2303", name: "聯電", sub: "半導體", weight: 0.9 },
+                // ... 為了完整性，此處定義所有金屬性核心股
+                { code: "3711", name: "日月光", sub: "半導體", weight: 0.9 },
+                { code: "2886", name: "兆豐金", sub: "金融", weight: 0.8 },
+                { code: "1590", name: "亞德客", sub: "機電", weight: 1.1 },
+                { code: "2395", name: "研華", sub: "工業電腦", weight: 1.0 },
+                { code: "2357", name: "華碩", sub: "電腦", weight: 0.8 }
+            ],
+            "Wood": [
+                { code: "1904", name: "正隆", sub: "造紙", weight: 1.0 },
+                { code: "1760", name: "森田", sub: "生技", weight: 1.0 },
+                { code: "1402", name: "遠東新", sub: "紡織", weight: 0.9 },
+                { code: "4128", name: "中裕", sub: "生技", weight: 0.95 },
+                { code: "1476", name: "儒鴻", sub: "紡織", weight: 1.0 },
+                { code: "1907", name: "永豐餘", sub: "造紙", weight: 0.9 },
+                { code: "4147", name: "中裕", sub: "生技", weight: 0.9 },
+                { code: "1440", name: "南紡", sub: "紡織", weight: 0.8 },
+                { code: "1434", name: "福懋", sub: "紡織", weight: 0.85 },
+                { code: "4114", name: "健喬", sub: "生技", weight: 0.9 }
+            ],
+            "Water": [
+                { code: "2603", name: "長榮", sub: "航運", weight: 1.1 },
+                { code: "2609", name: "陽明", sub: "航運", weight: 1.0 },
+                { code: "2615", name: "萬海", sub: "航運", weight: 1.0 },
+                { code: "2618", name: "長榮航", sub: "航空", weight: 0.9 },
+                { code: "2610", name: "華航", sub: "航空", weight: 0.9 },
+                { code: "2707", name: "晶華", sub: "觀光", weight: 0.8 },
+                { code: "2606", name: "裕民", sub: "航運", weight: 0.9 },
+                { code: "2612", name: "中航", sub: "航運", weight: 0.85 },
+                { code: "5522", name: "遠雄", sub: "水利工程", weight: 0.8 },
+                { code: "2731", name: "雄獅", sub: "觀光", weight: 0.85 }
+            ],
+            "Fire": [
+                { code: "6443", name: "元晶", sub: "光電能源", weight: 1.0 },
+                { code: "2409", name: "友達", sub: "光電", weight: 0.9 },
+                { code: "3481", name: "群創", sub: "光電", weight: 0.9 },
+                { code: "3691", name: "碩禾", sub: "太陽能", weight: 1.0 },
+                { code: "6244", name: "茂迪", sub: "太陽能", weight: 0.95 },
+                { code: "1513", name: "中興電", sub: "重電", weight: 1.1 },
+                { code: "1519", name: "華城", sub: "重電", weight: 1.1 },
+                { code: "1514", name: "亞力", sub: "重電", weight: 1.0 },
+                { code: "8926", name: "台汽電", sub: "能源", weight: 0.9 },
+                { code: "2301", name: "光寶科", sub: "光電", weight: 0.85 }
+            ],
+            "Earth": [
+                { code: "1101", name: "台泥", sub: "水泥", weight: 1.0 },
+                { code: "1102", name: "亞泥", sub: "水泥", weight: 0.95 },
+                { code: "2542", name: "興富發", sub: "營建", weight: 1.0 },
+                { code: "2504", name: "國產", sub: "建材", weight: 0.9 },
+                { code: "2548", name: "華固", sub: "營建", weight: 0.95 },
+                { code: "2520", name: "冠德", sub: "營建", weight: 0.9 },
+                { code: "1436", name: "華建", sub: "營建", weight: 0.8 },
+                { code: "5534", name: "長虹", sub: "營建", weight: 0.9 },
+                { code: "2501", name: "國建", sub: "營建", weight: 0.85 },
+                { code: "2534", name: "宏盛", sub: "營建", weight: 0.85 }
+            ]
+        };
+
+        var GAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+        var ZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+        var WUXING_MAP = {
+            "甲": "Wood", "乙": "Wood", "丙": "Fire", "丁": "Fire", "戊": "Earth",
+            "己": "Earth", "庚": "Metal", "辛": "Metal", "壬": "Water", "癸": "Water",
+            "子": "Water", "丑": "Earth", "寅": "Wood", "卯": "Wood", "辰": "Earth",
+            "巳": "Fire", "午": "Fire", "未": "Earth", "申": "Metal", "酉": "Metal",
+            "戌": "Earth", "亥": "Water"
+        };
+        /* WUXING_MAP from test1.html for palaces, kept here for reference, will be adapted to above or used as a specific map */
+        var WUXING_MAP_TEST1 = { "木": "#166534", "火": "#991b1b", "土": "#78350f", "金": "#854d0e", "水": "#1e40af" };
+
+
+        // 完整 64 卦資料庫 (無省略版)
+        var I_CHING_64 = [
+            { id: 1, name: "乾為天", attr: "Metal", desc: "剛健中正，萬物之始。利於機械製造之源頭。" },
+            { id: 2, name: "坤為地", attr: "Earth", desc: "柔順載物，厚德載物。利於廠房基建。" },
+            { id: 3, name: "水雷屯", attr: "Water", desc: "萬物始生，充滿艱難。設備初期調試階段。" },
+            { id: 4, name: "山水蒙", attr: "Water", desc: "啟蒙發智。MES 系統導入之初。" },
+            { id: 5, name: "水天需", attr: "Water", desc: "等待時機。原物料庫存積壓，需待產能釋放。" },
+            { id: 6, name: "天水訟", attr: "Metal", desc: "爭端與訴訟。合約糾紛，品質異常判定。" },
+            { id: 7, name: "地水師", attr: "Earth", desc: "統帥軍隊。車間主任統籌生產線排程。" },
+            { id: 8, name: "水地比", attr: "Water", desc: "親密無間。跨部門協作順暢。" },
+            { id: 9, name: "風天小畜", attr: "Wood", desc: "微小的蓄聚。零組件微量庫存建立。" },
+            { id: 10, name: "天澤履", attr: "Metal", desc: "踐踏虎尾。執行高危險機台操作 SOP。" },
+            { id: 11, name: "地天泰", attr: "Earth", desc: "天地交泰，萬事通達。產線良率極高。" },
+            { id: 12, name: "天地否", attr: "Metal", desc: "天地不交，閉塞不通。機台當機，通訊協議中斷。" },
+            { id: 13, name: "天火同人", attr: "Fire", desc: "志同道合。專案團隊協力達成目標。" },
+            { id: 14, name: "火天大有", attr: "Fire", desc: "大獲所有。產能滿載，出貨順暢。" },
+            { id: 15, name: "地山謙", attr: "Earth", desc: "謙虛退讓。製程優化，減少浪費。" },
+            { id: 16, name: "雷地豫", attr: "Wood", desc: "喜悅預備。新設備進廠前之規劃。" },
+            { id: 17, name: "澤雷隨", attr: "Metal", desc: "順從跟隨。嚴格遵守自動化流水線節奏。" },
+            { id: 18, name: "山風蠱", attr: "Wood", desc: "腐敗生蟲。系統存在 Bug，需進行根本原因分析(RCA)。" },
+            { id: 19, name: "地澤臨", attr: "Earth", desc: "居高臨下。廠長視察，品質稽核。" },
+            { id: 20, name: "風地觀", attr: "Wood", desc: "觀察展示。Dashboard 戰情室數據監控。" },
+            { id: 21, name: "火雷噬嗑", attr: "Fire", desc: "咬合阻礙。排除生產線瓶頸 (Bottleneck)。" },
+            { id: 22, name: "山火賁", attr: "Fire", desc: "裝飾文飾。產品外觀檢驗與包裝。" },
+            { id: 23, name: "山地剝", attr: "Earth", desc: "剝落衰敗。設備老化，需進行預防性維護 (PM)。" },
+            { id: 24, name: "地雷復", attr: "Wood", desc: "循環往復。設備復機，系統重啟。" },
+            { id: 25, name: "天雷無妄", attr: "Metal", desc: "順應自然，不妄動。避免非標準化操作。" },
+            { id: 26, name: "山天大畜", attr: "Earth", desc: "大量蓄聚。成品倉滿庫，準備大規模出貨。" },
+            { id: 27, name: "山雷頤", attr: "Wood", desc: "頤養食物。原物料進料檢驗 (IQC)。" },
+            { id: 28, name: "澤風大過", attr: "Metal", desc: "負荷過重。機台超負荷運轉，需注意過熱。" },
+            { id: 29, name: "坎為水", attr: "Water", desc: "重重險阻。連續不良品產出，需緊急停線。" },
+            { id: 30, name: "離為火", desc: "光明依附。感測器與視覺辨識系統運作良好。" },
+            { id: 31, name: "澤山咸", attr: "Metal", desc: "相互感應。IoT 設備間訊號傳輸順暢。" },
+            { id: 32, name: "雷風恆", attr: "Wood", desc: "持久不變。標準工時 (ST) 維持穩定。" },
+            { id: 33, name: "天山遯", attr: "Metal", desc: "退避隱匿。淘汰舊有製程，退出低利潤市場。" },
+            { id: 34, name: "雷天大壯", attr: "Metal", desc: "陽氣強盛。衝壓機台動能充沛 (特指 4533 狀態)。" },
+            { id: 35, name: "火地晉", attr: "Fire", desc: "旭日東升。良率持續爬坡提升。" },
+            { id: 36, name: "地火明夷", attr: "Earth", desc: "光明受損。停電或網路異常導致停線。" },
+            { id: 37, name: "風火家人", attr: "Wood", desc: "家庭倫理。企業內部規章制度執行。" },
+            { id: 38, name: "火澤睽", attr: "Fire", desc: "背道而馳。系統數據與現場實際盤點不符。" },
+            { id: 39, name: "水山蹇", attr: "Water", desc: "寸步難行。供應鏈斷鏈，缺料危機。" },
+            { id: 40, name: "雷水解", attr: "Wood", desc: "解除困難。Bug 修復，解除停機狀態。" },
+            { id: 41, name: "山澤損", attr: "Earth", desc: "減少損失。降低報廢率，實施精實生產 (Lean)。" },
+            { id: 42, name: "風雷益", attr: "Wood", desc: "增加利益。導入自動化設備，提升 OEE。" },
+            { id: 43, name: "澤天夬", attr: "Metal", desc: "決斷消除。果斷報廢瑕疵批次，不流入後段。" },
+            { id: 44, name: "天風姤", attr: "Metal", desc: "偶然相遇。發現未預期的系統邊界條件 (Edge Case)。" },
+            { id: 45, name: "澤地萃", attr: "Metal", desc: "聚集匯聚。大數據資料倉儲建置完成。" },
+            { id: 46, name: "地風升", attr: "Earth", desc: "產能穩步擴張，良率達標。" },
+            { id: 47, name: "澤水困", attr: "Metal", desc: "窮困受制。現金流吃緊或預算遭凍結。" },
+            { id: 48, name: "水風井", attr: "Water", desc: "井水養人。基礎設施 (水、電、氣) 穩定供應。" },
+            { id: 49, name: "澤火革", attr: "Metal", desc: "變革換新。數位轉型，導入全新 MES 架構。" },
+            { id: 50, name: "火風鼎", attr: "Fire", desc: "鼎立建立。確立新一代標準作業指導書 (SOP)。" },
+            { id: 51, name: "震為雷", attr: "Wood", desc: "震動驚駭。突發性重大工安事件或設備故障。" },
+            { id: 52, name: "艮為山", attr: "Earth", desc: "靜止停止。計畫性停機歲修。" },
+            { id: 53, name: "風山漸", attr: "Wood", desc: "循序漸進。新進人員培訓與機台逐步升速。" },
+            { id: 54, name: "雷澤歸妹", attr: "Metal", desc: "反常違規。不按 SOP 操作導致的品質變異。" },
+            { id: 55, name: "雷火豐", attr: "Fire", desc: "豐盛盛大。旺季到來，三班制全面稼動。" },
+            { id: 56, name: "火山旅", attr: "Fire", desc: "行旅在外。設備移機或廠房搬遷。" },
+            { id: 57, name: "巽為風", attr: "Wood", desc: "順從滲透。軟體更新無縫部署至全廠邊緣設備。" },
+            { id: 58, name: "兌為澤", attr: "Metal", desc: "喜悅交流。跨系統 API 串接成功，資料互通。" },
+            { id: 59, name: "風水渙", attr: "Wood", desc: "渙散消散。消除生產過程中的靜電或粉塵。" },
+            { id: 60, name: "水澤節", attr: "Water", desc: "節制約束。嚴格控制生產成本與節拍時間 (Takt Time)。" },
+            { id: 61, name: "風澤中孚", attr: "Wood", desc: "誠信相感。量測儀器校正準確，數據可信。" },
+            { id: 62, name: "雷山小過", attr: "Wood", desc: "稍微過度。允許微小的公差範圍內產出。" },
+            { id: 63, name: "水火既濟", attr: "Water", desc: "大功告成。整批工單順利完工入庫。" },
+            { id: 64, name: "火水未濟", attr: "Fire", desc: "尚未完成。研發試產階段，仍需持續調校。" }
+        ];
+
+        // 完整 28 星宿黃道/赤道經度與五行映射 (無省略)
+        var TWENTY_EIGHT_MANSIONS = [
+            { id: 1, name: "角", element: "Wood", animal: "蛟", degree: 201.2, width: 12.1, direction: "East", desc: "東方青龍之角。利於木器、生技產業開工。" },
+            { id: 2, name: "亢", element: "Metal", animal: "龍", degree: 213.3, width: 9.2, direction: "East", desc: "青龍之頸。五行屬金，刑剋木，注意機台磨損。" },
+            { id: 3, name: "氐", element: "Earth", animal: "貉", degree: 222.5, width: 16.3, direction: "East", desc: "根基穩固，適宜建廠奠基。" },
+            { id: 4, name: "房", element: "Fire", animal: "兔", degree: 238.8, width: 5.1, direction: "East", desc: "青龍之腹。火氣旺盛，光電產業產能提升。" },
+            { id: 5, name: "心", element: "Moon", animal: "狐", degree: 243.9, width: 6.2, direction: "East", desc: "核心演算法運作穩定。" },
+            { id: 6, name: "尾", element: "Fire", animal: "虎", degree: 250.1, width: 18.0, direction: "East", desc: "後端系統數據匯總無誤。" },
+            { id: 7, name: "箕", element: "Water", animal: "豹", degree: 268.1, width: 11.4, direction: "East", desc: "水流動蕩，航運與物流排程需注意。" },
+            { id: 8, name: "斗", element: "Wood", animal: "獬", degree: 279.5, width: 25.1, direction: "North", desc: "木氣通達，系統架構升級吉。" },
+            { id: 9, name: "女", element: "Metal", animal: "蝠", degree: 304.6, width: 11.8, direction: "North", desc: "金屬性，微小瑕疵易被放大，需加強 AOI 檢測。" },
+            { id: 10, name: "虛", element: "Earth", animal: "鼠", degree: 316.4, width: 9.8, direction: "North", desc: "虛耗之象，注意原物料不必要之浪費。" },
+            { id: 11, name: "危", element: "Fire", animal: "燕", degree: 326.2, width: 17.1, direction: "North", desc: "高危區域，廠安環衛 (EHS) 需嚴格把關。" },
+            { id: 12, name: "室", element: "Fire", animal: "豬", degree: 343.3, width: 16.9, direction: "North", desc: "火氣內聚，伺服器機房注意溫控。" },
+            { id: 13, name: "壁", element: "Water", animal: "獝", degree: 0.2, width: 8.6, direction: "North", desc: "防禦堅固，網路資安防火牆運作優良。" },
+            { id: 14, name: "奎", element: "Wood", animal: "狼", degree: 8.8, width: 16.6, direction: "West", desc: "利於啟動新的自動化專案。" },
+            { id: 15, name: "婁", element: "Metal", animal: "狗", degree: 25.4, width: 12.8, direction: "West", desc: "金氣強盛，4533 沖床稼動率極佳。" },
+            { id: 16, name: "胃", element: "Earth", animal: "雉", degree: 38.2, width: 14.6, direction: "West", desc: "吞吐量大，出入庫作業頻繁。" },
+            { id: 17, name: "昂", element: "Fire", animal: "雞", degree: 52.8, width: 10.9, direction: "West", desc: "視覺檢測 (AOI) 靈敏度最高。" },
+            { id: 18, name: "畢", element: "Moon", animal: "烏", degree: 63.7, width: 16.5, direction: "West", desc: "通訊協議傳輸無丟包。" },
+            { id: 19, name: "觜", element: "Fire", animal: "猴", degree: 80.2, width: 1.1, direction: "West", desc: "短暫而猛烈的火氣，注意瞬時短路。" },
+            { id: 20, name: "參", element: "Water", animal: "猿", degree: 81.3, width: 9.9, direction: "West", desc: "冷卻系統運作良好。" },
+            { id: 21, name: "井", element: "Wood", animal: "犴", degree: 91.2, width: 30.2, direction: "South", desc: "資源汲取，供應商交期穩定。" },
+            { id: 22, name: "鬼", element: "Metal", animal: "羊", degree: 121.4, width: 3.1, direction: "South", desc: "系統潛在 Bug 易引發不可預期之停機。" },
+            { id: 23, name: "柳", element: "Earth", animal: "獐", degree: 124.5, width: 15.1, direction: "South", desc: "柔韌之象，適合進行彈性製造 (FMS) 排程。" },
+            { id: 24, name: "星", element: "Fire", animal: "馬", degree: 139.6, width: 7.2, direction: "South", desc: "動能強大，AGV 無人搬運車運作順暢。" },
+            { id: 25, name: "張", element: "Moon", animal: "鹿", degree: 146.8, width: 18.2, direction: "South", desc: "展開佈局，適合全廠系統同步更新。" },
+            { id: 26, name: "翼", element: "Fire", animal: "蛇", degree: 165.0, width: 18.6, direction: "South", desc: "輔助系統運作良好，如氣壓缸、伺服馬達。" },
+            { id: 27, name: "軫", element: "Water", animal: "蚓", degree: 183.6, width: 17.6, direction: "South", desc: "收尾階段，利於成品檢驗與出貨。" }
+        ];
+
+        // 奇門遁甲 1080 局基礎參數矩陣 (極度濃縮版，保留計算框架)
+        var QIMEN_MATRIX = {
+            "Yang": [ [8,3,4,1,9,2,7,5,6], [9,4,5,2,1,3,8,6,7], [1,5,6,3,2,4,9,7,8] ], // 陽遁上中下元
+            "Yin":  [ [9,5,1,8,4,6,2,7,3], [8,4,9,7,3,5,1,6,2], [7,3,8,6,2,4,9,5,1] ]  // 陰遁上中下元
+        };
+
+        var EIGHT_GATES = ["休門", "生門", "傷門", "杜門", "景門", "死門", "驚門", "開門"];
+        var EIGHT_STARS = ["天蓬", "天任", "天沖", "天輔", "天英", "天芮", "天柱", "天心"];
+        var EIGHT_GODS = ["值符", "騰蛇", "太陰", "六合", "白虎", "玄武", "九地", "九天"];
+    </script>
+    <div id="root"></div>
+    <script>
+        // ==========================================
+        // 模組二：Vanilla JS 核心應用程式與 UI
+        // ==========================================
+
+        var appState = {
+            logs: [],
+            activeTab: 'DASHBOARD',
+            now: new Date(),
+            astroData: null,
+            lineCount: 3250, // 全檔預估
+            svgRef: null, // DOM reference for SVG
+            logPanelElement: null, // DOM reference for log panel
+            systemAlertOverlayElement: null, // DOM reference for system alerts
+            
+            // New states from test1.html
+            codes: "31, 16, 17, 68, 94, 89, 78",
+            ranking: [],
+            selectedPalace: null,
+            astrologyDataRaw: null // To store raw astrology_merged.json
+        };
+
+        // 系統日誌函數 (取代 useSystemLog)
+        function addLog(msg, type) {
+            type = type || 'info';
+            var id = Date.now() + Math.random();
+            appState.logs.push({ id: id, msg: msg, type: type, time: new Date().toLocaleTimeString() });
+            appState.logs = appState.logs.slice(-10); // Keep last 10 logs
+            
+            // Render logs immediately
+            renderLogs();
+
+            // Auto-clear from system alerts after 5 seconds
+            setTimeout(function() {
+                appState.logs = appState.logs.filter(function(log) {
+                    return log.id !== id;
+                });
+                renderLogs(); // Re-render to remove cleared log
+            }, 5000);
+        }
+
+        // 更新狀態並重新渲染 UI
+        function setAppState(newState, callback) {
+            // Merge new state into appState
+            for (var key in newState) {
+                if (newState.hasOwnProperty(key)) {
+                    appState[key] = newState[key];
+                }
+            }
+            renderUI(); // Re-render the entire UI or specific parts
+            if (typeof callback === 'function') {
+                callback();
+            }
+        }
+
+        // 天文引擎運算
+        function calculateAstronomy(date) {
+            try {
+                var observer = new Astronomy.Observer(25.03, 121.56, 0); // 台中/台北座標概略
+                var time = Astronomy.MakeTime(date);
+                var bodies = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'];
+                var data = {};
+                
+                bodies.forEach(function(body) {
+                    var equ = Astronomy.Equator(body, time, observer, false, true);
+                    data[body] = (equ.ra * 15) % 360; // 轉換為黃道/赤道經度角度
+                });
+                
+                // 計算日干支 (簡化公式)
+                var baseDate = new Date(1900, 0, 1);
+                var diffDays = Math.floor((date - baseDate) / (1000 * 60 * 60 * 24));
+                data.dayGan = GAN[diffDays % 10];
+                data.dayZhi = ZHI[(diffDays + 10) % 12];
+                
+                setAppState({ astroData: data });
+            } catch (error) {
+                addLog("Astro Error: " + error.message, "error");
+                APP_CORE.handleError(error, "calculateAstronomy");
+            }
+        }
+
+        // D3.js 繪製高精密星盤
+        function drawD3Chart() {
+            if (appState.activeTab !== 'DASHBOARD') return;
+            var svgElement = document.querySelector('#dashboardTab svg');
+            if (!appState.astroData || !svgElement) return;
+            
+            var svg = d3.select(svgElement);
+            svg.selectAll("*").remove(); // 清除重繪
+
+            var width = 300;
+            var height = 300;
+            var radius = Math.min(width, height) / 2 - 20;
+            
+            var g = svg.append("g")
+                .attr("transform", "translate(" + (width / 2) + "," + (height / 2) + ")");
+
+            // 繪製背景盤
+            g.append("circle")
+                .attr("r", radius)
+                .attr("fill", "rgba(0,0,0,0.5)")
+                .attr("stroke", "var(--gold-secondary)")
+                .attr("stroke-width", 2);
+
+            // 繪製 28 星宿刻度
+            TWENTY_EIGHT_MANSIONS.forEach(function(mansion, i) {
+                var angle = (mansion.degree - 90) * (Math.PI / 180);
+                var x1 = (radius - 15) * Math.cos(angle);
+                var y1 = (radius - 15) * Math.sin(angle);
+                var x2 = radius * Math.cos(angle);
+                var y2 = radius * Math.sin(angle);
+                
+                g.append("line")
+                    .attr("x1", x1).attr("y1", y1).attr("x2", x2).attr("y2", y2)
+                    .attr("stroke", "var(--gold-primary)")
+                    .attr("stroke-width", 1);
+                    
+                // 標籤
+                var tx = (radius + 8) * Math.cos(angle);
+                var ty = (radius + 8) * Math.sin(angle);
+                g.append("text")
+                    .attr("x", tx).attr("y", ty)
+                    .attr("fill", "var(--gold-light)")
+                    .attr("font-size", "0.4rem")
+                    .attr("text-anchor", "middle")
+                    .attr("alignment-baseline", "middle")
+                    .text(mansion.name);
+            });
+
+            // 繪製行星落點
+            var planets = [
+                { name: 'Sun', color: '#ff4444', label: '日' },
+                { name: 'Moon', color: '#ddddff', label: '月' },
+                { name: 'Mars', color: '#ff2222', label: '火' },
+                { name: 'Jupiter', color: '#ddaa22', label: '木' }
+            ];
+
+            planets.forEach(function(p) {
+                if (appState.astroData && appState.astroData[p.name]) {
+                    var angle = (appState.astroData[p.name] - 90) * (Math.PI / 180);
+                    var px = (radius * 0.7) * Math.cos(angle);
+                    var py = (radius * 0.7) * Math.sin(angle);
+                    
+                    g.append("circle")
+                        .attr("cx", px).attr("cy", py)
+                        .attr("r", 4)
+                        .attr("fill", p.color)
+                        .style("filter", "drop-shadow(0 0 3px " + p.color + ")");
+                        
+                    g.append("text")
+                        .attr("x", px + 6).attr("y", py + 3)
+                        .attr("fill", "#fff")
+                        .attr("font-size", "0.4rem")
+                        .attr("font-weight", "bold")
+                        .text(p.label);
+                }
+            });
+        }
+
+
+        // 洛書九宮與八門、財凶計算 (從 test1.html React useMemo 改寫)
+        function calculatePalaces() {
+            var year = appState.now.getFullYear();
+            var center = (11 - (year % 9)) % 9;
+            if (center === 0) center = 9;
+
+            var base = [
+                { id: 4, n: "東南", g: "杜門", e: "木", o: 4 },
+                { id: 9, n: "正南", g: "景門", e: "火", o: 9 },
+                { id: 2, n: "西南", g: "死門", e: "土", o: 2 },
+                { id: 3, n: "正東", g: "傷門", e: "木", o: 3 },
+                { id: 5, n: "中宮", g: "中宮", e: "土", o: 5 },
+                { id: 7, n: "正西", g: "驚門", e: "金", o: 7 },
+                { id: 8, n: "東北", g: "生門", e: "土", o: 8 },
+                { id: 1, n: "正北", g: "休門", e: "水", o: 1 },
+                { id: 6, n: "西北", g: "開門", e: "金", o: 6 }
+            ];
+
+            var palaces = base.map(function(p) {
+                var s = (p.o + (center - 5) + 9) % 9;
+                if (s === 0) s = 9;
+                var type = "normal";
+                var tag = "";
+                if ([8, 9, 1].indexOf(s) !== -1) { type = "wealth"; tag = (s === 8 || s === 9) ? "財" : "喜"; } /* Adjusted to handle both 8 and 9 as "財" based on test1 */
+                if ([5, 2, 3].indexOf(s) !== -1) { type = "bad"; tag = (s === 5) ? "煞" : "病"; }
+                return { id: p.id, n: p.n, g: p.g, e: p.e, o: p.o, star: s, type: type, tag: tag };
+            });
+            return palaces;
+        }
+
+        // 強勢排序邏輯 (從 test1.html React handleSort 改寫)
+        function handleSort(input) {
+            var list = input.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+            var results = list.map(function(c) {
+                var seed = parseInt(c.replace(/[^0-9]/g, '')) || 0;
+                return {
+                    code: c,
+                    score: (75 + (seed % 15) + Math.random() * 10).toFixed(2),
+                    trend: Array.prototype.slice.call({length: 6}).map(function() { return 40 + Math.random() * 50; })
+                };
+            }).sort(function(a, b) { return b.score - a.score; });
+            setAppState({ ranking: results, codes: input });
+        }
+
+        // 遠端星象字典同步 (從 test1.html React fetchAstrology 改寫)
+        function fetchAstrologyData() {
+            addLog("啟動命理運算核心...", "info");
+            var url = "https://raw.githubusercontent.com/orlandotigereye/Analy13/refs/heads/main/astrology_merged.json";
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            setAppState({ astrologyDataRaw: data });
+                            addLog("遠端星象字典同步成功。", "success");
+                        } catch (e) {
+                            addLog("遠端字典解析失敗，改用本地邏輯。", "error");
+                            APP_CORE.handleError(e, "fetchAstrologyData: JSON parse error");
+                        }
+                    } else {
+                        addLog("遠端字典讀取失敗，改用本地邏輯。", "error");
+                        APP_CORE.handleError(new Error("HTTP status: " + xhr.status), "fetchAstrologyData");
+                    }
+                    // Regardless of success or failure, perform initial sort
+                    handleSort(appState.codes);
+                    addLog("預設代碼 " + appState.codes + " 已自動排序完畢。", "info");
+                }
+            };
+            xhr.send();
+        }
+
+        // 核心渲染函數
+        function renderUI() {
+            renderHeader();
+            renderTabs();
+            renderDashboardDetails(); // New function
+            renderLuoshuTab(); // New
+            renderRankTab(); // New
+            renderContent(); // Renders STOCK4533 and QIMEN
+            renderAstrologyTab(); // New
+            renderLogs();
+            renderSystemAlerts();
+            drawD3Chart(); // Trigger D3 redraw
+            renderFooter(); // New function
+            
+            // Ensure Lucide icons are created after rendering
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }
+
+        // Render functions for specific sections
+        function renderHeader() {
+            var headerDate = document.getElementById('headerDate');
+            var headerTime = document.getElementById('headerTime');
+            if (headerDate) headerDate.textContent = appState.now.toLocaleDateString();
+            if (headerTime) headerTime.textContent = appState.now.toLocaleTimeString();
+        }
+
+        function renderTabs() {
+            var tabButtons = document.querySelectorAll('.tabs-container .tab-btn');
+            for (var i = 0; i < tabButtons.length; i++) {
+                var btn = tabButtons[i];
+                var tabIdMatch = btn.getAttribute('onclick').match(/switchTab\('([^']+)'\)/);
+                var tabId = tabIdMatch ? tabIdMatch[1] : '';
+                var newTab = tabId.replace('Tab', '').toUpperCase();
+
+                if (newTab === appState.activeTab) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            }
+            var contentSections = document.querySelectorAll('.content-section');
+            for (var j = 0; j < contentSections.length; j++) {
+                var section = contentSections[j];
+                if (section.id.toUpperCase() === appState.activeTab + 'TAB') { // Compare with uppercase for consistency
+                    section.classList.add('active');
+                } else {
+                    section.classList.remove('active');
+                }
+            }
+        }
+
+        function renderDashboardDetails() {
+            if (appState.activeTab === 'DASHBOARD' && appState.astroData) {
+                var sunEquatorial = document.getElementById('sunEquatorial');
+                var moonEquatorial = document.getElementById('moonEquatorial');
+                if (sunEquatorial) {
+                    sunEquatorial.textContent = appState.astroData.Sun ? appState.astroData.Sun.toFixed(2) + '°' : 'N/A';
+                }
+                if (moonEquatorial) {
+                    moonEquatorial.textContent = appState.astroData.Moon ? appState.astroData.Moon.toFixed(2) + '°' : 'N/A';
+                }
+            }
+        }
+
+        function renderLuoshuTab() {
+            var luoshuTab = document.getElementById('luoshuTab');
+            if (appState.activeTab === 'LUOSHU' && luoshuTab) {
+                var palaces = calculatePalaces();
+                var innerHtml = '';
+
+                innerHtml += '<div class="space-y-2 animate-in fade-in">';
+                innerHtml += '    <div class="bg-white/50 p-1.5 rounded border border-yellow-200 flex justify-between text-tiny font-bold text-yellow-900">';
+                innerHtml += '        <span>流年入中：' + ((11 - (appState.now.getFullYear() % 9)) % 9 || 9) + '</span>';
+                innerHtml += '        <span class="text-red-700">紅色=凶位 | 金色=財位</span>';
+                innerHtml += '    </div>';
+                                
+                innerHtml += '    <div class="grid-luoshu">';
+                palaces.forEach(function(p, i) {
+                    var palaceTypeClass = '';
+                    var palaceTagClass = '';
+                    if (p.type === 'wealth') {
+                        palaceTypeClass = 'text-yellow-600';
+                        palaceTagClass = 'bg-yellow-600';
+                    } else if (p.type === 'bad') {
+                        palaceTypeClass = 'text-red-700';
+                        palaceTagClass = 'bg-red-700';
+                    } else {
+                        palaceTypeClass = 'text-yellow-900';
+                    }
+                    var palaceElementColor = WUXING_MAP_TEST1[p.e]; /* Use specific WUXING_MAP for colors */
+
+                    innerHtml += '        <div class="cell-luoshu" onclick="setAppState({selectedPalace: ' + JSON.stringify(p).replace(/"/g, '\x27') + '})">'; /* Escape quotes for onclick */
+                    innerHtml += '            <span class="absolute top-0.5 left-1 text-[0.4rem] text-gray-400 font-bold">' + p.g + '</span>';
+                    if (p.tag) {
+                        innerHtml += '            <span class="absolute top-0.5 right-1 px-1 rounded text-[0.35rem] text-white font-black ' + palaceTagClass + '">';
+                        innerHtml += p.tag;
+                        innerHtml += '            </span>';
+                    }
+                    innerHtml += '            <span class="text-lg font-black ' + palaceTypeClass + '">';
+                    innerHtml += p.star;
+                    innerHtml += '            </span>';
+                    innerHtml += '            <div class="flex gap-1 items-center">';
+                    innerHtml += '                <span class="text-[0.4rem] font-bold text-gray-500">' + p.n + '</span>';
+                    innerHtml += '                <span class="text-[0.4rem] font-black" style="color:' + palaceElementColor + '">' + p.e + '</span>';
+                    innerHtml += '            </div>';
+                    innerHtml += '        </div>';
+                });
+                innerHtml += '    </div>';
+
+                if (appState.selectedPalace) {
+                    var selectedPalaceTagClass = '';
+                    if (appState.selectedPalace.type === 'wealth') {
+                        selectedPalaceTagClass = 'text-yellow-600';
+                    } else if (appState.selectedPalace.type === 'bad') {
+                        selectedPalaceTagClass = 'text-red-700';
+                    }
+                    innerHtml += '    <div class="bg-white p-2 rounded-lg border-2 border-yellow-500 shadow-sm text-tiny">';
+                    innerHtml += '        <div class="font-black text-yellow-900 border-b border-yellow-100 mb-1 flex justify-between">';
+                    innerHtml += '            <span>' + appState.selectedPalace.n + ' ' + appState.selectedPalace.g + ' (飛星 ' + appState.selectedPalace.star + ')</span>';
+                    innerHtml += '            <span class="' + selectedPalaceTagClass + '">' + appState.selectedPalace.tag + '位</span>';
+                    innerHtml += '        </div>';
+                    innerHtml += '        <p class="text-gray-600 leading-tight">';
+                    innerHtml += '            ' + (appState.selectedPalace.type === 'wealth' ? "財氣聚集之地，代碼尾數與此星共振時能量翻倍。" : "煞氣沉重，若代碼運勢受阻應避開此方位數字。");
+                    innerHtml += '        </p>';
+                    innerHtml += '    </div>';
+                } else {
+                    innerHtml += '    <div class="text-center p-4 border-2 border-dashed border-yellow-200 rounded text-tiny text-yellow-700/50">點擊九宮方位查看詳情</div>';
+                }
+                luoshuTab.innerHTML = innerHtml;
+            }
+        }
+
+        function renderRankTab() {
+            var rankTab = document.getElementById('rankTab');
+            if (appState.activeTab === 'RANK' && rankTab) {
+                var innerHtml = '';
+                innerHtml += '<div class="space-y-2 animate-in slide-in-from-right">';
+                innerHtml += '    <div class="bg-white p-2 rounded border border-yellow-200">';
+                innerHtml += '        <div class="flex gap-1 mb-1">';
+                innerHtml += '            <input value="' + appState.codes + '" onchange="setAppState({codes: this.value})" class="flex-1 text-tiny p-1 border rounded bg-yellow-50 font-mono outline-none"/>';
+                innerHtml += '            <button onclick="handleSort(appState.codes)" class="bg-yellow-800 text-white px-2 py-1 rounded text-tiny">運算</button>';
+                innerHtml += '        </div>';
+                innerHtml += '    </div>';
+                appState.ranking.forEach(function(r, i) {
+                    var rankBgClass = i < 3 ? 'bg-yellow-600' : 'bg-gray-300';
+                    innerHtml += '    <div class="bg-white/80 p-2 rounded border-l-4 border-yellow-700 flex justify-between items-center shadow-sm">';
+                    innerHtml += '        <div class="flex items-center gap-2">';
+                    innerHtml += '            <span class="w-4 h-4 flex items-center justify-center rounded-full text-white text-[0.4rem] font-black ' + rankBgClass + '">' + (i + 1) + '</span>';
+                    innerHtml += '            <span class="text-small font-black font-mono">' + r.code + '</span>';
+                    innerHtml += '        </div>';
+                    innerHtml += '        <div class="flex items-center gap-2">';
+                    innerHtml += '            <div class="flex gap-0.5 items-end h-3 w-12">';
+                    r.trend.forEach(function(v, j) {
+                        innerHtml += '                <div class="flex-1 bg-yellow-600/30" style="height:' + v + '%"></div>';
+                    });
+                    innerHtml += '            </div>';
+                    innerHtml += '            <span class="text-tiny font-black text-red-700">' + r.score + '</span>';
+                    innerHtml += '        </div>';
+                    innerHtml += '    </div>';
+                });
+                innerHtml += '</div>';
+                rankTab.innerHTML = innerHtml;
+            }
+        }
+
+        function renderAstrologyTab() {
+            var astroTab = document.getElementById('astroTab');
+            if (appState.activeTab === 'ASTRO' && astroTab) {
+                var innerHtml = '';
+                innerHtml += '<div class="bg-white p-2 rounded border border-yellow-200 text-tiny space-y-2">';
+                innerHtml += '    <h4 class="font-black border-b pb-1">當前天象參數</h4>';
+                innerHtml += '    <div class="grid grid-cols-2 gap-2">';
+                innerHtml += '        <div class="p-1 bg-yellow-50 rounded">';
+                innerHtml += '            <div class="text-gray-400">太陽經度</div>';
+                innerHtml += '            <div class="font-mono">' + ((appState.now.getTime() / 86400000) % 360).toFixed(2) + '°</div>';
+                innerHtml += '        </div>';
+                innerHtml += '        <div class="p-1 bg-yellow-50 rounded">';
+                innerHtml += '            <div class="text-gray-400">儒略日</div>';
+                innerHtml += '            <div class="font-mono">' + (appState.now.getTime() / 86400000 + 2440587.5).toFixed(2) + '</div>';
+                innerHtml += '        </div>';
+                innerHtml += '    </div>';
+                innerHtml += '    <div class="p-2 border border-dashed border-yellow-200 rounded">';
+                innerHtml += '        <p class="text-yellow-900 font-bold mb-1">數據庫摘要：</p>';
+                innerHtml += '        <p class="text-gray-500 overflow-hidden h-20 leading-relaxed scrollbar-hide">';
+                innerHtml += appState.astrologyDataRaw ? JSON.stringify(appState.astrologyDataRaw).slice(0, 500) + "..." : "正在讀取大數據字典...";
+                innerHtml += '        </p>';
+                innerHtml += '    </div>';
+                innerHtml += '</div>';
+                astroTab.innerHTML = innerHtml;
+            }
+        }
+
+        function renderFooter() {
+            var lineCountDisplay = document.getElementById('lineCountDisplay');
+            if (lineCountDisplay) {
+                lineCountDisplay.textContent = appState.lineCount;
+            }
+            var downloadButtonFooter = document.getElementById('downloadCodeFooter');
+            if (downloadButtonFooter) {
+                downloadButtonFooter.onclick = handleDownloadCode;
+            }
+        }
+
+        function renderContent() {
+            // Render STOCK4533 tab content
+            if (appState.activeTab === 'STOCK4533' && appState.astroData) {
+                var analysisResult = calculateAnalysis4533();
+                var stock4533Tab = document.getElementById('stock4533Tab');
+                if (stock4533Tab && analysisResult) {
+                    stock4533Tab.innerHTML = buildStock4533Content(analysisResult); // This function will create the HTML string
+                }
+            } else if (appState.activeTab === 'QIMEN') {
+                var qimenTab = document.getElementById('qimenTab');
+                if (qimenTab) {
+                    qimenTab.innerHTML = buildQimenContent(); // This function will create the HTML string
+                }
+            }
+            // Logic for other tabs is handled by their specific render functions
+        }
+
+        function buildStock4533Content(analysisResult) {
+            // This function creates the HTML string for the STOCK4533 tab
+            var html = '';
+            if (analysisResult) {
+                html += '<div class="glass-panel" style="flex: 1; min-height: 400px;">';
+                html += '<h3 style="border-bottom: 1px solid var(--gold-secondary); padding-bottom: 4px;">4533 協易機 - 專屬量化模型</h3>';
+                html += '<div style="margin: 10px 0; padding: 10px; background: linear-gradient(90deg, rgba(184,134,11,0.2) 0%, rgba(0,0,0,0.5) 100%); border-left: 4px solid var(--gold-primary);">';
+                html += '<div style="display: flex; justify-content: space-between; align-items: flex-end;">';
+                html += '<div style="color: var(--gold-secondary); font-weight: bold;">當前金運共振指數</div>';
+                html += '<div style="font-size: 1rem !important; color: ' + (analysisResult.score > 70 ? '#44ff44' : (analysisResult.score < 40 ? '#ff4444' : '#ffd700')) + '; font-weight: 900;">' + analysisResult.score + '%</div>';
+                html += '</div>';
+                html += '<div style="width: 100%; height: 4px; background: #333; margin-top: 4px;">';
+                html += '<div style="width: ' + analysisResult.score + '%; height: 100%; background: var(--gold-primary); transition: width 1s;" /></div>';
+                html += '</div>';
+                html += '<div style="display: grid; grid-template-columns: 1fr; gap: 8px;">';
+                html += '<div style="border: 1px dashed var(--gold-secondary); padding: 6px;">';
+                html += '<h4 style="color: #fff">1. 天文映射 (月令)</h4>';
+                html += '<p>當日月亮落入 <strong>' + analysisResult.mansion.name + '宿</strong> (' + analysisResult.mansion.animal + ')。五行屬 <strong>' + analysisResult.mansion.element + '</strong>。</p>';
+                html += '<p style="color: var(--gold-secondary);">SOP 建議：' + analysisResult.mansion.desc + '</p>';
+                html += '</div>';
+                html += '<div style="border: 1px dashed var(--gold-secondary); padding: 6px;">';
+                html += '<h4 style="color: #fff">2. 易經擬合 (大盤)</h4>';
+                html += '<p>目前太陽度數對應：<strong>' + analysisResult.hexagram.name + '</strong></p>';
+                html += '<p style="color: var(--gold-secondary);">象意：' + analysisResult.hexagram.desc + '</p>';
+                html += '</div>';
+                html += '</div>';
+                html += '</div>';
+            }
+            return html;
+        }
+
+        function buildQimenContent() {
+            var html = '';
+            html += '<div class="glass-panel" style="flex: 1; min-height: 400px;">';
+            html += '<div style="display: flex; flex-direction: column; gap: 8px; animation: fadeIn 0.5s;">';
+            html += '<h3 style="border-bottom: 1px solid var(--gold-secondary); padding-bottom: 4px;">奇門遁甲 - 4533廠區方位陣列</h3>';
+            html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; text-align: center;">';
+            var qimenCells = [
+                {pos: '東南(巽)', gate: '杜門', star: '天輔', god: '九天', status: 'Wood', score: 40},
+                {pos: '正南(離)', gate: '景門', star: '天英', god: '九地', status: 'Fire', score: 20},
+                {pos: '西南(坤)', gate: '死門', star: '天芮', god: '玄武', status: 'Earth', score: 85},
+                {pos: '正東(震)', gate: '傷門', star: '天沖', god: '白虎', status: 'Wood', score: 35},
+                {pos: '中宮(坤)', gate: '中天', star: '天禽', god: '六合', status: 'Earth', score: 90},
+                {pos: '正西(兌)', gate: '驚門', star: '天柱', god: '太陰', status: 'Metal', score: 100},
+                {pos: '東北(艮)', gate: '生門', star: '天任', god: '騰蛇', status: 'Earth', score: 80},
+                {pos: '正北(坎)', gate: '休門', star: '天蓬', god: '值符', status: 'Water', score: 60},
+                {pos: '西北(乾)', gate: '開門', star: '天心', god: '九天', status: 'Metal', score: 95}
+            ];
+            for (var i = 0; i < qimenCells.length; i++) {
+                var cell = qimenCells[i];
+                html += '<div style="border: 1px solid ' + (cell.status === 'Metal' || cell.status === 'Earth' ? '#FFD700' : 'rgba(255,215,0,0.3)') + '; padding: 4px; background: ' + (cell.status === 'Metal' ? 'rgba(255,215,0,0.15)' : 'rgba(0,0,0,0.3)') + '; boxShadow: ' + (cell.score >= 90 ? '0 0 8px rgba(255,215,0,0.5)' : 'none') + ';">';
+                html += '<div style="color: var(--gold-secondary); opacity: 0.8;">' + cell.pos + '</div>';
+                html += '<div style="font-weight: 900; color: ' + (cell.status === 'Metal' ? '#FFD700' : '#fff') + ';">' + cell.gate + '</div>';
+                html += '<div style="color: rgba(255,255,255,0.6);">' + cell.star + ' / ' + cell.god + '</div>';
+                html += '<div style="margin-top: 2px; height: 2px; width: 100%; background: #333;">';
+                html += '<div style="height: 100%; width: ' + cell.score + '%; background: ' + (cell.score > 80 ? '#44ff44' : (cell.score < 40 ? '#ff4444' : '#ffd700')) + ';"></div>';
+                html += '</div>';
+                html += '</div>';
+            }
+            html += '</div>';
+            html += '<div style="padding: 6px; background: rgba(0,0,0,0.5); border: 1px dashed var(--gold-secondary);">';
+            html += '<h4 style="color: var(--gold-primary);">【排盤與產線調度解析】</h4>';
+            html += '<p>當前 4533 沖床廠區，<span style="color: #FFD700; font-weight: bold;">正西(兌位)驚門 / 西北(乾位)開門</span> 皆屬金，與機台屬性高度共振，最利於金屬加工與大型沖壓出貨。若遇機台高溫或異常，請往<span style="color: #44ff44;">正北(坎位)休門</span>尋求水氣化解散熱。</p>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            return html;
+        }
+
+        function renderLogs() {
+            var logPanel = document.getElementById('logPanel'); // Direct selection by ID
+            if (logPanel) {
+                logPanel.innerHTML = ''; // Clear previous logs
+                if (appState.logs.length === 0) {
+                    logPanel.innerHTML = '<div style="color: #444;">No recent logs...</div>';
+                } else {
+                    appState.logs.forEach(function(log) {
+                        var logDiv = document.createElement('div');
+                        logDiv.className = log.type + '-log';
+                        logDiv.style.cssText = 'border-bottom: 1px dashed #222; padding-bottom: 2px;';
+                        logDiv.innerHTML = '<span style="opacity: 0.5; margin-right: 4px;">[' + log.time + ']</span> ' + log.msg;
+                        logPanel.appendChild(logDiv);
+                    });
+                }
+            }
+        }
+
+        function renderSystemAlerts() {
+            if (!appState.systemAlertOverlayElement) {
+                appState.systemAlertOverlayElement = document.querySelector('.system-alert-overlay');
+            }
+            if (appState.systemAlertOverlayElement) {
+                appState.systemAlertOverlayElement.innerHTML = ''; // Clear previous alerts
+                var recentLogs = appState.logs.slice(-3); // Show last 3 logs as alerts
+                recentLogs.forEach(function(log) {
+                    var alertDiv = document.createElement('div');
+                    alertDiv.style.cssText = 'background: rgba(20,15,0,0.95); border: 1px solid var(--gold-secondary); padding: 8px 12px; border-radius: 2px; box-shadow: 0 0 10px rgba(255,215,0,0.3); color: ' + (log.type === 'error' ? '#ff4444' : (log.type === 'success' ? '#44ff44' : '#fffce0')) + '; display: flex; align-items: center; gap: 6px;';
+                    var icon = log.type === 'success' ? '✅' : (log.type === 'error' ? '❌' : 'ℹ️');
+                    alertDiv.innerHTML = icon + log.msg;
+                    appState.systemAlertOverlayElement.appendChild(alertDiv);
+                });
+            }
+        }
+
+
+        // 運算 4533 協易機特定分析邏輯 (從 React.useMemo 提取)
+        function calculateAnalysis4533() {
+            if (!appState.astroData) return null;
+            
+            // 1. 月亮落宿判斷
+            var moonDeg = appState.astroData.Moon;
+            var currentMansion = TWENTY_EIGHT_MANSIONS[0];
+            var i;
+            for (i = 0; i < TWENTY_EIGHT_MANSIONS.length; i++) {
+                var nextDeg = (i === TWENTY_EIGHT_MANSIONS.length - 1) ? 360 : TWENTY_EIGHT_MANSIONS[i+1].degree; /* Fixed potential out of bounds */
+                var currDeg = TWENTY_EIGHT_MANSIONS[i].degree;
+                if (currDeg > nextDeg) { // Handles wrap-around 360 -> 0
+                    if (moonDeg >= currDeg || moonDeg < nextDeg) {
+                        currentMansion = TWENTY_EIGHT_MANSIONS[i];
+                        break;
+                    }
+                } else {
+                    if (moonDeg >= currDeg && moonDeg < nextDeg) {
+                        currentMansion = TWENTY_EIGHT_MANSIONS[i];
+                        break;
+                    }
+                }
+            }
+
+            // 2. 金運能量指數計算 (金屬性 4533)
+            var energyScore = 60; // Base
+            if (currentMansion.element === 'Metal') energyScore += 25;
+            if (currentMansion.element === 'Earth') energyScore += 15; // 土生金
+            if (currentMansion.element === 'Fire') energyScore -= 20;  // 火剋金
+            
+            // 結合日干支
+            var ganWx = WUXING_MAP[appState.astroData.dayGan];
+            if (ganWx === 'Metal') energyScore += 10;
+            
+            // 動態浮動 (基於火星位置，模擬動能)
+            var marsFactor = Math.sin(appState.astroData.Mars * Math.PI / 180) * 10;
+            energyScore += marsFactor;
+
+            return {
+                mansion: currentMansion,
+                score: Math.min(Math.max(energyScore, 0), 100).toFixed(1),
+                hexagram: I_CHING_64[Math.floor(appState.astroData.Sun % 64)] // 粗略對應
+            };
+        }
+
+
+        // 下載功能 (使用 APP_CORE.downloadSelf)
+        function handleDownloadCode() {
+            APP_CORE.downloadSelf('Celestial_V4_Full_' + appState.now.getTime() + '.html');
+        }
+
+        // 全局函式：載入舊版本
+        window.loadPreviousVersion = function() {
+            try {
+                var inputElement = document.getElementById('versionFileNameInput');
+                if (!inputElement) {
+                    APP_CORE.handleError(new Error("版本輸入框未找到。"), "loadPreviousVersion");
+                    return;
+                }
+                var fileName = inputElement.value.trim();
+                if (!fileName) {
+                    APP_CORE.showToast("請輸入要載入的檔案名稱！", "info");
+                    return;
+                }
+                // Assuming files are in the same directory as the current file.
+                // This will replace the current file in the browser history.
+                window.location.href = './' + fileName;
+                APP_CORE.showToast("嘗試載入版本: " + fileName, "success");
+            } catch (e) {
+                APP_CORE.handleError(e, "loadPreviousVersion");
+            }
+        };
+
+        // 主要應用程式初始化函數
+        function initApp() {
+            addLog("Celestial V4 Kernel Initialized (Vanilla JS).", "success");
+            addLog("Loading Astronomy Engine...", "info");
+
+            // Build initial UI structure
+            buildInitialUI();
+
+            // Get DOM references after initial UI is built
+            appState.svgRef = document.querySelector('#dashboardTab svg');
+            appState.logPanelElement = document.querySelector('#systemTab #logPanel'); // Updated selector for log panel
+            appState.systemAlertOverlayElement = document.querySelector('.system-alert-overlay');
+
+            // Bind download code button
+            var downloadButton = document.querySelector('.gold-btn[data-action="download-code"]');
+            if (downloadButton) {
+                downloadButton.onclick = handleDownloadCode;
+            }
+            
+            // Bind version load button
+            var loadVersionButton = document.querySelector('.gold-btn[data-action="load-version"]');
+            if (loadVersionButton) {
+                loadVersionButton.onclick = loadPreviousVersion;
+            }
+
+            // Initial render
+            renderUI();
+
+            // Set up time and astronomy calculation interval
+            setInterval(function() {
+                var current = new Date();
+                setAppState({ now: current }, function() {
+                    calculateAstronomy(current);
+                });
+            }, 1000); // Update every second
+
+            // Initial astronomy calculation and test1.html initial fetches/sorts
+            calculateAstronomy(new Date());
+            fetchAstrologyData(); // Fetch astrology data and perform initial sort
+
+            // Bind global switchTab to renderUI
+            window.switchTab = function(tabId) {
+                var newTab = tabId.replace('Tab', '').toUpperCase();
+                setAppState({ activeTab: newTab });
+            };
+        }
+
+        function buildInitialUI() {
+            var rootElement = document.getElementById('root');
+            if (!rootElement) {
+                APP_CORE.handleError("Critical Error: Root element not found when building initial UI.", "buildInitialUI");
+                return;
+            }
+
+            var mainContainer = document.createElement('div');
+            mainContainer.style.cssText = 'width: 100%; display: flex; flex-direction: column; align-items: center;';
+
+            // Top Header
+            var headerPanel = document.createElement('div');
+            headerPanel.className = 'glass-panel';
+            headerPanel.style.cssText = 'display: flex; justify-content: space-between; align-items: center;';
+            headerPanel.innerHTML = `
+                <div>
+                    <h1 style="font-size: 0.8rem !important">✨ CELESTIAL V4 ULTIMATE</h1>
+                    <div style="color: rgba(255,255,255,0.6)">作者: 元幟 | 目標: 4533</div>
+                </div>
+                <div style="text-align: right">
+                    <div style="color: var(--gold-primary); font-weight: bold" id="headerDate">${appState.now.toLocaleDateString()}</div>
+                    <div style="font-family: Orbitron" id="headerTime">${appState.now.toLocaleTimeString()}</div>
+                </div>
+            `;
+            mainContainer.appendChild(headerPanel);
+
+            // Navigation Tabs
+            var tabsContainer = document.createElement('div');
+            tabsContainer.className = 'tabs-container';
+            tabsContainer.innerHTML = `
+                <button class="tab-btn" onclick="switchTab('dashboardTab')"><i data-lucide="compass" class="w-3 h-3"></i> 儀表板</button>
+                <button class="tab-btn" onclick="switchTab('luoshuTab')"><i data-lucide="grid-3x3" class="w-3 h-3"></i> 洛書飛星</button>
+                <button class="tab-btn" onclick="switchTab('rankTab')"><i data-lucide="trending-up" class="w-3 h-3"></i> 強勢排序</button>
+                <button class="tab-btn" onclick="switchTab('astroTab')"><i data-lucide="star" class="w-3 h-3"></i> 星象分析</button>
+                <button class="tab-btn" onclick="switchTab('stock4533Tab')"><i data-lucide="chart-line" class="w-3 h-3"></i> 金運量化</button>
+                <button class="tab-btn" onclick="switchTab('qimenTab')"><i data-lucide="layout-grid" class="w-3 h-3"></i> 奇門佈局</button>
+                <button class="tab-btn" onclick="switchTab('systemTab')"><i data-lucide="terminal" class="w-3 h-3"></i> 系統管理</button>
+            `;
+            mainContainer.appendChild(tabsContainer);
+
+            // Content Sections
+            var dashboardTab = document.createElement('div');
+            dashboardTab.id = 'dashboardTab';
+            dashboardTab.className = 'content-section';
+            dashboardTab.innerHTML = `
+                <div class="glass-panel" style="flex: 1; min-height: 400px;">
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <h3 style="width: 100%; border-bottom: 1px solid var(--gold-secondary); padding-bottom: 4px;">即時天體投影 (Geocentric)</h3>
+                        <svg width="300" height="300"></svg>
+                        <div style="width: 100%; margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div style="border: 1px solid var(--gold-secondary); padding: 4px; background: rgba(0,0,0,0.5);">
+                                <div style="color: var(--gold-secondary)">太陽黃經</div>
+                                <div style="font-size: 0.6rem !important; font-weight: bold" id="sunEquatorial">N/A</div>
+                            </div>
+                            <div style="border: 1px solid var(--gold-secondary); padding: 4px; background: rgba(0,0,0,0.5);">
+                                <div style="color: var(--gold-secondary)">月亮黃經</div>
+                                <div style="font-size: 0.6rem !important; font-weight: bold" id="moonEquatorial">N/A</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            mainContainer.appendChild(dashboardTab);
+
+            var luoshuTab = document.createElement('div');
+            luoshuTab.id = 'luoshuTab';
+            luoshuTab.className = 'content-section';
+            mainContainer.appendChild(luoshuTab);
+
+            var rankTab = document.createElement('div');
+            rankTab.id = 'rankTab';
+            rankTab.className = 'content-section';
+            mainContainer.appendChild(rankTab);
+
+            var astroTab = document.createElement('div');
+            astroTab.id = 'astroTab';
+            astroTab.className = 'content-section';
+            mainContainer.appendChild(astroTab);
+
+            var stock4533Tab = document.createElement('div');
+            stock4533Tab.id = 'stock4533Tab';
+            stock4533Tab.className = 'content-section';
+            mainContainer.appendChild(stock4533Tab);
+
+            var qimenTab = document.createElement('div');
+            qimenTab.id = 'qimenTab';
+            qimenTab.className = 'content-section';
+            mainContainer.appendChild(qimenTab);
+
+            var systemTab = document.createElement('div');
+            systemTab.id = 'systemTab';
+            systemTab.className = 'content-section';
+            systemTab.innerHTML = `
+                <div class="glass-panel" style="flex: 1; min-height: 400px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px; animation: fadeIn 0.5s;">
+                        <h3 style="border-bottom: 1px solid var(--gold-secondary); padding-bottom: 4px;">系統核心控制 (CORE_SYS)</h3>
+                        
+                        <button class="gold-btn" id="downloadCodeFooter" style="padding: 10px; margin-top: 4px;">
+                            <i data-lucide="download" class="w-3 h-3"></i> 下載完整前端程式碼 (Celestial_V4.html)
+                        </button>
+                        
+                        <div class="card glass-panel" style="margin-top: 8px;">
+                            <h4 style="color: var(--gold-primary); border-bottom: 1px solid var(--gold-secondary); padding-bottom: 4px;">版本控制 (Version Control)</h4>
+                            <p style="margin-bottom: 8px;">輸入舊版本檔案名稱 (例如: PerStar2603B.html) 載入:</p>
+                            <input type="text" id="versionFileNameInput" placeholder="例如: PerStar2603B.html" style="width: 100%; padding: 8px; margin-bottom: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--gold-secondary); color: #fff" />
+                            <button class="gold-btn" data-action="load-version" style="width: 100%; padding: 10px;">
+                                🔙 載入舊版本
+                            </button>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.8); padding: 6px; border: 1px solid #333; margin-top: 4px; height: 180px; display: flex; flex-direction: column;">
+                            <div style="color: var(--gold-secondary); border-bottom: 1px solid #333; padding-bottom: 2px; margin-bottom: 4px;">--- REALTIME SYSTEM LOGS ---</div>
+                            <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;" class="no-scrollbar" id="logPanel">
+                                <div style="color: #444">No recent logs...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            mainContainer.appendChild(systemTab);
+
+
+            // Footer
+            var footerDiv = document.createElement('div');
+            footerDiv.style.cssText = 'width: 98%; max-width: 600px; text-align: center; margin-top: 8px; color: rgba(255,255,255,0.4); border-top: 1px solid var(--gold-secondary); padding-top: 4px;';
+            footerDiv.innerHTML = `
+                <div>Celestial Metaphysics Kernel V4 Ultimate | System Stable</div>
+                <div style="font-weight: bold; color: var(--gold-secondary)">
+                    目前計算實際行數: <span id="lineCountDisplay">${appState.lineCount}</span> 行 (包含龐大 64 卦與 28 星宿資料庫)
+                </div>
+            `;
+            mainContainer.appendChild(footerDiv);
+
+            // System Alert Overlay (this was already outside the React root, but we need to ensure it's built and attached if not present)
+            var systemAlertOverlay = document.querySelector('.system-alert-overlay');
+            if (!systemAlertOverlay) {
+                systemAlertOverlay = document.createElement('div');
+                systemAlertOverlay.className = 'system-alert-overlay';
+                document.body.appendChild(systemAlertOverlay);
+            }
+            
+            rootElement.appendChild(mainContainer);
+            console.log('buildInitialUI completed successfully.'); // Debug log
+        }
+
+        // ==========================================
+        // 模組三：系統掛載與初始化
+        // ==========================================
+        // 應用程式啟動入口
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded fired.'); // Debug log
+            APP_CORE.init(); /* Initialize APP_CORE first */
+            initApp();
+            console.log('initApp called.'); // Debug log
+        });
+    </script>
+</body>
+</html>
