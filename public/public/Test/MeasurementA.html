@@ -1,387 +1,259 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>金箔全方位量測系統 - 標的物校準版</title>
-    <!-- 外部依賴 -->
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script>
-    <style>
-        :root {
-            --gold: #ffd700;
-            --dark-gold: #b8860b;
-            --soft-gold: #ffec8b;
-            --bg-gold: #3d2b00;
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body {
-            margin: 0; padding: 0;
-            background: radial-gradient(circle, #8b6b00 0%, #3d2b00 100%), url('https://www.transparenttextures.com/patterns/gold-dust.png');
-            color: var(--gold);
-            font-family: "Microsoft JhengHei", STHeiti, sans-serif;
-            font-size: 0.5rem;
-            overflow-x: hidden;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        #app-wrapper {
-            width: 100%; max-width: 600px;
-            background: rgba(61, 43, 0, 0.92);
-            border: 2px solid var(--gold);
-            box-shadow: 0 0 30px rgba(184, 134, 11, 0.8);
-            position: relative;
-            min-height: 100vh;
-            display: flex; flex-direction: column;
-        }
-        .header {
-            padding: 10px;
-            text-align: center;
-            border-bottom: 2px solid var(--gold);
-            background: linear-gradient(to bottom, #ffd700, #b8860b);
-            color: #000;
-        }
-        .header h1 { margin: 0; font-size: 0.8rem; text-shadow: 1px 1px 1px #fff; }
-        
-        .tabs { display: flex; background: #221a00; border-bottom: 1px solid var(--gold); }
-        .tab {
-            flex: 1; padding: 12px; text-align: center; cursor: pointer;
-            transition: 0.3s; font-weight: bold; font-size: 0.5rem;
-            border-right: 1px solid var(--gold);
-        }
-        .tab:last-child { border-right: none; }
-        .tab.active { background: var(--gold); color: #000; box-shadow: inset 0 0 10px #fff; }
-
-        .viewport {
-            position: relative; width: 100%; aspect-ratio: 4/3;
-            background: #000; border-bottom: 1px solid var(--gold);
-            overflow: hidden;
-        }
-        video, canvas {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: contain;
-        }
-        #interaction-canvas { z-index: 10; touch-action: none; }
-
-        .panel { padding: 10px; border-bottom: 1px dotted var(--gold); }
-        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .result-display {
-            background: rgba(0,0,0,0.5); border: 1px solid var(--gold);
-            padding: 10px; border-radius: 5px; margin-top: 5px;
-            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;
-            text-align: center;
-        }
-        .res-item b { display: block; color: var(--soft-gold); font-size: 0.5rem; }
-        .res-item span { font-size: 0.6rem; font-weight: bold; }
-
-        .controls {
-            padding: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
-            background: rgba(0,0,0,0.3);
-        }
-        button {
-            background: linear-gradient(to bottom, #ffd700, #b8860b);
-            border: 1px solid #fff; border-radius: 4px; padding: 8px;
-            font-size: 0.5rem; font-weight: bold; color: #000;
-            cursor: pointer; transition: 0.2s;
-        }
-        button:active { transform: scale(0.95); background: #fff; }
-        button:disabled { opacity: 0.5; filter: grayscale(1); }
-        
-        input, select {
-            background: #000; color: var(--gold); border: 1px solid var(--gold);
-            padding: 4px; width: 95px; font-size: 0.5rem; text-align: center;
-        }
-
-        .status-bar {
-            padding: 5px 10px; background: #000; color: #0f0;
-            font-family: monospace; font-size: 0.5rem;
-            height: 80px; overflow-y: auto; border-top: 1px solid var(--gold);
-        }
-
-        /* 彈窗樣式 */
-        #modal-overlay {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.8); display: none;
-            justify-content: center; align-items: center; z-index: 200;
-        }
-        .modal-content {
-            background: var(--bg-gold); border: 2px solid var(--gold);
-            padding: 20px; border-radius: 10px; text-align: center; width: 80%;
-        }
-
-        .float-btn {
-            position: fixed; bottom: 20px; right: 20px;
-            width: 45px; height: 45px; border-radius: 50%;
-            background: var(--gold); border: 2px solid #fff;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 15px #000; z-index: 100; cursor: pointer;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>金箔全方位量測系統 - 修正版</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+:root {
+    --gold:#ffd700; --dark-gold:#b8860b; --soft-gold:#ffec8b; --bg-gold:#3d2b00;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{
+    margin:0; padding:0;
+    background: radial-gradient(circle,#8b6b00 0%,#3d2b00 100%), url('https://www.transparenttextures.com/patterns/gold-dust.png');
+    color: var(--gold);
+    font-family:"Microsoft JhengHei", STHeiti, sans-serif;
+    font-size:0.5rem;
+    overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+}
+#app-wrapper{
+    width:100%; max-width:600px;
+    background: rgba(61,43,0,0.92);
+    border:2px solid var(--gold);
+    box-shadow:0 0 30px rgba(184,134,11,0.8);
+    position:relative;
+    min-height:100vh;
+    display:flex; flex-direction:column;
+}
+.header{
+    padding:10px; text-align:center; border-bottom:2px solid var(--gold);
+    background:linear-gradient(to bottom,#ffd700,#b8860b);
+    color:#000;
+}
+.header h1{margin:0;font-size:0.8rem;text-shadow:1px 1px 1px #fff;}
+.tabs{display:flex;background:#221a00;border-bottom:1px solid var(--gold);}
+.tab{
+    flex:1; padding:12px; text-align:center; cursor:pointer;
+    transition:0.3s; font-weight:bold; font-size:0.5rem;
+    border-right:1px solid var(--gold);
+}
+.tab:last-child{border-right:none;}
+.tab.active{background:var(--gold);color:#000; box-shadow:inset 0 0 10px #fff;}
+.viewport{
+    position:relative; width:100%; height:auto; background:#000; border-bottom:1px solid var(--gold);
+    overflow:hidden;
+}
+video, canvas{
+    position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain;
+}
+#interaction-canvas{z-index:10; touch-action:none;}
+.panel{padding:10px;border-bottom:1px dotted var(--gold);}
+.row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.result-display{
+    background:rgba(0,0,0,0.5);border:1px solid var(--gold);
+    padding:10px;border-radius:5px;margin-top:5px;
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px;text-align:center;
+}
+.res-item b{display:block;color:var(--soft-gold); font-size:0.5rem;}
+.res-item span{font-size:0.6rem;font-weight:bold;}
+.controls{padding:10px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;background:rgba(0,0,0,0.3);}
+button{
+    background: linear-gradient(to bottom,#ffd700,#b8860b);
+    border:1px solid #fff; border-radius:4px; padding:8px;
+    font-size:0.5rem; font-weight:bold; color:#000;
+    cursor:pointer; transition:0.2s;
+}
+button:active{transform:scale(0.95); background:#fff;}
+button:disabled{opacity:0.5; filter:grayscale(1);}
+input, select{
+    background:#000; color:var(--gold); border:1px solid var(--gold);
+    padding:4px; width:95px; font-size:0.5rem; text-align:center;
+}
+.status-bar{padding:5px 10px; background:#000; color:#0f0; font-family:monospace; font-size:0.5rem; height:80px; overflow-y:auto; border-top:1px solid var(--gold);}
+</style>
 </head>
 <body>
-
 <div id="app-wrapper">
-    <div class="header">
-        <h1>⚜️ 金箔量測系統 - 標的物校準模式 ⚜️</h1>
-    </div>
-
-    <div class="tabs">
-        <div id="tab-manual" class="tab active" onclick="setMode('manual')">量測模式</div>
-        <div id="tab-calibrate" class="tab" onclick="setMode('calibrate')">物體校準</div>
-    </div>
-
-    <div class="viewport">
-        <video id="v-stream" autoplay playsinline muted></video>
-        <canvas id="interaction-canvas"></canvas>
-    </div>
-
-    <div class="panel">
-        <div class="row">
-            <span>校準狀態:</span>
-            <span id="calib-status" style="color:#0f0;">系統默認 (S23)</span>
-        </div>
-        <div class="row">
-            <span>標的物已知長度:</span>
-            <span><input type="number" id="in-ref-val" value="85.6" step="0.1"> mm</span>
-        </div>
-        <div class="result-display">
-            <div class="res-item"><b>目前長度</b><span id="out-l">0.0</span></div>
-            <div class="res-item"><b>比例(px/mm)</b><span id="out-ratio">0.0</span></div>
-            <div class="res-item"><b>誤差修正</b><span id="out-err">0%</span></div>
-        </div>
-    </div>
-
-    <div class="controls">
-        <button id="btn-snap">📸 拍照凍結</button>
-        <button id="btn-reset">🔄 重置系統</button>
-        <button id="btn-lock-calib">🔒 鎖定校準</button>
-        <button id="btn-switch">📷 切換鏡頭</button>
-        <button id="btn-undo">↩️ 撤銷標記</button>
-        <button id="btn-save">💾 下載截圖</button>
-    </div>
-
-    <div class="status-bar" id="log">系統準備就緒...</div>
-    <div style="text-align:center; padding:5px; opacity:0.6;">目前計算實際行數: 752</div>
+<div class="header"><h1>⚜️ 金箔量測系統 - 修正版 ⚜️</h1></div>
+<div class="tabs">
+    <div id="tab-manual" class="tab active" onclick="setMode('manual')">量測模式</div>
+    <div id="tab-calibrate" class="tab" onclick="setMode('calibrate')">物體校準</div>
 </div>
-
-<div id="modal-overlay">
-    <div class="modal-content">
-        <h2 style="font-size:0.7rem;">校準確認</h2>
-        <p id="modal-msg" style="font-size:0.5rem;"></p>
-        <button onclick="confirmCalib()">確定套用</button>
-        <button onclick="closeModal()" style="background:#666;">取消</button>
+<div class="viewport">
+    <video id="v-stream" autoplay playsinline muted></video>
+    <canvas id="interaction-canvas"></canvas>
+</div>
+<div class="panel">
+    <div class="row"><span>校準狀態:</span><span id="calib-status" style="color:#0f0;">系統默認</span></div>
+    <div class="row"><span>標的物已知長度:</span><span><input type="number" id="in-ref-val" value="85.6" step="0.1"> mm</span></div>
+    <div class="result-display">
+        <div class="res-item"><b>目前長度</b><span id="out-l">0.0</span></div>
+        <div class="res-item"><b>比例(px/mm)</b><span id="out-ratio">0.0</span></div>
+        <div class="res-item"><b>誤差修正</b><span id="out-err">0%</span></div>
     </div>
 </div>
-
-<div class="float-btn" onclick="exportCode()" title="下載代碼">💾</div>
+<div class="controls">
+    <button id="btn-snap">📸 拍照凍結</button>
+    <button id="btn-reset">🔄 重置系統</button>
+    <button id="btn-lock-calib">🔒 鎖定校準</button>
+    <button id="btn-switch">📷 切換鏡頭</button>
+    <button id="btn-undo">↩️ 撤銷標記</button>
+    <button id="btn-save">💾 下載截圖</button>
+</div>
+<div class="status-bar" id="log">系統準備就緒...</div>
+</div>
 
 <script>
-    const video = document.getElementById('v-stream');
-    const canvas = document.getElementById('interaction-canvas');
-    const ctx = canvas.getContext('2d');
-    const logBox = document.getElementById('log');
+const video = document.getElementById('v-stream');
+const canvas = document.getElementById('interaction-canvas');
+const ctx = canvas.getContext('2d');
+const logBox = document.getElementById('log');
 
-    let state = {
-        mode: 'manual', // 'manual' or 'calibrate'
-        isFrozen: false,
-        points: [],
-        facingMode: 'environment',
-        stream: null,
-        photoData: null,
-        // 校準參數
-        pixelToMmRatio: null, // 每毫米多少像素
-        isCalibrated: false
-    };
+let state = {
+    mode:'manual',
+    isFrozen:false,
+    points:[],
+    facingMode:'environment',
+    stream:null,
+    photoData:null,
+    pixelToMmRatio:null,
+    isCalibrated:false
+};
 
-    // S23 初始參數 (備援使用)
-    const S23_SW = 6.3;
-    const S23_FL = 5.4;
-    const S23_H = 300;
+function log(msg){
+    const p = document.createElement('div');
+    p.innerText = `> ${new Date().toLocaleTimeString()}: ${msg}`;
+    logBox.prepend(p);
+}
 
-    function log(msg) {
-        const p = document.createElement('div');
-        p.innerText = `> ${new Date().toLocaleTimeString()}: ${msg}`;
-        logBox.prepend(p);
+async function startCamera(){
+    if(state.stream) state.stream.getTracks().forEach(t=>t.stop());
+    try{
+        const constraints={video:{facingMode:state.facingMode, width:{ideal:1920}, height:{ideal:1080}}};
+        state.stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = state.stream;
+        video.onloadedmetadata = ()=>{
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+            log(`串流啟動: ${canvas.width}x${canvas.height}`);
+            drawLoop();
+        };
+    }catch(err){log("相機失敗: "+err.message);}
+}
+
+function setMode(m){
+    state.mode=m;
+    state.points=[];
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById(`tab-${m}`).classList.add('active');
+    log(`切換至 ${m==='calibrate'?'校準模式':'量測模式'}`);
+    if(m==='calibrate') log("請點選已知長度物體的兩端點。");
+}
+
+function drawLoop(){
+    if(!state.isFrozen){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    }else if(state.photoData){
+        ctx.putImageData(state.photoData,0,0);
     }
+    renderGraphics();
+    requestAnimationFrame(drawLoop);
+}
 
-    async function startCamera() {
-        if (state.stream) state.stream.getTracks().forEach(track => track.stop());
-        try {
-            const constraints = {
-                video: {
-                    facingMode: state.facingMode,
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
-                }
-            };
-            state.stream = await navigator.mediaDevices.getUserMedia(constraints);
-            video.srcObject = state.stream;
-            video.onloadedmetadata = () => {
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                log(`串流啟動: ${canvas.width}x${canvas.height}`);
-                drawLoop();
-            };
-        } catch (err) {
-            log("相機失敗: " + err.message);
+function renderGraphics(){
+    ctx.strokeStyle=state.mode==='calibrate'?"#0f0":"#ffd700";
+    ctx.lineWidth= Math.max(2, canvas.width*0.002);
+    ctx.fillStyle = ctx.strokeStyle;
+
+    state.points.forEach((p,i)=>{
+        ctx.beginPath(); ctx.arc(p.x,p.y,canvas.width*0.015,0,Math.PI*2); ctx.fill(); ctx.stroke();
+        if(i>0){
+            const prev=state.points[i-1];
+            ctx.setLineDash([10,5]);
+            ctx.beginPath(); ctx.moveTo(prev.x,prev.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+            ctx.setLineDash([]);
+            const pixelDist=Math.sqrt((p.x-prev.x)**2+(p.y-prev.y)**2);
+            let realDist;
+            if(state.mode==='calibrate') realDist="校準中...";
+            else if(state.isCalibrated) realDist=(pixelDist/state.pixelToMmRatio).toFixed(1)+" mm";
+            else realDist=pixelDist.toFixed(1)+" px";
+            drawText(realDist,(p.x+prev.x)/2,(p.y+prev.y)/2);
+            document.getElementById('out-l').innerText=realDist;
         }
-    }
-
-    function setMode(m) {
-        state.mode = m;
-        state.points = [];
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById(`tab-${m}`).classList.add('active');
-        log(`切換至 ${m === 'calibrate' ? '【標的物校準】模式' : '【實際量測】模式'}`);
-        if (m === 'calibrate') {
-            log("請點選已知長度物體的兩端點。");
-        }
-    }
-
-    function drawLoop() {
-        if (!state.isFrozen) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        } else if (state.photoData) {
-            ctx.putImageData(state.photoData, 0, 0);
-        }
-        renderGraphics();
-        requestAnimationFrame(drawLoop);
-    }
-
-    function renderGraphics() {
-        ctx.strokeStyle = state.mode === 'calibrate' ? "#00ff00" : "#ffd700";
-        ctx.lineWidth = 4;
-        ctx.fillStyle = ctx.strokeStyle;
-
-        state.points.forEach((p, i) => {
-            ctx.beginPath(); ctx.arc(p.x, p.y, 15, 0, Math.PI * 2); ctx.fill();
-            ctx.stroke();
-            
-            if (i > 0) {
-                const prev = state.points[i - 1];
-                ctx.setLineDash([10, 5]);
-                ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(p.x, p.y);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                
-                const pixelDist = Math.sqrt((p.x - prev.x)**2 + (p.y - prev.y)**2);
-                let realDist;
-
-                if (state.mode === 'calibrate') {
-                    realDist = "校準中...";
-                } else {
-                    if (state.isCalibrated) {
-                        realDist = (pixelDist / state.pixelToMmRatio).toFixed(1) + " mm";
-                    } else {
-                        // 使用 S23 公式作為保底
-                        realDist = ((pixelDist * S23_SW * S23_H) / (canvas.width * S23_FL)).toFixed(1) + " mm";
-                    }
-                }
-                
-                drawText(realDist, (p.x + prev.x) / 2, (p.y + prev.y) / 2);
-                document.getElementById('out-l').innerText = realDist;
-            }
-        });
-    }
-
-    function drawText(txt, x, y) {
-        ctx.font = "bold 40px sans-serif";
-        ctx.textAlign = "center";
-        ctx.lineWidth = 10; ctx.strokeStyle = "#000";
-        ctx.strokeText(txt, x, y);
-        ctx.fillStyle = ctx.strokeStyle === "#000" ? "#fff" : "#ffd700";
-        if(state.mode === 'calibrate') ctx.fillStyle = "#0f0";
-        ctx.fillText(txt, x, y);
-    }
-
-    canvas.addEventListener('pointerdown', e => {
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-        
-        if (state.mode === 'calibrate' && state.points.length >= 2) {
-            state.points = []; // 校準模式只允許兩個點
-        }
-        state.points.push({ x, y });
-        log(`點位標定: ${Math.round(x)}, ${Math.round(y)}`);
     });
+}
 
-    document.getElementById('btn-lock-calib').onclick = () => {
-        if (state.mode !== 'calibrate' || state.points.length < 2) {
-            log("請先進入校準模式並點選兩個點。");
-            return;
-        }
-        const p1 = state.points[0];
-        const p2 = state.points[1];
-        const pxDist = Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2);
-        const knownMm = parseFloat(document.getElementById('in-ref-val').value);
-        
-        const ratio = pxDist / knownMm;
-        document.getElementById('modal-msg').innerText = `檢測到像素距離: ${pxDist.toFixed(1)} px\n已知長度: ${knownMm} mm\n計算比例: ${ratio.toFixed(3)} px/mm\n是否套用此校準值？`;
-        document.getElementById('modal-overlay').style.display = 'flex';
-        state.tempRatio = ratio;
-    };
+function drawText(txt,x,y){
+    ctx.font=`bold ${canvas.height*0.04}px sans-serif`;
+    ctx.textAlign='center';
+    ctx.lineWidth=8; ctx.strokeStyle='#000';
+    ctx.strokeText(txt,x,y);
+    ctx.fillStyle=state.mode==='calibrate'?"#0f0":"#ffd700";
+    ctx.fillText(txt,x,y);
+}
 
-    function confirmCalib() {
-        state.pixelToMmRatio = state.tempRatio;
-        state.isCalibrated = true;
-        document.getElementById('calib-status').innerText = "✅ 物體已校準";
-        document.getElementById('out-ratio').innerText = state.pixelToMmRatio.toFixed(3);
-        log("校準成功！現在所有量測將以此物體為基準。");
-        closeModal();
-        setMode('manual');
-    }
+canvas.addEventListener('pointerdown',e=>{
+    const rect = canvas.getBoundingClientRect();
+    const x=(e.clientX-rect.left)*(canvas.width/rect.width);
+    const y=(e.clientY-rect.top)*(canvas.height/rect.height);
+    if(state.mode==='calibrate' && state.points.length>=2) state.points=[];
+    state.points.push({x,y});
+    log(`點位標定: ${Math.round(x)},${Math.round(y)}`);
+});
 
-    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+document.getElementById('btn-lock-calib').onclick=()=>{
+    if(state.mode!=='calibrate'||state.points.length<2){log("請先進入校準模式並點選兩個點。"); return;}
+    const p1=state.points[0], p2=state.points[1];
+    const pxDist=Math.sqrt((p1.x-p2.x)**2+(p1.y-p2.y)**2);
+    const knownMm=parseFloat(document.getElementById('in-ref-val').value);
+    state.pixelToMmRatio=pxDist/knownMm;
+    state.isCalibrated=true;
+    document.getElementById('calib-status').innerText="✅ 物體已校準";
+    document.getElementById('out-ratio').innerText=state.pixelToMmRatio.toFixed(3);
+    log(`校準成功！比例: ${state.pixelToMmRatio.toFixed(3)} px/mm`);
+    setMode('manual');
+};
 
-    document.getElementById('btn-snap').onclick = () => {
-        state.isFrozen = !state.isFrozen;
-        if (state.isFrozen) {
-            video.pause();
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            state.photoData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            log("影像已凍結，請進行精確標註。");
-        } else {
-            video.play();
-            log("回到即時預覽。");
-        }
-    };
+document.getElementById('btn-snap').onclick=()=>{
+    state.isFrozen=!state.isFrozen;
+    if(state.isFrozen){
+        video.pause();
+        ctx.drawImage(video,0,0,canvas.width,canvas.height);
+        state.photoData=ctx.getImageData(0,0,canvas.width,canvas.height);
+        log("影像已凍結，請進行精確標註。");
+    }else{video.play(); log("回到即時預覽。");}
+};
 
-    document.getElementById('btn-reset').onclick = () => {
-        state.isCalibrated = false;
-        state.pixelToMmRatio = null;
-        state.points = [];
-        document.getElementById('calib-status').innerText = "系統默認 (S23)";
-        document.getElementById('out-ratio').innerText = "0.0";
-        log("系統參數已重置為 S23 默認值。");
-    };
+document.getElementById('btn-reset').onclick=()=>{
+    state.isCalibrated=false; state.pixelToMmRatio=null; state.points=[];
+    document.getElementById('calib-status').innerText="系統默認";
+    document.getElementById('out-ratio').innerText="0.0";
+    log("系統已重置。");
+};
 
-    document.getElementById('btn-undo').onclick = () => {
-        state.points.pop();
-        log("撤銷標記點。");
-    };
+document.getElementById('btn-undo').onclick=()=>{
+    state.points.pop(); log("撤銷標記點。");
+};
 
-    document.getElementById('btn-switch').onclick = () => {
-        state.facingMode = state.facingMode === 'user' ? 'environment' : 'user';
-        startCamera();
-    };
+document.getElementById('btn-switch').onclick=()=>{
+    state.facingMode=state.facingMode==='user'?'environment':'user';
+    startCamera();
+};
 
-    document.getElementById('btn-save').onclick = () => {
-        const out = document.createElement('canvas');
-        out.width = canvas.width; out.height = canvas.height;
-        const octx = out.getContext('2d');
-        octx.drawImage(video, 0, 0); octx.drawImage(canvas, 0, 0);
-        const a = document.createElement('a');
-        a.download = `Gold_Calib_Measure_${Date.now()}.png`;
-        a.href = out.toDataURL(); a.click();
-    };
+document.getElementById('btn-save').onclick=()=>{
+    const out=document.createElement('canvas'); out.width=canvas.width; out.height=canvas.height;
+    const octx=out.getContext('2d'); octx.drawImage(video,0,0); octx.drawImage(canvas,0,0);
+    const a=document.createElement('a'); a.download=`Gold_Calib_${Date.now()}.png`;
+    a.href=out.toDataURL(); a.click();
+};
 
-    function exportCode() {
-        const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = 'gold_measure_calibrated.html'; a.click();
-    }
-
-    window.onload = startCamera;
+window.onload=startCamera;
 </script>
 </body>
 </html>
