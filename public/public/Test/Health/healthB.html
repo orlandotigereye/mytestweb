@@ -61,7 +61,7 @@
             color: #b45309;
             padding: 0.1rem 0.4rem;
             border-radius: 4px;
-            font-size: 0.45rem;
+            font-size: 0.5rem;
             font-weight: bold;
         }
 
@@ -93,6 +93,14 @@
         }
         .count-num { font-size: 8rem; font-weight: 900; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* Timer Specific Styles */
+        .timer-display {
+            font-family: 'Courier New', Courier, monospace;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+        .timer-btn-start { background: #10b981; }
+        .timer-btn-stop { background: #ef4444; }
     </style>
 </head>
 <body class="pb-32">
@@ -173,8 +181,8 @@
                         <div class="bg-yellow-50 p-3 rounded-xl border border-yellow-200">
                             <label class="block font-bold text-yellow-800 mb-1">🧠 30秒神經自查 (系統 2 開啟)</label>
                             <div class="grid grid-cols-2 gap-2 mt-2">
-                                <button onclick="setSystem2('理性')" class="sys2-btn bg-white border border-yellow-300 py-1 rounded-lg text-[0.45rem]">⚖️ 理性決策</button>
-                                <button onclick="setSystem2('平靜')" class="sys2-btn bg-white border border-yellow-300 py-1 rounded-lg text-[0.45rem]">🌊 情緒平靜</button>
+                                <button onclick="setSystem2('理性')" class="sys2-btn bg-white border border-yellow-300 py-1 rounded-lg text-[0.5rem]">⚖️ 理性決策</button>
+                                <button onclick="setSystem2('平靜')" class="sys2-btn bg-white border border-yellow-300 py-1 rounded-lg text-[0.5rem]">🌊 情緒平靜</button>
                             </div>
                             <input type="hidden" id="system2-state" value="未掃描">
                         </div>
@@ -188,28 +196,48 @@
                 <!-- 微習慣觸發器 -->
                 <div class="cute-card p-4 border-dashed border-green-400 bg-green-50/30">
                     <p class="text-green-800 font-bold mb-2">💡 Tiny Habit 錨點</p>
-                    <p class="text-[0.45rem] text-green-700">「當我一進家門，我就換上跑鞋（最小行動），並對鏡子給自己一個讚（慶祝）。」</p>
+                    <p class="text-[0.5rem] text-green-700">「當我一進家門，我就換上跑鞋（最小行動），並對鏡子給自己一個讚（慶祝）。」</p>
                 </div>
             </section>
 
-            <!-- 運動分頁 -->
+            <!-- 運動分頁 (加入自動計時器) -->
             <section id="page-exercise" class="page">
                 <div class="cute-card p-6">
                     <h2 class="text-xl font-bold text-green-700 mb-4 flex items-center">
-                        <i class="fas fa-bolt mr-2"></i> 運動資產：證據採集
+                        <i class="fas fa-stopwatch mr-2"></i> 神經動力計時器
                     </h2>
                     
+                    <!-- 計時器主介面 -->
+                    <div class="bg-emerald-900 rounded-3xl p-6 mb-6 text-center shadow-inner relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-emerald-400/30">
+                            <div id="timer-progress" class="h-full bg-emerald-400 transition-all" style="width:0%"></div>
+                        </div>
+                        <p class="text-emerald-400 text-[0.5rem] tracking-widest uppercase mb-2">Current Workout Session</p>
+                        <div id="stopwatch-display" class="timer-display text-5xl font-black text-white mb-4">00:00:00</div>
+                        
+                        <div class="flex justify-center gap-4">
+                            <button id="timer-ctrl-btn" onclick="toggleStopwatch()" class="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl shadow-lg transition-all active:scale-90 timer-btn-start">
+                                <i class="fas fa-play" id="timer-icon"></i>
+                            </button>
+                            <button onclick="resetStopwatch()" class="w-20 h-20 rounded-full flex items-center justify-center bg-gray-700 text-white text-2xl shadow-lg transition-all active:scale-90">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-green-50 p-4 rounded-2xl border-2 border-green-200 text-center relative">
-                                <span class="absolute top-1 right-2 text-[0.4rem] text-green-600 font-bold">跑步</span>
+                                <span class="absolute top-1 right-2 text-[0.5rem] text-green-600 font-bold">跑步</span>
                                 <input type="number" id="run-min" placeholder="0" class="text-center border-none bg-transparent text-2xl font-black text-green-600">
-                                <p class="text-[0.4rem] text-green-500 mt-1">分鐘</p>
+                                <p class="text-[0.5rem] text-green-500 mt-1">分鐘 (點擊代入計時)</p>
+                                <button onclick="injectTime('run-min')" class="absolute bottom-1 right-1 text-xs text-green-400"><i class="fas fa-plus-circle"></i></button>
                             </div>
                             <div class="bg-orange-50 p-4 rounded-2xl border-2 border-orange-200 text-center relative">
-                                <span class="absolute top-1 right-2 text-[0.4rem] text-orange-600 font-bold">跳動</span>
+                                <span class="absolute top-1 right-2 text-[0.5rem] text-orange-600 font-bold">跳動</span>
                                 <input type="number" id="jump-min" placeholder="0" class="text-center border-none bg-transparent text-2xl font-black text-orange-600">
-                                <p class="text-[0.4rem] text-orange-500 mt-1">分鐘</p>
+                                <p class="text-[0.5rem] text-orange-500 mt-1">分鐘 (點擊代入計時)</p>
+                                <button onclick="injectTime('jump-min')" class="absolute bottom-1 right-1 text-xs text-orange-400"><i class="fas fa-plus-circle"></i></button>
                             </div>
                         </div>
 
@@ -229,7 +257,7 @@
                 <div class="cute-card p-4">
                     <div class="flex justify-between items-center mb-4 px-2">
                         <h2 class="text-xl font-bold text-yellow-800 italic">📜 身份證據日誌</h2>
-                        <button onclick="downloadCSV()" class="text-[0.4rem] bg-yellow-600 text-white px-3 py-1 rounded-full font-bold">EXCEL 匯出</button>
+                        <button onclick="downloadCSV()" class="text-[0.5rem] bg-yellow-600 text-white px-3 py-1 rounded-full font-bold">EXCEL 匯出</button>
                     </div>
                     <div id="history-list" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
                 </div>
@@ -264,13 +292,13 @@
 
                         <div class="bg-white/80 p-4 rounded-2xl border-2 border-yellow-200 text-center">
                             <p class="text-xs text-gray-400 mb-2 uppercase tracking-widest">每日神經元連結語</p>
-                            <p id="motivational-quote" class="font-black text-yellow-900 italic text-[0.55rem]">"每一次記錄，都在削弱舊的脂肪身份。"</p>
+                            <p id="motivational-quote" class="font-black text-yellow-900 italic text-[0.6rem]">"每一次記錄，都在削弱舊的脂肪身份。"</p>
                         </div>
 
                         <!-- 排除閃亮物 -->
                         <div class="p-4 bg-red-50 rounded-2xl border border-red-200">
                             <p class="font-bold text-red-800 flex items-center"><i class="fas fa-shield-halved mr-2"></i> 閃亮物監獄 (Idea Jail)</p>
-                            <p class="text-[0.4rem] text-red-600 mt-1">「新的偏方？等 30 天後再審核。現在只執行這套系統。」</p>
+                            <p class="text-[0.5rem] text-red-600 mt-1">「新的偏方？等 30 天後再審核。現在只執行這套系統。」</p>
                         </div>
                     </div>
                 </div>
@@ -317,6 +345,11 @@
         let db = JSON.parse(localStorage.getItem(CONFIG.storageKey) || '[]');
         let chartInstance = null;
 
+        // Stopwatch State
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let isTimerRunning = false;
+
         // 5秒法則邏輯
         function triggerFiveSecondRule() {
             const overlay = document.getElementById('five-sec-overlay');
@@ -335,6 +368,62 @@
                     renderMsg("系統 1 已攔截！現在去做該做的事！🚀", "success");
                 }
             }, 1000);
+        }
+
+        function toggleStopwatch() {
+            const btn = document.getElementById('timer-ctrl-btn');
+            const icon = document.getElementById('timer-icon');
+            const progress = document.getElementById('timer-progress');
+
+            if (!isTimerRunning) {
+                // Start
+                isTimerRunning = true;
+                btn.classList.replace('timer-btn-start', 'timer-btn-stop');
+                icon.classList.replace('fa-play', 'fa-stop');
+                
+                timerInterval = setInterval(() => {
+                    secondsElapsed++;
+                    updateStopwatchDisplay();
+                    // Fake progress logic (e.g., wrap every 60s)
+                    progress.style.width = ((secondsElapsed % 60) / 60 * 100) + '%';
+                }, 1000);
+                renderMsg("計時開始，大腦已進入運動模式 🏃", "success");
+            } else {
+                // Stop
+                isTimerRunning = false;
+                btn.classList.replace('timer-btn-stop', 'timer-btn-start');
+                icon.classList.replace('fa-stop', 'fa-play');
+                clearInterval(timerInterval);
+                renderMsg(`計時結束！已累積 ${Math.floor(secondsElapsed / 60)} 分鐘證據。`, "success");
+            }
+        }
+
+        function resetStopwatch() {
+            if (isTimerRunning) toggleStopwatch();
+            secondsElapsed = 0;
+            updateStopwatchDisplay();
+            document.getElementById('timer-progress').style.width = '0%';
+        }
+
+        function updateStopwatchDisplay() {
+            const hrs = Math.floor(secondsElapsed / 3600).toString().padStart(2, '0');
+            const mins = Math.floor((secondsElapsed % 3600) / 60).toString().padStart(2, '0');
+            const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+            document.getElementById('stopwatch-display').innerText = `${hrs}:${mins}:${secs}`;
+        }
+
+        function injectTime(targetId) {
+            if (secondsElapsed === 0) {
+                renderMsg("請先開始計時以產生數據 😺", "error");
+                return;
+            }
+            const mins = Math.floor(secondsElapsed / 60);
+            if (mins === 0 && secondsElapsed > 0) {
+                document.getElementById(targetId).value = 1; // 至少1分鐘
+            } else {
+                document.getElementById(targetId).value = mins;
+            }
+            renderMsg("已代入統計分鐘 💰", "success");
         }
 
         function setSystem2(state) {
@@ -392,6 +481,10 @@
             renderMsg("神經元連結強化中...🔥", "success");
             updateQuickStats();
             initChart();
+            resetStopwatch();
+            // 清空輸入
+            document.getElementById('run-min').value = '';
+            document.getElementById('jump-min').value = '';
         }
 
         function saveData(newData) {
@@ -423,16 +516,16 @@
                 card.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-[0.4rem] font-bold text-gray-300 tracking-widest">${item.date}</p>
+                            <p class="text-[0.5rem] font-bold text-gray-300 tracking-widest">${item.date}</p>
                             <div class="flex items-center space-x-2 my-1">
                                 <span class="text-lg font-black text-yellow-700">${item.weight || '--'}kg</span>
                                 <span class="evidence-badge">${item.sys2}</span>
                             </div>
                             <div class="grid grid-cols-2 gap-x-4 gap-y-1">
-                                <span class="text-[0.45rem] text-pink-500 font-bold">BP: ${item.sbp || '--'}/${item.dbp || '--'}</span>
-                                <span class="text-[0.45rem] text-blue-500 font-bold">W: ${item.water || 0}ml</span>
-                                <span class="text-[0.45rem] text-green-600 font-bold">🏃: ${item.run || 0}m</span>
-                                <span class="text-[0.45rem] text-orange-600 font-bold">🦘: ${item.jump || 0}m</span>
+                                <span class="text-[0.5rem] text-pink-500 font-bold">BP: ${item.sbp || '--'}/${item.dbp || '--'}</span>
+                                <span class="text-[0.5rem] text-blue-500 font-bold">W: ${item.water || 0}ml</span>
+                                <span class="text-[0.5rem] text-green-600 font-bold">🏃: ${item.run || 0}m</span>
+                                <span class="text-[0.5rem] text-orange-600 font-bold">🦘: ${item.jump || 0}m</span>
                             </div>
                         </div>
                         <button onclick="deleteData(${index})" class="text-gray-200 hover:text-red-400"><i class="fas fa-trash-alt"></i></button>
@@ -466,10 +559,10 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { labels: { font: { size: 8 } } } },
+                    plugins: { legend: { labels: { font: { size: 10 } } } },
                     scales: { 
-                        y: { beginAtZero: true, ticks: { font: { size: 8 } } },
-                        x: { ticks: { font: { size: 8 } } }
+                        y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+                        x: { ticks: { font: { size: 10 } } }
                     }
                 }
             });
