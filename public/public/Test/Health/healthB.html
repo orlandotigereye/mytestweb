@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>金萌神經健康逆轉系統 😺💰</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { font-size: 0.5rem; }
+        body {
+            background: #fff9e6 url('https://www.transparenttextures.com/patterns/gold-white.png');
+            font-family: "Hiragino Sans GB", "Microsoft JhengHei", sans-serif;
+            margin: 0; padding: 0; min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .gold-sparkle {
+            background: linear-gradient(135deg, #ffd700 0%, #ffecb3 50%, #daa520 100%);
+            box-shadow: 0 4px 15px rgba(218, 165, 32, 0.4);
+        }
+        .cute-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #ffd700;
+            border-radius: 25px;
+            box-shadow: 6px 6px 0px #daa520;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .cute-card:hover { transform: translateY(-3px) scale(1.01); }
+        input, select, textarea {
+            font-size: 0.5rem !important;
+            border: 2px solid #ffe082;
+            border-radius: 12px;
+            padding: 0.6rem;
+            background: #fffdf7;
+            outline: none;
+            width: 100%;
+        }
+        input:focus { border-color: #ffd700; background: #fff; box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+        .cat-mascot {
+            position: absolute;
+            top: -30px; right: 10px;
+            font-size: 3rem;
+            filter: drop-shadow(2px 2px 0 white);
+            cursor: pointer;
+            z-index: 50;
+            transition: transform 0.2s;
+        }
+        .cat-mascot:active { transform: scale(0.8); }
+        .page { display: none; }
+        .page.active { display: block; animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .progress-fill { transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .evidence-badge {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #b45309;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.45rem;
+            font-weight: bold;
+        }
+
+        /* 導航切換樣式 */
+        nav button { font-size: 0.5rem; transition: all 0.3s; position: relative; }
+        .active-nav { color: #b45309 !important; font-weight: 900; }
+        .active-nav::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            width: 30%;
+            height: 4px;
+            background: #b45309;
+            border-radius: 10px;
+        }
+
+        /* 5秒法則動畫 */
+        .countdown-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: #ffd700;
+            display: none;
+        }
+        .count-num { font-size: 8rem; font-weight: 900; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body class="pb-32">
+
+    <!-- 5秒法則遮罩 -->
+    <div id="five-sec-overlay" class="countdown-overlay">
+        <p class="text-xl mb-4">系統 1 衝動攔截中...</p>
+        <div id="count-display" class="count-num">5</div>
+        <p class="text-lg mt-4 font-bold">倒數結束，立即行動！</p>
+    </div>
+
+    <!-- 背景裝飾 -->
+    <div class="fixed inset-0 pointer-events-none opacity-20 z-0 overflow-hidden">
+        <i class="fas fa-coins absolute text-yellow-500 animate-bounce" style="top:5%; left:5%; font-size: 2.5rem;"></i>
+        <i class="fas fa-brain absolute text-pink-400" style="top:25%; right:10%; font-size: 2rem;"></i>
+        <i class="fas fa-dna absolute text-blue-400" style="bottom:20%; left:15%; font-size: 1.5rem;"></i>
+    </div>
+
+    <div class="relative z-10 max-w-md mx-auto p-4">
+        <!-- 頂部標題 -->
+        <header class="text-center py-6 relative">
+            <div class="cat-mascot" onclick="triggerFiveSecondRule()">🐈</div>
+            <h1 class="text-3xl font-black text-yellow-700 tracking-tighter italic">NEURO GOLD V4</h1>
+            <p class="text-yellow-600 font-bold bg-white/70 inline-block px-3 py-1 rounded-full border border-yellow-200 shadow-sm">🚀 身份轉換：我是一個掌控健康的人 🚀</p>
+        </header>
+
+        <!-- 快速資訊欄 (身份證據) -->
+        <div id="quick-stats" class="grid grid-cols-4 gap-2 mb-6">
+            <div class="cute-card p-2 text-center bg-white">
+                <p class="text-gray-400 scale-90">體重證據</p>
+                <p id="stat-w" class="text-lg font-bold text-yellow-600">--</p>
+            </div>
+            <div class="cute-card p-2 text-center bg-white">
+                <p class="text-gray-400 scale-90">舒張壓區</p>
+                <p id="stat-dbp" class="text-lg font-bold text-pink-500">--</p>
+            </div>
+            <div class="cute-card p-2 text-center bg-white">
+                <p class="text-gray-400 scale-90">運動資產</p>
+                <p id="stat-exercise" class="text-lg font-bold text-green-500">0m</p>
+            </div>
+            <div class="cute-card p-2 text-center bg-white">
+                <p class="text-gray-400 scale-90">基底核天數</p>
+                <p id="stat-days" class="text-lg font-bold text-blue-500">0</p>
+            </div>
+        </div>
+
+        <main>
+            <!-- 記錄分頁 -->
+            <section id="page-input" class="page active">
+                <div class="cute-card p-6 mb-4">
+                    <h2 class="text-xl font-bold text-yellow-800 mb-4 flex items-center">
+                        <i class="fas fa-microchip mr-2"></i> 神經存摺：生理數據
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-bold text-gray-500 mb-1">體重 (kg)</label>
+                                <input type="number" id="weight" step="0.1" placeholder="83.6">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-gray-500 mb-1">收縮壓</label>
+                                <input type="number" id="sbp" placeholder="126">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-bold text-gray-500 mb-1">舒張壓 (目標80)</label>
+                                <input type="number" id="dbp" placeholder="88">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-gray-500 mb-1">飲水 (ml)</label>
+                                <input type="number" id="water-input" placeholder="2500">
+                            </div>
+                        </div>
+
+                        <div class="bg-yellow-50 p-3 rounded-xl border border-yellow-200">
+                            <label class="block font-bold text-yellow-800 mb-1">🧠 30秒神經自查 (系統 2 開啟)</label>
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <button onclick="setSystem2('理性')" class="sys2-btn bg-white border border-yellow-300 py-1 rounded-lg text-[0.45rem]">⚖️ 理性決策</button>
+                                <button onclick="setSystem2('平靜')" class="sys2-btn bg-white border border-yellow-300 py-1 rounded-lg text-[0.45rem]">🌊 情緒平靜</button>
+                            </div>
+                            <input type="hidden" id="system2-state" value="未掃描">
+                        </div>
+
+                        <button onclick="handleSave()" class="w-full py-4 gold-sparkle text-white font-black text-xl rounded-2xl shadow-xl active:scale-95 transition-all">
+                            💰 累積健康證據
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 微習慣觸發器 -->
+                <div class="cute-card p-4 border-dashed border-green-400 bg-green-50/30">
+                    <p class="text-green-800 font-bold mb-2">💡 Tiny Habit 錨點</p>
+                    <p class="text-[0.45rem] text-green-700">「當我一進家門，我就換上跑鞋（最小行動），並對鏡子給自己一個讚（慶祝）。」</p>
+                </div>
+            </section>
+
+            <!-- 運動分頁 -->
+            <section id="page-exercise" class="page">
+                <div class="cute-card p-6">
+                    <h2 class="text-xl font-bold text-green-700 mb-4 flex items-center">
+                        <i class="fas fa-bolt mr-2"></i> 運動資產：證據採集
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-green-50 p-4 rounded-2xl border-2 border-green-200 text-center relative">
+                                <span class="absolute top-1 right-2 text-[0.4rem] text-green-600 font-bold">跑步</span>
+                                <input type="number" id="run-min" placeholder="0" class="text-center border-none bg-transparent text-2xl font-black text-green-600">
+                                <p class="text-[0.4rem] text-green-500 mt-1">分鐘</p>
+                            </div>
+                            <div class="bg-orange-50 p-4 rounded-2xl border-2 border-orange-200 text-center relative">
+                                <span class="absolute top-1 right-2 text-[0.4rem] text-orange-600 font-bold">跳動</span>
+                                <input type="number" id="jump-min" placeholder="0" class="text-center border-none bg-transparent text-2xl font-black text-orange-600">
+                                <p class="text-[0.4rem] text-orange-500 mt-1">分鐘</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-3 rounded-2xl shadow-inner h-64 overflow-hidden">
+                            <canvas id="exerciseChart"></canvas>
+                        </div>
+
+                        <button onclick="handleSaveExercise()" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-black text-xl rounded-2xl shadow-lg active:scale-95">
+                            🔥 寫入基底核記憶
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 歷史分頁 -->
+            <section id="page-history" class="page">
+                <div class="cute-card p-4">
+                    <div class="flex justify-between items-center mb-4 px-2">
+                        <h2 class="text-xl font-bold text-yellow-800 italic">📜 身份證據日誌</h2>
+                        <button onclick="downloadCSV()" class="text-[0.4rem] bg-yellow-600 text-white px-3 py-1 rounded-full font-bold">EXCEL 匯出</button>
+                    </div>
+                    <div id="history-list" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
+                </div>
+            </section>
+
+            <!-- 成就分頁 -->
+            <section id="page-goals" class="page">
+                <div class="cute-card p-5">
+                    <h2 class="text-xl font-bold text-yellow-800 mb-6 text-center">🏆 系統自動化進度</h2>
+                    <div class="space-y-6">
+                        <!-- 身份證據條 -->
+                        <div class="relative pb-2">
+                            <div class="flex justify-between mb-1">
+                                <span class="font-black text-yellow-700">體重證據 (目標 78kg)</span>
+                                <span id="weight-progress-text" class="font-mono text-yellow-600">0%</span>
+                            </div>
+                            <div class="w-full bg-yellow-100 rounded-full h-5 border-2 border-yellow-300 p-0.5 shadow-inner">
+                                <div id="weight-bar" class="progress-fill bg-gradient-to-r from-yellow-400 to-yellow-600 h-full rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- 基底核天數條 -->
+                        <div class="relative pb-2">
+                            <div class="flex justify-between mb-1">
+                                <span class="font-black text-blue-700">基底核自動化 (66天成習慣)</span>
+                                <span id="habit-progress-text" class="font-mono text-blue-600">0/66</span>
+                            </div>
+                            <div class="w-full bg-blue-100 rounded-full h-5 border-2 border-blue-300 p-0.5 shadow-inner">
+                                <div id="habit-bar" class="progress-fill bg-gradient-to-r from-blue-400 to-blue-600 h-full rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/80 p-4 rounded-2xl border-2 border-yellow-200 text-center">
+                            <p class="text-xs text-gray-400 mb-2 uppercase tracking-widest">每日神經元連結語</p>
+                            <p id="motivational-quote" class="font-black text-yellow-900 italic text-[0.55rem]">"每一次記錄，都在削弱舊的脂肪身份。"</p>
+                        </div>
+
+                        <!-- 排除閃亮物 -->
+                        <div class="p-4 bg-red-50 rounded-2xl border border-red-200">
+                            <p class="font-bold text-red-800 flex items-center"><i class="fas fa-shield-halved mr-2"></i> 閃亮物監獄 (Idea Jail)</p>
+                            <p class="text-[0.4rem] text-red-600 mt-1">「新的偏方？等 30 天後再審核。現在只執行這套系統。」</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 導航 -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t-4 border-yellow-400 flex justify-around p-2 pb-8 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+            <button onclick="navTo('input')" id="nav-input" class="flex flex-col items-center flex-1 py-2 text-gray-400">
+                <i class="fas fa-fingerprint text-2xl mb-1"></i>
+                <span>採集</span>
+            </button>
+            <button onclick="navTo('exercise')" id="nav-exercise" class="flex flex-col items-center flex-1 py-2 text-gray-400">
+                <i class="fas fa-microchip text-2xl mb-1"></i>
+                <span>寫入</span>
+            </button>
+            <button onclick="navTo('history')" id="nav-history" class="flex flex-col items-center flex-1 py-2 text-gray-400">
+                <i class="fas fa-folder-open text-2xl mb-1"></i>
+                <span>金庫</span>
+            </button>
+            <button onclick="navTo('goals')" id="nav-goals" class="flex flex-col items-center flex-1 py-2 text-gray-400">
+                <i class="fas fa-shield-heart text-2xl mb-1"></i>
+                <span>自動化</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- 下載按鈕 -->
+    <div class="fixed bottom-36 right-4 z-50">
+        <button onclick="downloadCode()" class="w-12 h-12 bg-yellow-600 text-white rounded-full shadow-2xl flex items-center justify-center opacity-70 hover:opacity-100 transition-all">
+            <i class="fas fa-cloud-download-alt"></i>
+        </button>
+    </div>
+
+    <script>
+        const CONFIG = {
+            height: 170.9,
+            targetWeight: 78.0,
+            initialWeight: 83.6,
+            habitCycle: 66,
+            storageKey: 'neuro_gold_v4_data'
+        };
+
+        let db = JSON.parse(localStorage.getItem(CONFIG.storageKey) || '[]');
+        let chartInstance = null;
+
+        // 5秒法則邏輯
+        function triggerFiveSecondRule() {
+            const overlay = document.getElementById('five-sec-overlay');
+            const display = document.getElementById('count-display');
+            overlay.style.display = 'flex';
+            let count = 5;
+            display.innerText = count;
+
+            const interval = setInterval(() => {
+                count--;
+                if(count > 0) {
+                    display.innerText = count;
+                } else {
+                    clearInterval(interval);
+                    overlay.style.display = 'none';
+                    renderMsg("系統 1 已攔截！現在去做該做的事！🚀", "success");
+                }
+            }, 1000);
+        }
+
+        function setSystem2(state) {
+            document.getElementById('system2-state').value = state;
+            document.querySelectorAll('.sys2-btn').forEach(b => {
+                b.classList.remove('bg-yellow-400', 'text-white');
+                if(b.innerText.includes(state)) b.classList.add('bg-yellow-400', 'text-white');
+            });
+        }
+
+        function navTo(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`page-${page}`).classList.add('active');
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-nav', 'text-gray-400'));
+            document.getElementById(`nav-${page}`).classList.add('active-nav');
+
+            if(page === 'history') refreshHistory();
+            if(page === 'goals') refreshGoals();
+            if(page === 'exercise') setTimeout(initChart, 100);
+        }
+
+        function handleSave() {
+            const weight = parseFloat(document.getElementById('weight').value);
+            const sbp = parseInt(document.getElementById('sbp').value);
+            const dbp = parseInt(document.getElementById('dbp').value);
+            const water = parseInt(document.getElementById('water-input').value) || 0;
+            const sys2 = document.getElementById('system2-state').value;
+            const date = new Date().toLocaleDateString('zh-TW');
+
+            if(!weight || !sbp || !dbp) {
+                renderMsg("大腦需要數據來更新證據庫 😺", "error");
+                return;
+            }
+
+            const bmi = (weight / Math.pow(CONFIG.height/100, 2)).toFixed(1);
+            saveData({ date, weight, sbp, dbp, water, sys2, bmi });
+            
+            triggerConfetti(['#ffd700', '#daa520']);
+            renderMsg("證據已累積！系統 2 控制權 +10", "success");
+            updateQuickStats();
+        }
+
+        function handleSaveExercise() {
+            const run = parseInt(document.getElementById('run-min').value) || 0;
+            const jump = parseInt(document.getElementById('jump-min').value) || 0;
+            const date = new Date().toLocaleDateString('zh-TW');
+
+            if(run === 0 && jump === 0) {
+                renderMsg("即使是 1 分鐘也是重要證據唷 😺", "error");
+                return;
+            }
+
+            saveData({ date, run, jump });
+            triggerConfetti(['#10b981', '#34d399']);
+            renderMsg("神經元連結強化中...🔥", "success");
+            updateQuickStats();
+            initChart();
+        }
+
+        function saveData(newData) {
+            let index = db.findIndex(d => d.date === newData.date);
+            if(index > -1) {
+                db[index] = { ...db[index], ...newData, timestamp: Date.now() };
+            } else {
+                db.unshift({ ...newData, timestamp: Date.now(), weight: 0, sbp:0, dbp:0, water:0, run:0, jump:0, sys2: '未掃描' });
+            }
+            localStorage.setItem(CONFIG.storageKey, JSON.stringify(db));
+        }
+
+        function updateQuickStats() {
+            if(db.length === 0) return;
+            const latest = db[0];
+            document.getElementById('stat-w').innerText = (latest.weight || '--') + 'k';
+            document.getElementById('stat-dbp').innerText = latest.dbp || '--';
+            document.getElementById('stat-exercise').innerText = ((latest.run || 0) + (latest.jump || 0)) + 'm';
+            document.getElementById('stat-days').innerText = db.length;
+        }
+
+        function refreshHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = db.length === 0 ? '<p class="text-center text-gray-400 py-20">暫無證據...</p>' : '';
+            
+            db.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-2xl border-2 border-yellow-200 shadow-sm relative';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[0.4rem] font-bold text-gray-300 tracking-widest">${item.date}</p>
+                            <div class="flex items-center space-x-2 my-1">
+                                <span class="text-lg font-black text-yellow-700">${item.weight || '--'}kg</span>
+                                <span class="evidence-badge">${item.sys2}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                                <span class="text-[0.45rem] text-pink-500 font-bold">BP: ${item.sbp || '--'}/${item.dbp || '--'}</span>
+                                <span class="text-[0.45rem] text-blue-500 font-bold">W: ${item.water || 0}ml</span>
+                                <span class="text-[0.45rem] text-green-600 font-bold">🏃: ${item.run || 0}m</span>
+                                <span class="text-[0.45rem] text-orange-600 font-bold">🦘: ${item.jump || 0}m</span>
+                            </div>
+                        </div>
+                        <button onclick="deleteData(${index})" class="text-gray-200 hover:text-red-400"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function initChart() {
+            const canvas = document.getElementById('exerciseChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const data = [...db].reverse().slice(-7);
+            
+            const labels = data.map(d => d.date.split('/')[2] || d.date);
+            const runData = data.map(d => d.run || 0);
+            const jumpData = data.map(d => d.jump || 0);
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: '跑步', data: runData, backgroundColor: '#10b981', borderRadius: 5 },
+                        { label: '跳動', data: jumpData, backgroundColor: '#f97316', borderRadius: 5 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { font: { size: 8 } } } },
+                    scales: { 
+                        y: { beginAtZero: true, ticks: { font: { size: 8 } } },
+                        x: { ticks: { font: { size: 8 } } }
+                    }
+                }
+            });
+        }
+
+        function refreshGoals() {
+            if(db.length === 0) return;
+            const latest = db[0];
+
+            // 體重進度
+            const weightP = Math.min(Math.max(((CONFIG.initialWeight - latest.weight) / (CONFIG.initialWeight - CONFIG.targetWeight)) * 100, 0), 100);
+            document.getElementById('weight-bar').style.width = weightP + '%';
+            document.getElementById('weight-progress-text').innerText = Math.round(weightP) + '%';
+            
+            // 習慣進度 (基底核天數)
+            const habitP = Math.min((db.length / CONFIG.habitCycle) * 100, 100);
+            document.getElementById('habit-bar').style.width = habitP + '%';
+            document.getElementById('habit-progress-text').innerText = `${db.length}/${CONFIG.habitCycle} 天`;
+
+            const quotes = [
+                "「這是我做的，這證明我是一個自律的人。」",
+                "「虧損厭惡是本能，理性記錄是神聖。」",
+                "「微行動大於意志力，今天你贏了基底核。」",
+                "「舊身份正在崩解，78kg 的新身份正在成型。」",
+                "「倒數 5-4-3-2-1，行動就是對抗恐懼的解藥。」"
+            ];
+            document.getElementById('motivational-quote').innerText = quotes[Math.floor(Math.random()*quotes.length)];
+        }
+
+        function deleteData(index) {
+            Swal.fire({ title: '刪除這份證據？', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444' }).then(r => {
+                if(r.isConfirmed) { db.splice(index, 1); localStorage.setItem(CONFIG.storageKey, JSON.stringify(db)); refreshHistory(); updateQuickStats(); }
+            });
+        }
+
+        function renderMsg(msg, icon) {
+            Swal.fire({ text: msg, icon: icon, toast: true, position: 'top', showConfirmButton: false, timer: 2000, background: '#fff9e6' });
+        }
+
+        function triggerConfetti(colors) {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.8 }, colors: colors });
+        }
+
+        function downloadCSV() {
+            if(db.length === 0) return;
+            let csv = "\ufeff日期,體重,收縮壓,舒張壓,飲水,跑步,跳動,系統2狀態\n";
+            db.forEach(d => csv += `${d.date},${d.weight},${d.sbp},${d.dbp},${d.water},${d.run},${d.jump},${d.sys2}\n`);
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `神經健康報告_${new Date().toLocaleDateString()}.csv`;
+            a.click();
+        }
+
+        function downloadCode() {
+            const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'neuro_health_system.html';
+            a.click();
+        }
+
+        window.onload = () => { navTo('input'); updateQuickStats(); };
+    </script>
+</body>
+</html>
