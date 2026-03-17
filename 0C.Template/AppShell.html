@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>App Shell Template</title>
+    
+    <!-- 1. External Styles & Core JS -->
+    <link rel="stylesheet" href="../00CSS/global.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    
+    <!-- Firebase (Compat version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
+    <!-- Project Core Utility -->
+    <script src="../0B.JS/core.js"></script>
+</head>
+<body>
+    <!-- Standard Tab Navigation -->
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab('mainTab')">
+            <i class="fas fa-home"></i> MAIN
+        </button>
+        <button class="tab-btn" onclick="switchTab('historyTab')">
+            <i class="fas fa-history"></i> LOGS
+        </button>
+        <button class="tab-btn" onclick="switchTab('settingTab')">
+            <i class="fas fa-cog"></i> SETS
+        </button>
+    </div>
+
+    <!-- Main Content Section -->
+    <div id="mainTab" class="content-section active">
+        <div class="card">
+            <h2><i class="fas fa-star"></i> Welcome</h2>
+            <p>This is your standard template. Edit content here.</p>
+            <button class="btn-gold" onclick="APP_CORE.showToast('Hello World!')">
+                <i class="fas fa-info-circle"></i> TEST TOAST
+            </button>
+        </div>
+    </div>
+
+    <!-- History Section -->
+    <div id="historyTab" class="content-section">
+        <div class="card">
+            <h2><i class="fas fa-history"></i> Logs</h2>
+            <div id="logList">No data found.</div>
+        </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div id="settingTab" class="content-section">
+        <div class="card">
+            <h2><i class="fas fa-cog"></i> Management</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn-gold" onclick="APP_CORE.downloadSelf('MyNewApp.html')">
+                    <i class="fas fa-download"></i> SOURCE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Page-Specific Logic
+         */
+        window.addEventListener('tabChanged', (e) => {
+            console.log("Tab changed to:", e.detail.tabId);
+            if(e.detail.tabId === 'historyTab') {
+                // Refresh log list here
+            }
+        });
+    </script>
+</body>
+</html>
