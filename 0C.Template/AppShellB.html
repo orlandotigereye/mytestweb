@@ -1,0 +1,614 @@
+<!--
+{
+    "AppID": "AppShellB",
+    "Version": "1.0.0",
+    "LastModified": "2026-03-17",
+    "Dependencies": ["font-awesome", "d3.js", "astronomy-engine", "firebase-compat"]
+}
+-->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Royal Gold App Shell Template B</title>
+    
+    <!-- External CSS for Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- External JS Libraries (Add as needed by specific apps) -->
+    <!-- <script src="https://d3js.org/d3.v7.min.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script> -->
+    
+    <!-- Firebase SDKs - Compat versions (Add as needed by specific apps) -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script> -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script> -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script> -->
+
+    <style>
+        /* Inlined global.css content */
+        /*
+   Global Theme: Royal Gold Universal v2
+   Path: /public/00css/global.css
+*/
+
+:root {
+    /* Colors */
+    --primary-color: #2c3e50;
+    --accent-color: #FFD700;
+    --accent-dark: #B8860B;
+    --accent-light: #FFFACD;
+    --bg-gradient: radial-gradient(circle, #fdf5e6 0%, #ffd700 100%);        
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --text-color: #5d4037;
+    --muted-color: #7f8c8d;
+    --success-color: #27ae60;
+
+    /* Design Tokens (Spacing & Radius) */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 20px;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+
+    /* Fonts */
+    --base-font-size: 13px;
+    --main-font: 'Segoe UI', 'Noto Sans TC', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }      
+
+body {
+    font-family: var(--main-font);
+    font-size: var(--base-font-size);
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    color: var(--text-color);
+    margin: 0; padding: 0;
+    overflow-x: hidden;
+    line-height: 1.5;
+}
+
+/* App Shell Components */
+.tabs-container {
+    display: flex; background: var(--accent-dark);
+    position: sticky; top: 0; z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.tab-btn {
+    flex: 1; padding: var(--space-md); border: none; background: transparent;
+    color: rgba(255,255,255,0.8); font-size: 11px; font-weight: bold;        
+    cursor: pointer; transition: 0.3s; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;    
+}
+
+.tab-btn.active {
+    color: #fff; background: rgba(255,255,255,0.15);
+    border-bottom: 3px solid #fff;
+}
+
+.content-section { display: none; padding: var(--space-md); animation: fadeIn 0.4s ease; }
+.content-section.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Shared Layouts */
+.card {
+    background: var(--card-bg);
+    border: 2px solid var(--accent-dark);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    box-shadow: 0 4px 15px rgba(184, 134, 11, 0.2);
+    margin-bottom: var(--space-md);
+}
+
+.card h2 {
+    margin-top: 0; font-size: 15px; color: var(--accent-dark);
+    border-bottom: 1px solid var(--accent-dark);
+    padding-bottom: var(--space-xs); margin-bottom: var(--space-md);
+}
+
+/* UI Elements */
+.btn-gold {
+    background: linear-gradient(to bottom, var(--accent-color), var(--accent-dark));
+    color: #fff; border: 1px solid #8b4513;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    font-size: 11px; font-weight: bold; cursor: pointer;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-gold:active { transform: scale(0.95); opacity: 0.9; }
+
+textarea, input {
+    width: 100%; padding: var(--space-sm); border: 1px solid #ddd;
+    border-radius: var(--radius-sm); font-size: 14px; background: #fffdf0;   
+}
+
+/* Standard Helpers */
+.toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);   
+    background: rgba(44, 62, 80, 0.95); color: white; padding: 10px 20px;    
+    border-radius: 25px; z-index: 3000; font-size: 12px; display: none;      
+}
+
+.spinner-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255,255,255,0.7); display: none;
+    flex-direction: column; align-items: center; justify-content: center; z-index: 4000;
+}
+
+.loader {
+    border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-dark);     
+    border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Specific styles from RichLiveN.html for global UI elements */
+        h1 { text-align: center; text-shadow: 1px 1px 0px rgba(255,255,255,0.8); margin: 5px 0; }
+        
+        .btn-celebrate { background: #ff6f00; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+
+        .log-entry {
+            border-left: 4px solid var(--accent-dark); padding: var(--space-sm);
+            margin-bottom: var(--space-sm); background: rgba(255, 255, 255, 0.9);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        }
+        .identity-badge { 
+            display: inline-block; padding: 2px 6px; 
+            background: var(--accent-color); border-radius: 10px; 
+            font-weight: bold; margin-bottom: 5px;
+        }
+
+        .astro-badge {
+            font-size: 0.45rem; background: var(--text-color); color: var(--accent-color);
+            padding: 2px 5px; border-radius: 4px; margin-bottom: 5px; display: inline-block;
+        }
+
+        #msg-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(255, 255, 255, 0.95); padding: var(--space-sm);
+            text-align: center; border-top: 1px solid var(--accent-dark);
+            font-weight: bold; z-index: 10001;
+        }
+        #cool-down-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 20000;
+            flex-direction: column; justify-content: center; align-items: center; color: var(--accent-color);
+        }
+        .timer-circle {
+            width: 80px; height: 80px; border: 4px solid var(--accent-color); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
+        }
+
+        .check-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-sm); }
+        label { display: flex; align-items: center; background: rgba(255,255,255,0.5); padding: var(--space-sm); border-radius: 4px; }
+        input[type="checkbox"] { margin-right: var(--space-sm); }
+
+        /* Compound Graph Container */
+        #compound-viz { width: 100%; height: 100px; background: white; border-radius: 4px; margin-top: var(--space-md); }
+
+        /* Styles for Idea Jail Input */
+        #ideaJailInput {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid var(--accent-dark);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 20002;
+            width: 90%;
+            max-width: 300px;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #ideaJailInput input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: var(--base-font-size); /* Use global font size */
+        }
+        #ideaJailInput .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        #ideaJailInput .btn-group button {
+            flex: 1;
+        }
+
+        /* Styles for logList (page-specific display) */
+        #log-container {
+            margin-top: var(--space-md);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #serverLogList { /* New style for server log list */
+            margin-top: var(--space-md);
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            background: #f9f9f9;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: #555;
+        }
+        #serverLogList p {
+            margin: 3px 0;
+            padding-bottom: 3px;
+            border-bottom: 1px dotted #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <h1>[APP_TITLE_PLACEHOLDER]</h1>
+
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="APP_CORE.switchTab('mainTab')">
+                <i class="fas fa-home"></i> 首頁
+            </button>
+            <button class="tab-btn" onclick="APP_CORE.switchTab('brainTab')">
+                <i class="fas fa-brain"></i> 心情自查
+            </button>
+            <button class="tab-btn" onclick="APP_CORE.switchTab('marketTab')">
+                <i class="fas fa-chart-line"></i> 投資環境
+            </button>
+            <button class="tab-btn" onclick="APP_CORE.switchTab('habitsTab')">
+                <i class="fas fa-seedling"></i> 累積好習慣
+            </button>
+            <button class="tab-btn" onclick="APP_CORE.switchTab('historyTab')">
+                <i class="fas fa-book"></i> 我的存摺
+            </button>
+            <button class="tab-btn" onclick="APP_CORE.switchTab('serverLogTab')">
+                <i class="fas fa-server"></i> 伺服器訊息
+            </button>
+            <button class="tab-btn" onclick="APP_CORE.switchTab('settingTab')">
+                <i class="fas fa-cog"></i> 設定
+            </button>
+        </div>
+
+        <!-- Main Tab -->
+        <div id="mainTab" class="content-section active">
+            <div class="card">
+                <h2><i class="fas fa-star"></i> 歡迎</h2>
+                <p>這是您的應用程式主頁。請在此處添加您的內容。</p>
+            </div>
+        </div>
+
+        <!-- 頁面: 心情與星象自查 -->
+        <div id="brainTab" class="content-section">
+            <div class="card">
+                <h2>心情自查</h2>
+                <p>心情自查內容佔位符。</p>
+            </div>
+        </div>
+
+        <!-- 頁面: 投資環境與風向分析 -->
+        <div id="marketTab" class="content-section">
+            <div class="card">
+                <h2>投資環境</h2>
+                <p>投資環境內容佔位符。</p>
+            </div>
+        </div>
+
+        <!-- 頁面: 累積好習慣與複利視覺化 -->
+        <div id="habitsTab" class="content-section">
+            <div class="card">
+                <h2>累積好習慣</h2>
+                <p>累積好習慣內容佔位符。</p>
+            </div>
+        </div>
+
+        <!-- 頁面: 我的存摺 (歷史回顧) -->
+        <div id="historyTab" class="content-section">
+            <div class="card">
+                <h2>我的存摺</h2>
+                <p>我的存摺內容佔位符。</p>
+                <div id="log-container"></div>
+            </div>
+        </div>
+
+        <!-- 頁面: 伺服器訊息 -->
+        <div id="serverLogTab" class="content-section">
+            <div class="card">
+                <h2><i class="fas fa-server"></i> 伺服器訊息</h2>
+                <div id="serverLogList">
+                    <p>等待伺服器訊息...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 頁面: 設定 -->
+        <div id="settingTab" class="content-section">
+            <div class="card">
+                <h2><i class="fas fa-cog"></i> 管理</h2>
+                <p>設定內容佔位符。</p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button class="btn-gold" onclick="APP_CORE.downloadSelf('AppShellB.html')">
+                        <i class="fas fa-download"></i> 備份程式碼
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="msg-bar">系統待命：等待您的微小行動累積。</div>
+
+    <!-- 5秒法則遮罩 -->
+    <div id="cool-down-overlay">
+        <div class="timer-circle" id="timer-val">5</div>
+        <div style="margin-top:var(--space-lg); text-align:center; padding: 20px;">
+            <h2 style="color:var(--accent-color);">🧘‍♂️ 理智重新連線中...</h2>
+            <p>深呼吸... 暫停所有的自動反應。<br>讓衝動消散，讓智慧回歸。</p>
+        </div>
+    </div>
+
+    <!-- Idea Jail Input UI -->
+    <div id="ideaJailInput">
+        <h2>🔒 新想法關牢籠</h2>
+        <input type="text" id="ideaJailText" placeholder="輸入新的衝動想法..." style="width:100%;">
+        <div class="btn-group">
+            <button class="btn-gold" onclick="confirmIdeaJail()">確定</button>
+            <button class="btn-gold" onclick="cancelIdeaJail()" style="background:#666;">取消</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // --- Fixed Data (Placeholders for specific app configuration) ---
+        var __firebase_config = '{}'; // Placeholder: Will be replaced by app-specific config
+        var __app_id = 'app-shell-b'; // Placeholder: Will be replaced by app-specific ID
+        var __initial_auth_token; // Optional: If you have an initial auth token
+
+        var user = null; // Global user object for Firebase Auth state
+        var logs = []; // Placeholder for app-specific logs, load with APP_CORE.getLocal
+
+        // Global Firebase instances (compat versions), initialized by APP_CORE
+        var db = null;
+        var auth = null;
+
+        // --- Core JS Library - Inlined ---
+        /**
+         * Core JS Library - Project Universal Logic
+         * Path: /public/01js/core.js
+         * V2.1.2 - Enhanced Global Availability & Local Compatibility
+         */
+
+        var APP_CORE = {
+            version: "2.1.2",
+            // 1. Firebase Configuration (Centralized)
+            firebaseConfig: {}, // Will be set by __firebase_config in APP_CORE.init
+            db: null,
+            _initialized: false,
+
+            // 2. Initialization
+            init: function() {
+                if (this._initialized) return;
+                console.log("Core: Initializing v" + this.version);
+                
+                // Set firebaseConfig from global placeholder
+                try {
+                    this.firebaseConfig = JSON.parse(__firebase_config);
+                } catch (e) {
+                    this.handleError(e, "解析 Firebase 配置");
+                }
+
+
+                if (typeof firebase !== 'undefined' && this.firebaseConfig && Object.keys(this.firebaseConfig).length > 0) {
+                    try {
+                        // Initialize Firebase with compat versions
+                        firebase.initializeApp(this.firebaseConfig);
+                        auth = firebase.auth(); // Set global auth
+                        db = firebase.firestore(); // Set global db for Firestore
+                        console.log("Core: Firebase Initialized with Firestore");
+
+                        // Listen for auth state changes
+                        auth.onAuthStateChanged(function(currentUser) {
+                            user = currentUser; // Set global user
+                            if (user) {
+                                console.log("Firebase user logged in:", user.uid);
+                                // Placeholder for app-specific cloud listener
+                                if (typeof listenToCloud === 'function') listenToCloud();
+                            } else {
+                                console.log("No Firebase user logged in.");
+                                // Placeholder for app-specific auth init
+                                if (typeof initAuth === 'function') initAuth();
+                            }
+                        });
+
+                    } catch (e) { 
+                        console.error("Core: Firebase Init Error", e);
+                        APP_CORE.handleError(e, "Firebase 初始化失敗"); // Unified error handling
+                    }   
+                } else if (typeof firebase !== 'undefined') {
+                    console.warn("Core: Firebase not initialized. No config or firebase not available.");
+                }
+                
+                this.switchTab('mainTab'); // Default to mainTab
+                this._initialized = true;
+                
+                // Notify any listeners that core is ready
+                window.dispatchEvent(new CustomEvent('coreReady', { detail: { core: this } }));
+            },
+
+            // 3. UI Components (No Alerts)
+            showToast: function(msg, duration) {
+                duration = duration || 3000;
+                var t = document.getElementById('toast');
+                if (!t) {
+                    // Create toast element if it doesn't exist
+                    t = document.createElement('div');
+                    t.id = 'toast';
+                    t.className = 'toast';
+                    document.body.appendChild(t);
+                }
+                t.textContent = msg;
+                t.style.display = 'block';
+                t.style.opacity = '1'; // Ensure it's visible
+                setTimeout(function() {
+                    if(t) { // Check if element still exists
+                        t.style.opacity = '0'; // Fade out
+                        t.addEventListener('transitionend', function handler() {
+                            t.style.display = 'none'; // Hide after fade
+                            t.removeEventListener('transitionend', handler);
+                        });
+                    }
+                }, duration);
+            },
+
+            toggleSpinner: function(show) {
+                var s = document.getElementById('spinner');
+                if (!s) {
+                    s = document.createElement('div');
+                    s.id = 'spinner';
+                    s.className = 'spinner-overlay';
+                    s.innerHTML = '<div class="loader"></div><p id="spinner-text" style="margin-top:10px; font-weight:bold; color:var(--accent-dark);">Processing...</p>';
+                    document.body.appendChild(s);
+                }
+                if(typeof show === 'string') {
+                    var spinnerText = document.getElementById('spinner-text');
+                    if (spinnerText) spinnerText.textContent = show;
+                }
+                s.style.display = show ? 'flex' : 'none';
+            },
+
+            // 4. Tab System
+            switchTab: function(tabId) { // Handles tab switching logic
+                var i; // Declare i for loop
+                var contentSections = document.querySelectorAll('.content-section');
+                for (i = 0; i < contentSections.length; i++) {
+                    contentSections[i].classList.remove('active');
+                }
+
+                var tabButtons = document.querySelectorAll('.tab-btn');
+                for (i = 0; i < tabButtons.length; i++) {
+                    tabButtons[i].classList.remove('active');
+                }
+
+                var targetContent = document.getElementById(tabId);
+                // Use a more robust way to find the button, matching the onclick attribute directly
+                var targetBtn = document.querySelector('[onclick*="APP_CORE.switchTab(\x27' + tabId + '\x27)"]'); 
+                
+                if (targetContent) targetContent.classList.add('active');        
+                if (targetBtn) targetBtn.classList.add('active');
+
+                // Custom event for page-specific tab logic
+                window.dispatchEvent(new CustomEvent('tabChanged', { detail: { tabId: tabId } }));
+            },
+
+            // 5. Data Helpers
+            getLocal: function(key) { 
+                try {
+                    var data = localStorage.getItem(key);
+                    return data ? JSON.parse(data) : null; 
+                } catch (e) {
+                    APP_CORE.handleError(e, "讀取 localStorage ('" + key + "')");
+                    return null;
+                }
+            }, 
+            saveLocal: function(key, data) { 
+                try {
+                    localStorage.setItem(key, JSON.stringify(data)); 
+                } catch (e) {
+                    APP_CORE.handleError(e, "儲存 localStorage ('" + key + "')");
+                }
+            },
+
+            // 6. Source Download
+            downloadSelf: function(filename) {
+                var content = document.documentElement.outerHTML;
+                // Get metadata from the top of the HTML file
+                var metadataMatch = content.match(/<!--([\s\S]*?)-->/);
+                var metadata = '';
+                if (metadataMatch && metadataMatch[1]) {
+                    metadata = '<!--' + metadataMatch[1] + '-->\x0A';
+                }
+
+                var blob = new Blob([metadata + content], { type: 'text/html' });
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename || 'source.html';
+                a.click();
+            },
+
+            // 7. Error Handling (Unified)
+            handleError: function(err, context) {
+                console.error("Error in " + context + ":", err);
+                var logPanel = document.getElementById('serverLogList'); // Default to serverLogList
+                if (!logPanel) { // Fallback to console if serverLogList is not available
+                    console.error("Error: serverLogList element not found for logging.");
+                } else {
+                    var errorMsg = (err && err.message) ? err.message : err;
+                    logPanel.innerHTML += '<p style="color:red;">[' + (new Date()).toLocaleTimeString() + '] Error in ' + context + ': ' + errorMsg + '</p>';
+                    logPanel.scrollTop = logPanel.scrollHeight; // Scroll to bottom
+                }
+                APP_CORE.showToast('發生錯誤: ' + context + ' - ' + ((err && err.message) ? err.message : err), 5000);
+            }
+        };
+        // Ensure APP_CORE is globally available
+        window.APP_CORE = APP_CORE;
+
+        // --- Global ES5 Functions (Placeholders for app-specific logic) ---
+        // These functions will be defined by specific applications that use this App Shell
+        // They are included here as empty placeholders to avoid 'undefined' errors
+        // during initial load or if an app doesn't implement all of them.
+
+        function updateStatus(m) {
+            var el = document.getElementById('msg-bar');
+            if (el) el.innerText = m;
+        }
+
+        function analyzeBrain() { APP_CORE.showToast("此分頁功能尚未實作。", 2000); }
+        function start5SecondRule() { APP_CORE.showToast("此分頁功能尚未實作。", 2000); }
+        function updateAstroInfo() { /* No default action for template */ }
+        function calculateSentiment() { APP_CORE.showToast("此分頁功能尚未實作。", 2000); }
+        function executeHabit() { APP_CORE.showToast("此分頁功能尚未實作。", 2000); }
+        function drawCompoundGraph() { /* No default action for template */ }
+        function calculateStreak() { return 0; }
+        function saveLog(entry) { APP_CORE.showToast("日誌功能尚未實作。", 2000); }
+        function renderLogs() { 
+            var container = document.getElementById('log-container');
+            if (container) container.innerHTML = '<div style="text-align:center; padding:10px;">日誌功能尚未實作...</div>';
+        }
+        function triggerIdeaJail() { APP_CORE.showToast("此分頁功能尚未實作。", 2000); }
+        function confirmIdeaJail() { APP_CORE.showToast("此分頁功能尚未實作。", 2000); }
+        function cancelIdeaJail() { APP_CORE.showToast("此分頁功能尚未實作。", 2000); }
+        function showDisasterPlan() { APP_CORE.showToast("此分頁功能尚未實作。", 2000); }
+        function celebrate(label) { /* No default action for template */ }
+        function listenToCloud() { /* No default action for template */ }
+        function initAuth() { /* No default action for template */ }
+
+        // Call APP_CORE.init() when the window is loaded
+        window.addEventListener('load', function() {
+            APP_CORE.init();
+            // Initial data load for tabs that don't auto-refresh on tab change
+            // These will be called if the functions are defined by the app
+            if (typeof updateAstroInfo === 'function') updateAstroInfo();
+            if (typeof drawCompoundGraph === 'function') drawCompoundGraph();
+            if (typeof renderLogs === 'function') renderLogs();
+        });
+
+        // Event listener for tab changes
+        window.addEventListener('tabChanged', function(e) {
+            if (e.detail.tabId === 'brainTab') {
+                if (typeof updateAstroInfo === 'function') updateAstroInfo();
+            } else if (e.detail.tabId === 'habitsTab') {
+                if (typeof drawCompoundGraph === 'function') drawCompoundGraph();
+            } else if (e.detail.tabId === 'historyTab') {
+                if (typeof renderLogs === 'function') renderLogs();
+            }
+        });
+    </script>
+</body>
+</html>
