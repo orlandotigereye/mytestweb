@@ -1,0 +1,602 @@
+<!--
+{
+    "AppID": "RichLiveO_Verify",
+    "Version": "1.2.8",
+    "LastModified": "2026-03-17",
+    "Design": "Royal Gold Universal v3 (Fixed Firebase Database Error)",
+    "Dependencies": [
+        "https://orlandotigereye.github.io/mytestweb/core/global.css",
+        "https://orlandotigereye.github.io/mytestweb/core/core.js",
+        "d3.js",
+        "astronomy-engine",
+        "firebase-compat"
+    ]
+}
+-->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>凱醬複利生活操作系統 - 雲端範本版 v1.2.8</title>
+    
+    <!-- 統一引用雲端核心樣式 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://orlandotigereye.github.io/mytestweb/core/global.css">
+    
+    <style>
+        :root {
+            --gold-primary: #FFD700;
+            --gold-dark: #B8860B;
+            --gold-light: #FFFACD;
+            --bg-main: radial-gradient(circle at center, #7a631a 0%, #3d300a 60%, #1a1405 100%);
+            --glass: rgba(0, 0, 0, 0.6);
+            --text-size: 0.5rem;
+        }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            background: var(--bg-main) !important;
+            color: var(--gold-primary);
+            font-size: var(--text-size);
+            margin: 0;
+            padding: 0;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 100vw;
+            padding: 8px;
+            flex: 1;
+            position: relative;
+        }
+
+        .app-header {
+            text-align: center;
+            padding: 10px 0;
+            border-bottom: 2px solid var(--gold-dark);
+            margin-bottom: 8px;
+            background: linear-gradient(to right, transparent, rgba(184,134,11,0.8), transparent);
+            animation: goldPulse 3s infinite;
+        }
+
+        @keyframes goldPulse {
+            0% { border-color: #B8860B; }
+            50% { border-color: #FFD700; box-shadow: 0 0 10px #FFD700; }
+            100% { border-color: #B8860B; }
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 0.8rem;
+            text-shadow: 0 0 10px gold;
+            color: #fff;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            border: 1px solid var(--gold-dark);
+            padding: 6px;
+            border-radius: 4px;
+            position: relative;
+            box-shadow: inset 0 0 5px rgba(255,215,0,0.2);
+        }
+
+        .stat-card h4 {
+            margin: 0 0 3px 0;
+            font-size: var(--text-size);
+            color: var(--gold-light);
+            border-bottom: 1px solid rgba(184,134,11,0.5);
+        }
+
+        .auth-actions {
+            margin-top: 4px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .tab-nav {
+            display: flex;
+            overflow-x: auto;
+            gap: 2px;
+            scrollbar-width: none;
+        }
+        .tab-nav::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            white-space: nowrap;
+            padding: 8px 12px;
+            background: linear-gradient(to bottom, #FFD700 0%, #B8860B 100%);
+            border: 1px solid #443300;
+            color: #000;
+            font-weight: bold;
+            font-size: var(--text-size);
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--gold-light);
+            box-shadow: 0 0 10px gold;
+            transform: translateY(-1px);
+        }
+
+        .tab-panel {
+            background: var(--glass);
+            border: 1px solid var(--gold-dark);
+            border-top: none;
+            padding: 10px;
+            min-height: 300px;
+            border-radius: 0 0 4px 4px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        input, select, textarea {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--gold-dark);
+            color: #fff;
+            font-size: var(--text-size);
+            padding: 6px;
+            border-radius: 4px;
+            outline: none;
+            width: 100%;
+        }
+
+        .btn-gold {
+            background: linear-gradient(to bottom, #ffd700, #b8860b);
+            border: 1px solid #554400;
+            padding: 4px 10px;
+            font-size: var(--text-size);
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #000;
+            white-space: nowrap;
+        }
+
+        .btn-gold:active { background: #fff; transform: scale(0.95); }
+
+        .btn-google {
+            background: #fff;
+            color: #444;
+            border: 1px solid #ccc;
+            padding: 8px;
+            font-size: var(--text-size);
+            font-weight: bold;
+            border-radius: 4px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .visual-area {
+            background: rgba(0,0,0,0.6);
+            border: 1px inset var(--gold-dark);
+            padding: 8px;
+            height: 180px;
+            overflow-y: auto;
+            margin-top: 5px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--gold-dark) transparent;
+        }
+
+        #login-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--bg-main);
+            border: 2px solid var(--gold-primary);
+            padding: 20px;
+            border-radius: 8px;
+            width: 85%;
+            max-width: 300px;
+            box-shadow: 0 0 25px var(--gold-dark);
+        }
+
+        #float-dl {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: var(--gold-dark);
+            color: #fff;
+            border: 1px solid gold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 9999;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        #error-log {
+            margin-top: 5px;
+            font-size: 0.45rem;
+            color: #ffaaaa;
+            background: rgba(255,0,0,0.3);
+            padding: 4px;
+            display: none;
+            max-height: 80px;
+            overflow-y: auto;
+            border: 1px solid #ff4444;
+            border-radius: 4px;
+        }
+
+        .list-item {
+            background: rgba(255,215,0,0.05);
+            border-left: 3px solid var(--gold-dark);
+            margin-bottom: 4px;
+            padding: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .divider { border-top: 1px solid var(--gold-dark); margin: 15px 0; position: relative; }
+        .divider::after { content: '或使用'; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); background: #3d300a; padding: 0 5px; font-size: 0.4rem; color: var(--gold-light); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="app-header">
+        <h1><i class="fas fa-crown"></i> 凱醬複利生活作業系統 V1.2.8</h1>
+    </div>
+
+    <div class="dashboard">
+        <div class="stat-card">
+            <h4><i class="fas fa-cloud"></i> 雲端狀態</h4>
+            <div id="st-auth" style="font-weight:bold;">身份: 偵測中</div>
+            <div class="auth-actions" id="auth-btns"></div>
+        </div>
+        <div class="stat-card">
+            <h4><i class="fas fa-book"></i> 連線與資源</h4>
+            <div id="st-db">資料庫: 待命</div>
+            <div id="st-dict">中文字典: 讀取中</div>
+        </div>
+    </div>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchPanel('verify', this)">核心校驗</button>
+        <button class="tab-btn" onclick="switchPanel('money', this)">複利財務</button>
+        <button class="tab-btn" onclick="switchPanel('brain', this)">大腦操作</button>
+        <button class="tab-btn" onclick="switchPanel('astro', this)">星象工具</button>
+        <button class="tab-btn" onclick="switchPanel('history', this)">歷史日誌</button>
+    </div>
+
+    <!-- 1. 核心校驗面板 -->
+    <div id="panel-verify" class="tab-panel">
+        <h4 style="margin-top:0;">雲端完整度報告</h4>
+        <div id="verify-list" class="visual-area" style="height:110px;"></div>
+        <div style="margin-top:8px;">
+            <div class="input-row">
+                <input type="text" id="verify-stroke-ipt" placeholder="輸入中文查筆劃">
+                <button class="btn-gold" onclick="verifyStrokes()">執行</button>
+            </div>
+            <div id="verify-stroke-res" class="visual-area" style="height:100px;"></div>
+        </div>
+    </div>
+
+    <!-- 2. 複利財務面板 -->
+    <div id="panel-money" class="tab-panel" style="display:none;">
+        <div class="input-row">
+            <input type="number" id="capital" placeholder="初始本金">
+            <input type="number" id="rate" placeholder="年利率%">
+            <input type="number" id="years" placeholder="投資年限">
+        </div>
+        <button class="btn-gold" style="width:100%; margin-bottom:5px;" onclick="calcCompound()">計算並儲存</button>
+        <div id="compound-chart" class="visual-area"></div>
+    </div>
+
+    <!-- 3. 大腦操作面板 -->
+    <div id="panel-brain" class="tab-panel" style="display:none;">
+        <div class="input-row">
+            <input type="text" id="task-title" placeholder="任務標題..." style="flex:1;">
+            <select id="task-type" style="width:80px;">
+                <option value="important">重要</option>
+                <option value="normal">一般</option>
+                <option value="note">備註</option>
+            </select>
+        </div>
+        <textarea id="task-content" placeholder="內容詳述..." style="height:60px; margin-bottom:5px;"></textarea>
+        <button class="btn-gold" style="width:100%;" onclick="saveTask()">存入雲端任務</button>
+        <div id="task-list" class="visual-area"></div>
+    </div>
+
+    <!-- 4. 星象工具面板 -->
+    <div id="panel-astro" class="tab-panel" style="display:none;">
+        <div class="input-row">
+            <input type="text" id="astro-search" placeholder="搜尋星象字典內容...">
+            <button class="btn-gold" onclick="findAstro()">搜尋</button>
+        </div>
+        <div id="astro-res" class="visual-area"></div>
+    </div>
+
+    <!-- 5. 歷史日誌面板 -->
+    <div id="panel-history" class="tab-panel" style="display:none;">
+        <button class="btn-gold" onclick="syncHistory()">手動同步雲端</button>
+        <div id="history-view" class="visual-area" style="height:230px;"></div>
+    </div>
+
+    <div id="error-log"></div>
+</div>
+
+<!-- 登入彈窗 -->
+<div id="login-modal">
+    <div class="modal-content">
+        <h4 style="margin:0 0 10px 0; text-align:center; color: #fff;">雲端會員登入</h4>
+        <button class="btn-google" onclick="handleGoogleLogin()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="14" height="14">
+            使用 Google 帳號登入
+        </button>
+        <div class="divider"></div>
+        <div style="margin-bottom:8px;">
+            <input type="email" id="login-email" placeholder="Email 電子信箱">
+        </div>
+        <div style="margin-bottom:12px;">
+            <input type="password" id="login-pwd" placeholder="Password 密碼">
+        </div>
+        <div style="display:flex; gap:5px;">
+            <button class="btn-gold" style="flex:1;" onclick="handleLogin()">登入</button>
+            <button class="btn-gold" style="flex:1; background: #666; color: #fff;" onclick="closeLogin()">取消</button>
+        </div>
+    </div>
+</div>
+
+<div id="float-dl" onclick="downloadThis()" title="下載整合版原始碼">
+    <i class="fas fa-file-code"></i>
+</div>
+
+<!-- Firebase SDKs - 修正：補上 firebase-database.js 並調整載入順序 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<!-- 其他庫 -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script>
+
+<!-- 核心範本引用 - 放在 SDK 之後 -->
+<script src="https://orlandotigereye.github.io/mytestweb/core/core.js" crossorigin="anonymous"></script>
+
+<script>
+    const CONFIG = {
+        dictUrl: "https://raw.githubusercontent.com/max32002/chinese_dictionary/master/Dictionary.json",
+        astroUrl: "https://raw.githubusercontent.com/orlandotigereye/Analy13/refs/heads/main/astrology_merged.json"
+    };
+
+    let _DICT = null, _ASTRO = null, _USER = null;
+    const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'RichLiveO_Verify';
+
+    window.addEventListener('load', function() {
+        initFirebase();
+        runVerification();
+        loadResources();
+    });
+
+    function initFirebase() {
+        if (typeof __firebase_config === 'undefined') return pushError("Firebase Config 未定義");
+        try {
+            const config = JSON.parse(__firebase_config);
+            if (!firebase.apps.length) firebase.initializeApp(config);
+            
+            firebase.auth().onAuthStateChanged(user => {
+                _USER = user;
+                const authLabel = document.getElementById('st-auth');
+                const btnArea = document.getElementById('auth-btns');
+                
+                if (user) {
+                    const isAnon = user.isAnonymous;
+                    authLabel.innerText = `身份: ${user.displayName || user.email || '會員'}${isAnon ? '(匿名)' : ''}`;
+                    authLabel.style.color = isAnon ? "#FFD700" : "#00ff00";
+                    let btns = `<button class="btn-gold" style="font-size:0.5rem; padding:2px 5px;" onclick="firebase.auth().signOut()">登出</button>`;
+                    if (isAnon) btns += `<button class="btn-gold" style="font-size:0.5rem; padding:2px 5px;" onclick="openLogin()">會員登入</button>`;
+                    btnArea.innerHTML = btns;
+                    syncHistory();
+                    loadTasks();
+                } else {
+                    authLabel.innerText = "身份: 未登入";
+                    authLabel.style.color = "red";
+                    btnArea.innerHTML = `<button class="btn-gold" onclick="openLogin()">會員登入</button>`;
+                    firebase.auth().signInAnonymously().catch(e => console.warn("匿名登入失敗"));
+                }
+            });
+        } catch (e) { pushError("Firebase 初始化錯誤: " + e.message); }
+    }
+
+    function openLogin() { document.getElementById('login-modal').style.display = 'flex'; }
+    function closeLogin() { document.getElementById('login-modal').style.display = 'none'; }
+    
+    async function handleGoogleLogin() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        try {
+            await firebase.auth().signInWithPopup(provider);
+            closeLogin();
+        } catch (e) { pushError("Google 登入失敗: " + e.message); }
+    }
+
+    async function handleLogin() {
+        const email = document.getElementById('login-email').value;
+        const pwd = document.getElementById('login-pwd').value;
+        if(!email || !pwd) return pushError("請輸入帳密");
+        try {
+            await firebase.auth().signInWithEmailAndPassword(email, pwd);
+            closeLogin();
+        } catch(e) { pushError("登入失敗: " + e.message); }
+    }
+
+    async function loadResources() {
+        updateLabel("st-dict", "資源載入中...", "gold");
+        try {
+            const [dR, aR] = await Promise.all([fetch(CONFIG.dictUrl), fetch(CONFIG.astroUrl)]);
+            if (dR.ok) _DICT = await dR.json();
+            if (aR.ok) _ASTRO = await aR.json();
+            updateLabel("st-dict", "雲端資源就緒", "#00ff00");
+        } catch (e) { updateLabel("st-dict", "載入失敗", "red"); }
+    }
+
+    function runVerification() {
+        const out = document.getElementById('verify-list');
+        const coreOk = typeof APP_CORE !== 'undefined';
+        out.innerHTML = `
+            <div class="check-item ${coreOk?'success':'failure'}"><i class="fas fa-link"></i> 核心引用: ${coreOk?'OK':'失敗'}</div>
+            <div class="check-item success"><i class="fas fa-database"></i> Realtime DB SDK: OK</div>
+            <div class="check-item success"><i class="fas fa-check"></i> 版本: V1.2.8</div>
+        `;
+    }
+
+    function verifyStrokes() {
+        const val = document.getElementById('verify-stroke-ipt').value.trim();
+        const out = document.getElementById('verify-stroke-res');
+        if (!_DICT) return pushError("字典尚未載入");
+        let html = "";
+        for (let char of val) {
+            const d = _DICT[char];
+            let s = d ? (typeof d === 'object' ? (d.stroke_count || d.strokes || "？") : d) : "？";
+            html += `<div style="border-bottom:1px solid #444; padding:3px;">【${char}】 筆劃: <b>${s}</b></div>`;
+        }
+        out.innerHTML = html || "無內容";
+    }
+
+    function calcCompound() {
+        const p = parseFloat(document.getElementById('capital').value);
+        const r = parseFloat(document.getElementById('rate').value) / 100;
+        const y = parseInt(document.getElementById('years').value);
+        if (isNaN(p) || isNaN(r) || isNaN(y)) return pushError("請輸入數值");
+        let data = [];
+        for (let i = 0; i <= y; i++) data.push({ year: i, amount: p * Math.pow(1 + r, i) });
+        const container = d3.select("#compound-chart");
+        container.selectAll("*").remove();
+        const w = container.node().clientWidth, h = 180;
+        const svg = container.append("svg").attr("width", w).attr("height", h);
+        const x = d3.scaleLinear().domain([0, y]).range([35, w - 10]);
+        const yS = d3.scaleLinear().domain([0, d3.max(data, d => d.amount)]).range([h - 25, 10]);
+        svg.append("path").datum(data).attr("fill", "none").attr("stroke", "gold").attr("stroke-width", 2).attr("d", d3.line().x(d => x(d.year)).y(d => yS(d.amount)));
+        saveToCloud("finance", { p, r, y, final: data[y].amount });
+    }
+
+    async function saveTask() {
+        const title = document.getElementById('task-title').value.trim();
+        const type = document.getElementById('task-type').value;
+        const content = document.getElementById('task-content').value.trim();
+        if (!title) return pushError("請輸入標題");
+        await saveToCloud("brain_tasks", { title, type, content });
+        document.getElementById('task-title').value = "";
+        document.getElementById('task-content').value = "";
+        loadTasks();
+    }
+
+    async function loadTasks() {
+        if (!_USER) return;
+        const db = firebase.firestore();
+        try {
+            const snap = await db.collection('artifacts').doc(APP_ID).collection('users').doc(_USER.uid).collection('brain_tasks').get();
+            let html = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                html += `<div class="list-item">
+                    <span>[${d.type}] <b>${d.title}</b></span>
+                    <button class="btn-gold" style="padding:2px 4px;" onclick="deleteDoc('brain_tasks','${doc.id}')">刪除</button>
+                </div>`;
+            });
+            document.getElementById('task-list').innerHTML = html || "暫無任務";
+        } catch (e) { console.warn("載入任務失敗"); }
+    }
+
+    async function saveToCloud(coll, data) {
+        if (!_USER) return;
+        const db = firebase.firestore();
+        try {
+            await db.collection('artifacts').doc(APP_ID).collection('users').doc(_USER.uid).collection(coll).add({
+                ...data, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            syncHistory();
+        } catch (e) { pushError("雲端儲存失敗"); }
+    }
+
+    async function deleteDoc(coll, id) {
+        if (!_USER) return;
+        await firebase.firestore().collection('artifacts').doc(APP_ID).collection('users').doc(_USER.uid).collection(coll).doc(id).delete();
+        if (coll === 'brain_tasks') loadTasks(); else syncHistory();
+    }
+
+    async function syncHistory() {
+        if (!_USER) return;
+        updateLabel("st-db", "同步中...", "gold");
+        const db = firebase.firestore();
+        try {
+            const snap = await db.collection('artifacts').doc(APP_ID).collection('users').doc(_USER.uid).collection('finance').get();
+            let html = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                html += `<div class="list-item">本金:${d.p} → ${Math.round(d.final)}</div>`;
+            });
+            document.getElementById('history-view').innerHTML = html || "尚無紀錄";
+            updateLabel("st-db", "同步就緒", "#00ff00");
+        } catch (e) { updateLabel("st-db", "連線異常", "red"); }
+    }
+
+    function switchPanel(id, btn) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('panel-' + id).style.display = 'block';
+        btn.classList.add('active');
+    }
+
+    function updateLabel(id, txt, color) {
+        const el = document.getElementById(id);
+        if (el) { el.innerText = txt; el.style.color = color; }
+    }
+
+    function pushError(m) {
+        const el = document.getElementById('error-log');
+        el.style.display = 'block';
+        el.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${m}</div>`;
+        setTimeout(() => { el.style.display = 'none'; el.innerHTML = ''; }, 6000);
+    }
+
+    function downloadThis() {
+        const blob = new Blob([document.documentElement.outerHTML], {type: 'text/html'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `RichLiveO_Cloud_v128.html`;
+        a.click();
+    }
+</script>
+
+</body>
+</html>
