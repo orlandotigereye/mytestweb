@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PTT Stock 內容觀測器 - 金幣輝煌版</title>
+    <!-- 外部依賴與版本：Tailwind CSS v3.4.1, Font Awesome v6.0.0 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --gold-primary: #ffd700;
+            --gold-secondary: #ffae00;
+            --gold-dark: #b8860b;
+        }
+        body {
+            background: radial-gradient(circle, #4a3500 0%, #3a2a00 100%);
+            background-attachment: fixed;
+            color: var(--gold-primary);
+            font-size: 0.5rem; 
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        .coin-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.35;
+            background-image: url('https://www.transparenttextures.com/patterns/gold-tips.png');
+        }
+        .gold-border {
+            border: 2px solid var(--gold-secondary);
+            box-shadow: 0 0 15px var(--gold-dark);
+        }
+        .content-card {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            transition: transform 0.2s, border-color 0.2s;
+            border: 1px solid var(--gold-dark);
+        }
+        .content-card:hover {
+            transform: translateY(-2px);
+            border-color: #ffffff;
+            box-shadow: 0 0 12px var(--gold-primary);
+        }
+        .line-count-badge {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: var(--gold-dark);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            z-index: 100;
+            font-size: 0.5rem;
+        }
+        .btn-gold {
+            background: linear-gradient(to bottom, #ffd700, #b8860b);
+            color: black;
+            font-weight: bold;
+            padding: 5px 15px;
+            border-radius: 999px;
+            cursor: pointer;
+            border: 1px solid #ffffff;
+            text-shadow: 0 1px 1px rgba(255,255,255,0.5);
+            font-size: 0.5rem;
+        }
+        .btn-gold:hover:not(:disabled) {
+            filter: brightness(1.2);
+            box-shadow: 0 0 10px #ffd700;
+        }
+        .xpath-info {
+            background: rgba(184, 134, 11, 0.3);
+            border-left: 4px solid var(--gold-primary);
+            padding: 6px;
+            margin-bottom: 12px;
+            font-family: monospace;
+            font-size: 0.5rem;
+        }
+        .rank-badge {
+            width: 22px;
+            height: 22px;
+            background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+            color: black;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 0.5rem;
+            margin-right: 10px;
+            border: 1px solid white;
+        }
+        /* 確保文字大小嚴格控制 */
+        * { font-size: 0.5rem !important; }
+        h1, h1 * { font-size: 1.25rem !important; }
+    </style>
+</head>
+<body class="p-4">
+    <div class="coin-bg"></div>
+    
+    <!-- 頂部導航與標題 -->
+    <div class="max-w-4xl mx-auto mb-4">
+        <div class="flex justify-between items-center gold-border p-4 rounded-lg bg-black/70">
+            <div>
+                <h1 class="font-bold italic tracking-widest text-yellow-400">
+                    <i class="fas fa-coins mr-2"></i>PTT STOCK 智慧觀測儀 (28取Top14)
+                </h1>
+                <p class="mt-1 opacity-80">自動分析 index9862.html | 演算法：取前28篇後篩選推薦最強14篇</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="downloadCode()" class="btn-gold">
+                    <i class="fas fa-file-code mr-1"></i>下載源碼
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto">
+        <div class="xpath-info">
+            <i class="fas fa-robot mr-1"></i> 邏輯狀態: <span class="text-white">自動掃描 28 筆原始數據 → 推薦數降序排列 → 輸出前 14 名精選</span>
+        </div>
+
+        <div id="statusMessage" class="text-white text-center mb-4 italic">
+            <i class="fas fa-spinner fa-spin mr-2"></i>財金數據擷取中...
+        </div>
+
+        <div id="xpathResult" class="text-center text-yellow-200 font-bold mb-4"></div>
+
+        <!-- 文章列表呈現區 -->
+        <div id="dataContainer" class="grid grid-cols-1 gap-4">
+            <div class="content-card gold-border p-12 rounded-lg text-center opacity-50">
+                <i class="fas fa-circle-notch fa-spin text-4xl mb-4 text-yellow-500"></i>
+                <p>正在從 PTT 伺服器同步最新股板資訊...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 行數顯示器 -->
+    <div id="lineCounter" class="line-count-badge">目前計算實際行數：0 行</div>
+
+    <script>
+        // 設定與變數
+        const PTT_URL = 'https://www.ptt.cc/bbs/Stock/index9862.html';
+        const LIST_XPATH = '//*[@id="main-container"]/div[2]/div[4]/div[1]/span';
+        
+        // Proxy 列表，提供自動重試機制
+        const PROXIES = [
+            (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}&_=${Date.now()}`,
+            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`
+        ];
+
+        window.onload = () => {
+            updateLineCount();
+            autoFetchProcess(); 
+        };
+
+        // 更新程式碼行數顯示
+        function updateLineCount() {
+            const html = document.documentElement.innerHTML;
+            const lines = html.split('\n').length;
+            document.getElementById('lineCounter').innerText = `目前計算實際行數：${lines} 行`;
+        }
+
+        // 解析推薦數 (處理爆、X1等特殊字元)
+        function parseNrec(nrecStr) {
+            if (!nrecStr || nrecStr.trim() === "") return 0;
+            if (nrecStr.includes('爆')) return 100;
+            if (nrecStr.includes('X')) {
+                const xVal = parseInt(nrecStr.replace('X', '')) || 1;
+                return -xVal * 10;
+            }
+            const val = parseInt(nrecStr);
+            return isNaN(val) ? 0 : val;
+        }
+
+        // 解析日期 (M/D 格式轉數值比較)
+        function parseDate(dateStr) {
+            if (!dateStr) return 0;
+            const parts = dateStr.trim().split('/');
+            if (parts.length !== 2) return 0;
+            return parseInt(parts[0].padStart(2, '0') + parts[1].padStart(2, '0'));
+        }
+
+        // 主自動化流程
+        async function autoFetchProcess() {
+            const status = document.getElementById('statusMessage');
+            const container = document.getElementById('dataContainer');
+            const xpathDisplay = document.getElementById('xpathResult');
+            
+            status.innerHTML = '<i class="fas fa-search-dollar fa-spin mr-2"></i>正在擷取前 28 篇文章數據...';
+            
+            let htmlContent = null;
+            let lastError = '';
+
+            // 嘗試不同代理
+            for (const getProxyUrl of PROXIES) {
+                try {
+                    const response = await fetch(getProxyUrl(PTT_URL));
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const data = await response.json();
+                    htmlContent = data.contents || data;
+                    if (htmlContent) break;
+                } catch (e) {
+                    lastError = e.message;
+                }
+            }
+
+            if (!htmlContent) {
+                status.innerHTML = `<span class="text-red-500"><i class="fas fa-exclamation-triangle mr-1"></i>載入失敗: ${lastError}</span>`;
+                return;
+            }
+
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlContent, 'text/html');
+
+                // 執行 XPath 驗證
+                const xpathRes = doc.evaluate(LIST_XPATH, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+                const targetNode = xpathRes.singleNodeValue;
+                if (targetNode) {
+                    xpathDisplay.innerHTML = `<i class="fas fa-check-circle mr-1"></i>系統定位點：${targetNode.textContent.trim()}`;
+                }
+
+                // 擷取所有文章節點
+                const rentries = Array.from(doc.querySelectorAll('.r-ent'));
+                
+                // 讀取前 28 篇
+                const rawList = rentries.slice(0, 28).map(entry => {
+                    const titleEl = entry.querySelector('.title a');
+                    const nrecText = entry.querySelector('.nrec')?.textContent || '';
+                    const dateText = entry.querySelector('.meta .date')?.textContent || '';
+                    return {
+                        title: titleEl ? titleEl.textContent : (entry.querySelector('.title')?.textContent?.trim() || '（內容已刪除）'),
+                        link: titleEl ? 'https://www.ptt.cc' + titleEl.getAttribute('href') : '#',
+                        date: dateText,
+                        author: entry.querySelector('.meta .author')?.textContent || '匿名',
+                        nrec: nrecText,
+                        nrecVal: parseNrec(nrecText),
+                        dateVal: parseDate(dateText)
+                    };
+                });
+
+                // 核心排序：推薦數降序 (主要)，日期降序 (次要)
+                rawList.sort((a, b) => {
+                    if (b.nrecVal !== a.nrecVal) return b.nrecVal - a.nrecVal;
+                    return b.dateVal - a.dateVal;
+                });
+
+                // 最終篩選：只留前 14 篇
+                const finalTop14 = rawList.slice(0, 14);
+
+                // 渲染 UI
+                container.innerHTML = ''; 
+                if (finalTop14.length === 0) {
+                    container.innerHTML = '<div class="text-center py-10">查無符合條件的數據</div>';
+                } else {
+                    finalTop14.forEach((item, index) => {
+                        const card = document.createElement('div');
+                        card.className = 'content-card gold-border p-3 rounded flex justify-between items-center';
+                        card.innerHTML = `
+                            <div class="flex items-center flex-1 overflow-hidden">
+                                <div class="rank-badge">${index + 1}</div>
+                                <div class="flex-1 truncate">
+                                    <div class="text-white font-bold mb-1 truncate">[${item.date}] ${item.title}</div>
+                                    <div class="flex gap-3 text-yellow-500 opacity-90">
+                                        <span><i class="fas fa-user mr-1"></i>${item.author}</span>
+                                        <span><i class="fas fa-external-link-alt mr-1"></i><a href="${item.link}" target="_blank" class="hover:underline">原文連結</a></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right ml-4 min-w-[50px]">
+                                <div class="text-lg font-black ${getNrecColor(item.nrec)}">${item.nrec || '0'}</div>
+                                <div class="opacity-60">推薦</div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                }
+
+                status.innerHTML = '<i class="fas fa-trophy text-green-400 mr-2"></i>完成：已從 28 篇中篩選出最強 14 篇';
+            } catch (error) {
+                status.innerHTML = `<span class="text-red-500">解析異常: ${error.message}</span>`;
+            } finally {
+                updateLineCount();
+            }
+        }
+
+        // 根據推薦數變換顏色
+        function getNrecColor(nrec) {
+            if (nrec.includes('爆')) return 'text-red-500';
+            const num = parseInt(nrec);
+            if (num >= 50) return 'text-orange-500';
+            if (num >= 10) return 'text-yellow-300';
+            if (nrec.includes('X')) return 'text-gray-500';
+            return 'text-gray-400';
+        }
+
+        // 下載 HTML 功能
+        function downloadCode() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ptt_stock_top14_from_28.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
