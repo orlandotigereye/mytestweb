@@ -1,6 +1,6 @@
 /**
  * 真八字（節氣版）
- * 輸入日期 → 回傳 年/月/日/時 干支
+ * 輸入日期 → 回傳 年/月/日/時 干支 
  */
 function getBazi(dateInput) {
   const now = new Date();
