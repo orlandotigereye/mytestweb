@@ -250,8 +250,7 @@ var APP_CORE = {
      * @returns {void}
      */
     downloadSelf: function(filename) { // Converted to ES5 function syntax
-        var content = "<!DOCTYPE html>
-" + document.documentElement.outerHTML;
+        var content = "<!DOCTYPE html>\\x0A" + document.documentElement.outerHTML;
         var blob = new Blob([content], { type: 'text/html;charset=utf-8' }); // Specify charset
         var url = URL.createObjectURL(blob); // Capture the URL
         var a = document.createElement('a');
