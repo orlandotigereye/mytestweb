@@ -1,0 +1,475 @@
+<!--
+{
+  "AppID": "AppShellA",
+  "Version": "1.0.0",
+  "LastModified": "2026-03-21",
+  "Dependencies": []
+}
+-->
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>App Shell Template</title>
+    
+    <!-- 1. Inline Styles (from global.css) -->
+    <style>
+        /*
+           Global Theme: Royal Gold Universal v2
+           Path: /public/00css/global.css
+        */
+
+        :root {
+            /* Colors */
+            --primary-color: #2c3e50;
+            --accent-color: #FFD700;
+            --accent-dark: #B8860B;
+            --accent-light: #FFFACD;
+            --bg-gradient: radial-gradient(circle, #fdf5e6 0%, #ffd700 100%);        
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-color: #5d4037;
+            --muted-color: #7f8c8d;
+            --success-color: #27ae60;
+
+            /* Design Tokens (Spacing & Radius) */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 12px;
+            --space-lg: 20px;
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --radius-lg: 20px;
+
+            /* Fonts */
+            --base-font-size: 13px;
+            --main-font: 'Segoe UI', 'Noto Sans TC', system-ui, sans-serif;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }      
+
+        body {
+            font-family: var(--main-font);
+            font-size: var(--base-font-size);
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-color);
+            margin: 0; padding: 0;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        /* App Shell Components */
+        .tabs-container {
+            display: flex; background: var(--accent-dark);
+            position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .tab-btn {
+            flex: 1; padding: var(--space-md); border: none; background: transparent;
+            color: rgba(255,255,255,0.8); font-size: 11px; font-weight: bold;        
+            cursor: pointer; transition: 0.3s; text-align: center;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;    
+        }
+
+        .tab-btn.active {
+            color: #fff; background: rgba(255,255,255,0.15);
+            border-bottom: 3px solid #fff;
+        }
+
+        .content-section { display: none; padding: var(--space-md); animation: fadeIn 0.4s ease; }
+        .content-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Shared Layouts */
+        .card {
+            background: var(--card-bg);
+            border: 2px solid var(--accent-dark);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            box-shadow: 0 4px 15px rgba(184, 134, 11, 0.2);
+            margin-bottom: var(--space-md);
+        }
+
+        .card h2 {
+            margin-top: 0; font-size: 15px; color: var(--accent-dark);
+            border-bottom: 1px solid var(--accent-dark);
+            padding-bottom: var(--space-xs); margin-bottom: var(--space-md);
+        }
+
+        /* UI Elements */
+        .btn-gold {
+            background: linear-gradient(to bottom, var(--accent-color), var(--accent-dark));
+            color: #fff; border: 1px solid #8b4513;
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-sm);
+            font-size: 11px; font-weight: bold; cursor: pointer;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .btn-gold:active { transform: scale(0.95); opacity: 0.9; }
+
+        textarea, input {
+            width: 100%; padding: var(--space-sm); border: 1px solid #ddd;
+            border-radius: var(--radius-sm); font-size: 14px; background: #fffdf0;   
+        }
+
+        /* Standard Helpers */
+        .toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);   
+            background: rgba(44, 62, 80, 0.95); color: white; padding: 10px 20px;    
+            border-radius: 25px; z-index: 3000; font-size: 12px; display: none;      
+        }
+
+        .spinner-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.7); display: none;
+            flex-direction: column; align-items: center; justify-content: center; z-index: 4000;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-dark);     
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    
+    <!-- Firebase (Compat version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    
+</head>
+<body>
+    <!-- Standard Tab Navigation -->
+    <div class="tabs-container">
+        <button class="tab-btn active" onclick="switchTab('mainTab')">
+            <i class="fas fa-home"></i> MAIN
+        </button>
+        <button class="tab-btn" onclick="switchTab('historyTab')">
+            <i class="fas fa-history"></i> LOGS
+        </button>
+        <button class="tab-btn" onclick="switchTab('settingTab')">
+            <i class="fas fa-cog"></i> SETS
+        </button>
+        <button class="tab-btn" onclick="switchTab('serverLogTab')">
+            <i class="fas fa-server"></i> SERVER
+        </button>
+        <button class="tab-btn" onclick="switchTab('codeCheckTab')">
+            <i class="fas fa-microchip"></i> 標準檢查
+        </button>
+    </div>
+
+    <!-- Main Content Section -->
+    <div id="mainTab" class="content-section active">
+        <div class="card">
+            <h2><i class="fas fa-star"></i> Welcome</h2>
+            <p>This is your standard template. Edit content here.</p>
+            <button class="btn-gold" onclick="APP_CORE.showToast('Hello World!')">
+                <i class="fas fa-info-circle"></i> TEST TOAST
+            </button>
+        </div>
+    </div>
+
+    <!-- History Section -->
+    <div id="historyTab" class="content-section">
+        <div class="card">
+            <h2><i class="fas fa-history"></i> Logs</h2>
+            <div id="logList">No data found.</div>
+        </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div id="settingTab" class="content-section">
+        <div class="card">
+            <h2><i class="fas fa-cog"></i> Management</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn-gold" onclick="APP_CORE.downloadSelf('AppShellA.html')">
+                    <i class="fas fa-download"></i> SOURCE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Log Content Section -->
+    <div id="serverLogTab" class="content-section">
+        <div class="card">
+            <h2><i class="fas fa-server"></i> 伺服器訊息</h2>
+            <div id="serverLogList" style="max-height: 300px; overflow-y: auto; background: #eee; padding: 10px; border-radius: 8px; color: #333;">
+                無伺服器訊息。
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Standard Check Log Section -->
+    <div id="codeCheckTab" class="content-section">
+        <div class="card">
+            <h2><i class="fas fa-clipboard-list"></i> 程式碼標準檢查日誌</h2>
+            <div id="codeCheckList" style="max-height: 300px; overflow-y: auto; background: #eee; padding: 10px; border-radius: 8px; color: #333;">
+                點擊下方按鈕進行檢查。
+            </div>
+            <button class="btn-gold mt-2" onclick="APP_CORE.runCodeStandardCheck(document.documentElement.outerHTML)">執行程式碼標準檢查</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Core JS Library - Project Universal Logic
+         * Path: /public/01js/core.js
+         * V2.1.2 - Enhanced Global Availability & Local Compatibility
+         */
+
+        var APP_CORE = {
+            version: "2.1.2",
+            // 1. Firebase Configuration (Centralized)
+            firebaseConfig: {
+                apiKey: "AIzaSyDRgBVUSuLlxsZiRCPUqfTUoHrNfZY70vs",
+                authDomain: "inventory-y.firebaseapp.com",
+                databaseURL: "https://inventory-y-default-rtdb.firebaseio.com",      
+                projectId: "inventory-y"
+            },
+            db: null,
+            _initialized: false,
+
+            // 2. Initialization
+            init: function() {
+                if (this._initialized) return;
+                console.log("Core: Initializing v" + this.version);
+                
+                // Ensure firebase is defined before use
+                if (typeof firebase !== 'undefined' && typeof firebase.initializeApp === 'function') {
+                    try {
+                        firebase.initializeApp(this.firebaseConfig);
+                        this.db = firebase.database();
+                        console.log("Core: Firebase Initialized");
+                    } catch (e) { 
+                        console.error("Core: Firebase Init Error", e);
+                        APP_CORE.handleError(e, 'Firebase Init'); // Unified Error Guard
+                    }   
+                } else {
+                    console.warn("Core: Firebase SDK not loaded or initialized.");
+                }
+                
+                this.setupTabs(); // Setup tabs from core
+                this._initialized = true;
+                
+                // Notify any listeners that core is ready
+                window.dispatchEvent(new CustomEvent('coreReady', { detail: { core: this } }));
+            },
+
+            // 3. UI Components (No Alerts)
+            showToast: function(msg, duration) {
+                duration = duration || 3000;
+                var t = document.getElementById('toast');
+                if (!t) { // DOM existence check
+                    t = document.createElement('div');
+                    t.id = 'toast';
+                    t.className = 'toast';
+                    document.body.appendChild(t);
+                }
+                t.textContent = msg;
+                t.style.display = 'block';
+                setTimeout(function() { // ES5 function
+                    if (t) t.style.display = 'none'; // DOM existence check
+                }, duration);
+            },
+
+            toggleSpinner: function(show, message) { // Added message parameter
+                var s = document.getElementById('spinner');
+                var spinner_text_el = document.getElementById('spinner-text'); // Get spinner text element
+                
+                if (!s) { // DOM existence check
+                    s = document.createElement('div');
+                    s.id = 'spinner';
+                    s.className = 'spinner-overlay';
+                    s.innerHTML = '<div class="loader"></div><p id="spinner-text" style="margin-top:10px; font-weight:bold; color:var(--accent-dark);">Processing...</p>';
+                    document.body.appendChild(s);
+                    spinner_text_el = document.getElementById('spinner-text'); // Re-get after append
+                }
+                
+                if (typeof show === 'boolean') { // Check if 'show' is boolean
+                    if (s) s.style.display = show ? 'flex' : 'none'; // DOM existence check
+                }
+                
+                if (typeof message === 'string' && spinner_text_el) { // DOM existence check
+                    spinner_text_el.textContent = message;
+                }
+            },
+
+            // 4. Tab System (Updated for new tabs and ES5)
+            setupTabs: function() {
+                window.switchTab = function(tabId) { // ES5 function
+                    var contentSections = document.querySelectorAll('.content-section');
+                    var tabButtons = document.querySelectorAll('.tab-btn');
+                    var i;
+
+                    for (i = 0; i < contentSections.length; i++) {
+                        contentSections[i].classList.remove('active');
+                        contentSections[i].style.display = 'none'; // Explicitly hide
+                    }
+                    for (i = 0; i < tabButtons.length; i++) {
+                        tabButtons[i].classList.remove('active');
+                    }
+
+                    var targetContent = document.getElementById(tabId);
+                    var targetBtn = document.querySelector('[onclick*="' + tabId + '"]'); // ES5 string concat
+                    if (targetContent) { // DOM existence check
+                        targetContent.classList.add('active');
+                        targetContent.style.display = 'block'; // Explicitly show
+                    }        
+                    if (targetBtn) { // DOM existence check
+                        targetBtn.classList.add('active');
+                    }
+
+                    // Custom event for page-specific tab logic
+                    window.dispatchEvent(new CustomEvent('tabChanged', { detail: { tabId: tabId } }));
+                };
+            },
+
+            // 5. Data Helpers
+            getLocal: function(key) {
+                var data = localStorage.getItem(key);
+                try {
+                    // Type validation and fallback
+                    var parsedData = JSON.parse(data);
+                    // Ensure it's an array if expected to be
+                    return Array.isArray(parsedData) ? parsedData : [];
+                } catch (e) {
+                    console.error("Core: Error parsing localStorage key '" + key + "': " + e.message);
+                    APP_CORE.handleError(e, 'getLocal'); // Unified Error Guard
+                    return []; // Return empty array on error
+                }
+            }, 
+            saveLocal: function(key, data) { // ES5 function
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                } catch (e) {
+                    console.error("Core: Error saving to localStorage key '" + key + "': " + e.message);
+                    APP_CORE.handleError(e, 'saveLocal'); // Unified Error Guard
+                }
+            },
+
+            syncToFirebase: function(path, data) { // ES5 function
+                if (!this.db || !navigator.onLine) {
+                    APP_CORE.showToast('Firebase 未初始化或網路離線', 3000);
+                    return Promise.resolve(false); // Return a resolved promise for consistency
+                }
+                var self = this; // Maintain context for 'this'
+                return new Promise(function(resolve, reject) { // ES5 Promise
+                    self.db.ref(path).set(data)
+                        .then(function() { resolve(true); }) // ES5 function
+                        .catch(function(e) { // ES5 function
+                            console.error("Core: Firebase Sync Error", e);
+                            APP_CORE.handleError(e, 'syncToFirebase'); // Unified Error Guard
+                            reject(false);
+                        });
+                });
+            },
+
+            // 6. Source Download
+            downloadSelf: function(filename) { // ES5 function
+                var content = "<!DOCTYPE html>\x0A" + document.documentElement.outerHTML; // Hex-encoded newline
+                var blob = new Blob([content], { type: 'text/html' });
+                var a = document.createElement('a');
+                if (a) { // DOM existence check
+                    a.href = URL.createObjectURL(blob);
+                    a.download = filename || 'source.html';
+                    a.click();
+                    URL.revokeObjectURL(a.href); // Clean up
+                } else {
+                    console.error("Core: Could not create download link.");
+                    APP_CORE.handleError('Could not create download link', 'downloadSelf'); // Unified Error Guard
+                }
+            },
+
+            // 7. Error Handling (Unified)
+            handleError: function(err, context) { // ES5 function
+                var errorMessage = (err && err.message) ? err.message : String(err);
+                console.error("Error in " + context + ": " + errorMessage);
+                
+                // Log to server log panel if available, otherwise to console
+                APP_CORE.logServerMessage('Error in ' + context + ': ' + errorMessage, 'serverLogList', 'red'); // Unified Error Guard: Log to server log panel
+                APP_CORE.showToast('發生錯誤: ' + errorMessage, 5000);
+            },
+            
+            // 8. Server Message Logging (New)
+            logServerMessage: function(message, panelId, color) { // ES5 function
+                panelId = panelId || 'logList'; // Default to logList in AppShell
+                var targetPanel = document.getElementById(panelId);
+                if (targetPanel) { // DOM existence check
+                    var p = document.createElement('p');
+                    p.innerHTML = message;
+                    if (color) {
+                        p.style.color = color;
+                    }
+                    targetPanel.appendChild(p);
+                    targetPanel.scrollTop = targetPanel.scrollHeight; // Auto-scroll
+                } else {
+                    console.warn("Log panel '" + panelId + "' not found.");
+                }
+            },
+
+            // 9. Code Standard Check (New for template)
+            runCodeStandardCheck: function(htmlContent) {
+                var logPanel = document.getElementById('codeCheckList');
+                if (!logPanel) {
+                    APP_CORE.showToast('Code check log panel not found.', 3000);
+                    return;
+                }
+                logPanel.innerHTML = ''; // Clear previous logs
+                APP_CORE.logServerMessage('開始執行程式碼標準檢查...', 'codeCheckList');
+                
+                // Extract script content
+                var scriptRegex = /<script\b[^>]*>([\s\S]*?)<\/script>/g;
+                var match;
+                var scriptContent = '';
+                while ((match = scriptRegex.exec(htmlContent)) !== null) {
+                    scriptContent += match[1];
+                }
+
+                var violations = [];
+
+                // Check for 'let' and 'const'
+                if (/(^|\W)let\s/.test(scriptContent)) {
+                    violations.push("發現 'let' 關鍵字，不符合 ES5 標準。請改用 'var'。");
+                }
+                if (/(^|\W)const\s/.test(scriptContent)) {
+                    violations.push("發現 'const' 關鍵字，不符合 ES5 標準。請改用 'var'。");
+                }
+
+                // Check for arrow functions (=>)
+                if (/\(\s*\)\s*=>|function\s*\w*\s*\(\s*\)\s*=>/.test(scriptContent)) { // Simple arrow function pattern
+                    violations.push("發現箭頭函數 (=>)，不符合 ES5 標準。請改用傳統 function。");
+                }
+                
+                // Report findings
+                if (violations.length === 0) {
+                    APP_CORE.logServerMessage('✅ 未發現程式碼標準違規。', 'codeCheckList');
+                } else {
+                    for (var i = 0; i < violations.length; i++) {
+                        APP_CORE.logServerMessage('❌ ' + violations[i], 'codeCheckList', 'red'); // Pass color for error
+                    }
+                }
+                APP_CORE.logServerMessage('程式碼標準檢查完成。', 'codeCheckList');
+            }
+        };
+
+        // 關鍵修正：立即掛載到 window，確保異步載入時全域物件立即存在
+        window.APP_CORE = APP_CORE;
+
+        // Auto-init based on document state
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() { // ES5 function
+                APP_CORE.init();
+            });
+        } else {
+            // Already loaded (e.g., when injected via path_helper after initial load)
+            APP_CORE.init();
+        }
+    </script>
+</body>
+</html>
