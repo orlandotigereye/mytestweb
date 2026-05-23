@@ -1,0 +1,896 @@
+```html
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>黃金日記智慧代入系統</title>
+  <!-- Tailwind CSS 用於 RWD 快速排版 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome 用於黃金奢華圖標 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* 全域金碧輝煌奢華風格 */
+    body {
+      background: radial-gradient(circle at center, #ffe066 0%, #f5b041 50%, #cb4335 100%);
+      background-attachment: fixed;
+      font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      color: #78281f;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+      overflow-x: hidden;
+    }
+
+    /* 金幣與閃光動態背景背景 */
+    .gold-coin-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0.12;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M30 0A30 30 0 1 0 60 30 30 30 0 0 0 30 0zm0 50a20 20 0 1 1 20-20 20 20 0 0 1-20 20z' fill='%23ffffff'/%3E%3Ccircle cx='30' cy='30' r='12' fill='%23ffffff'/%3E%3Cpath d='M27 20h6v20h-6z' fill='%23ffffff'/%3E%3C/svg%3E");
+    }
+
+    /* 奢華金屬邊框與陰影 */
+    .gold-card {
+      background: linear-gradient(135deg, #fdf2e9 0%, #fbeee6 100%);
+      border: 4px solid #d4ac0d;
+      box-shadow: 0 10px 25px rgba(120, 40, 31, 0.3), inset 0 0 15px rgba(241, 196, 15, 0.5);
+      border-radius: 16px;
+    }
+
+    .gold-btn {
+      background: linear-gradient(135deg, #f1c40f 0%, #f39c12 50%, #d4ac0d 100%);
+      color: #78281f;
+      border: 2px solid #9a7d0a;
+      font-weight: bold;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 4px 6px rgba(120, 40, 31, 0.2);
+    }
+
+    .gold-btn:active {
+      transform: scale(0.96);
+      box-shadow: 0 2px 3px rgba(120, 40, 31, 0.2);
+    }
+
+    .gold-btn-active {
+      background: linear-gradient(135deg, #b9770e 0%, #d35400 100%) !important;
+      color: #fff !important;
+      border-color: #7e5109 !important;
+    }
+
+    /* 輸入區金屬質感與極大化 */
+    .gold-input {
+      background: #fdfefe;
+      border: 2px solid #f5b041;
+      color: #641e16;
+      box-shadow: inset 0 2px 5px rgba(120, 40, 31, 0.1);
+      transition: all 0.3s;
+    }
+
+    .gold-input:focus {
+      border-color: #cb4335;
+      outline: none;
+      box-shadow: 0 0 8px rgba(203, 67, 53, 0.5);
+    }
+
+    /* 極小字設定：嚴格限制為 0.5rem (不使用0.4) */
+    .text-tiny {
+      font-size: 0.5rem !important;
+      line-height: 0.75rem !important;
+    }
+
+    /* 行動版滑動候選欄 */
+    .candidate-scroll-bar {
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      border-top: 2px solid #f4d03f;
+      border-bottom: 2px solid #f4d03f;
+      background: linear-gradient(90deg, #fef9e7, #fcf3cf);
+    }
+
+    .candidate-scroll-bar::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .candidate-scroll-bar::-webkit-scrollbar-thumb {
+      background: #f39c12;
+      border-radius: 2px;
+    }
+
+    /* 懸浮提示框 */
+    .toast-box {
+      background: linear-gradient(135deg, #fcf3cf 0%, #f9e79f 100%);
+      border: 2px solid #b7950b;
+      color: #78281f;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body class="p-2 md:p-4 min-h-screen flex flex-col justify-between">
+
+  <div class="gold-coin-bg"></div>
+
+  <!-- 主容器 -->
+  <div class="w-full max-w-4xl mx-auto gold-card p-3 md:p-5 mb-4">
+    
+    <!-- 標頭資訊：功能鍵以上極小化（全部設為 0.5rem 極小字體） -->
+    <div class="flex justify-between items-center border-b border-yellow-500 pb-1 mb-2">
+      <div class="flex items-center space-x-1">
+        <i class="fa-solid fa-coins text-yellow-600 text-xs animate-bounce"></i>
+        <h1 class="text-tiny font-black text-red-900 tracking-wider uppercase">金石記 · 智慧代入系統</h1>
+      </div>
+      <!-- 控制列與極小字系統規格 -->
+      <div class="text-right flex flex-col items-end">
+        <span class="text-tiny bg-yellow-200 px-1 py-0.5 rounded text-yellow-900 font-mono">
+          System Ver: 6.0.0 | Tiny Text Node 0.5rem
+        </span>
+        <span id="lineCounter" class="text-tiny text-red-800 font-bold">
+          實際代碼總行數：0 行
+        </span>
+      </div>
+    </div>
+
+    <!-- 分頁按鈕列：高度與文字極小化 -->
+    <div class="grid grid-cols-3 gap-1 mb-2">
+      <button onclick="switchTab('write')" id="tabBtn-write" class="gold-btn py-1 text-tiny rounded-md gold-btn-active">
+        <i class="fa-solid fa-feather-pointed mr-0.5"></i>璀璨日記本
+      </button>
+      <button onclick="switchTab('words')" id="tabBtn-words" class="gold-btn py-1 text-tiny rounded-md">
+        <i class="fa-solid fa-crown mr-0.5"></i>詞庫黃金殿
+      </button>
+      <button onclick="switchTab('history')" id="tabBtn-history" class="gold-btn py-1 text-tiny rounded-md">
+        <i class="fa-solid fa-vault mr-0.5"></i>歷史藏寶閣
+      </button>
+    </div>
+
+    <!-- TAB 1: 璀璨日記本 -->
+    <div id="tab-write" class="tab-content block">
+      
+      <!-- 行動版/電腦版共用 智慧聯想候選滑動欄 (位於輸入框上方，提示與按鈕極小化) -->
+      <div class="mb-2">
+        <div class="flex justify-between items-center px-1 mb-1">
+          <span class="text-tiny font-bold text-yellow-900">
+            <i class="fa-solid fa-magic mr-0.5"></i>黃金聯想字詞（可左右滑動）：
+          </span>
+          <button onclick="clearCurrentKeyword()" class="text-tiny text-red-700 underline cursor-pointer hover:text-red-900">
+            清除匹配
+          </button>
+        </div>
+        <div id="candidateBar" class="candidate-scroll-bar rounded-md p-1 min-h-[38px] flex items-center space-x-1.5">
+          <span class="text-tiny text-yellow-700 italic px-1">請開始輸入日記，系統將在此呈現黃金聯想字...</span>
+        </div>
+      </div>
+
+      <!-- 日記主輸入區域：極大化輸入框 -->
+      <div class="relative">
+        <div class="flex justify-between items-center mb-1">
+          <label class="block text-tiny font-bold text-red-900">
+            <i class="fa-regular fa-star mr-0.5 text-yellow-600"></i>今日金句隨筆：
+          </label>
+          <span id="saveStatus" class="text-tiny text-green-700 bg-green-100 px-1 rounded transition-opacity duration-300 opacity-0">
+            已自動存入金庫
+          </span>
+        </div>
+        
+        <!-- 極大化之輸入框：高度設為 h-[550px] 讓書寫畫面無比寬廣 -->
+        <textarea id="diaryInput" class="w-full h-[550px] p-4 rounded-lg gold-input text-base leading-relaxed resize-none" placeholder="在此輸入日記... 輸入任何字詞即時於上方浮現黃金聯想字詞。按下「空白鍵」即可快速補全首個推薦詞！"></textarea>
+        
+        <!-- 自動代入狀態提示（0.5rem 極小字） -->
+        <div class="flex justify-between items-center mt-1 px-1">
+          <span class="text-tiny text-yellow-900">
+            💡 輸入單字/拼音將自動比對。按空白鍵自動補全首位詞彙。
+          </span>
+          <span id="charCount" class="text-tiny text-red-800 font-mono font-bold">
+            字數：0 字
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: 詞庫黃金殿 (文字極小化調整) -->
+    <div id="tab-words" class="tab-content hidden">
+      <div class="mb-2 bg-yellow-50 p-2 rounded border border-yellow-300">
+        <h3 class="text-tiny font-bold text-red-900 mb-0.5"><i class="fa-solid fa-circle-info mr-0.5"></i>詞庫管理說明</h3>
+        <p class="text-tiny text-yellow-800">
+          此處管理您的核心智慧詞彙庫。點擊下方分類，可以篩選字詞；您也可以自由加入全新的詞彙。
+        </p>
+      </div>
+
+      <!-- 新增詞彙面板 (外觀緊湊、文字極小化) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-1.5 mb-2 bg-yellow-100 p-2 rounded border border-yellow-400">
+        <div>
+          <label class="block text-tiny font-bold text-red-900 mb-0.5">詞彙名稱</label>
+          <input type="text" id="newWordName" class="w-full p-1 text-tiny rounded border border-yellow-400 gold-input" placeholder="例如：黃金巨龍">
+        </div>
+        <div>
+          <label class="block text-tiny font-bold text-red-900 mb-0.5">歸屬分類</label>
+          <select id="newWordCategory" class="w-full p-1 text-tiny rounded border border-yellow-400 gold-input">
+            <option value="人名">人名</option>
+            <option value="世界觀">世界觀</option>
+            <option value="技能">技能</option>
+            <option value="心理學">心理學</option>
+            <option value="投資">投資</option>
+            <option value="地點">地點</option>
+            <option value="神話">神話</option>
+            <option value="自訂">自訂</option>
+          </select>
+        </div>
+        <div class="flex items-end">
+          <button onclick="addNewWord()" class="w-full gold-btn py-1 text-tiny rounded">
+            <i class="fa-solid fa-plus-circle mr-0.5"></i>鑄造新詞彙
+          </button>
+        </div>
+      </div>
+
+      <!-- 分類篩選按鈕列 -->
+      <div id="categoryFilters" class="flex flex-wrap gap-1 mb-2">
+        <!-- JS 動態生成 -->
+      </div>
+
+      <!-- 字詞清單展示區域 -->
+      <div class="border border-yellow-400 rounded overflow-hidden bg-white max-h-64 overflow-y-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-yellow-200 text-red-950 text-tiny font-bold">
+              <th class="p-1.5 border-b border-yellow-400">詞彙</th>
+              <th class="p-1.5 border-b border-yellow-400">分類</th>
+              <th class="p-1.5 border-b border-yellow-400">使用次數</th>
+              <th class="p-1.5 border-b border-yellow-400 text-center">操作</th>
+            </tr>
+          </thead>
+          <tbody id="wordsTableBody" class="text-tiny text-red-900">
+            <!-- JS 動態生成 -->
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-1 text-right">
+        <button onclick="resetDefaultWords()" class="text-tiny text-red-700 hover:text-red-900 underline">
+          <i class="fa-solid fa-arrows-rotate mr-0.5"></i>還原系統預設詞庫
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 3: 歷史藏寶閣 -->
+    <div id="tab-history" class="tab-content hidden">
+      <div class="mb-2 bg-yellow-50 p-2 rounded border border-yellow-300 flex justify-between items-center">
+        <div>
+          <h3 class="text-tiny font-bold text-red-900"><i class="fa-solid fa-box-archive mr-0.5"></i>時光金庫</h3>
+          <p class="text-tiny text-yellow-800">所有您在本瀏覽器寫下的字句，皆安全存放於本地儲存空間。</p>
+        </div>
+        <button onclick="manualSaveDiary()" class="gold-btn px-2 py-1 text-tiny rounded">
+          <i class="fa-solid fa-floppy-disk mr-0.5"></i>手動封存
+        </button>
+      </div>
+
+      <!-- 歷史日記列表 -->
+      <div class="space-y-2 max-h-[500px] overflow-y-auto" id="historyList">
+        <!-- JS 動態生成 -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 下方通用工具面板 & 下載本體代碼按鈕 (文字極小化 0.5rem 以符合規定) -->
+  <div class="w-full max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center bg-yellow-100 p-2 rounded-lg border-2 border-yellow-500 gap-2">
+    <div class="flex items-center space-x-1.5">
+      <i class="fa-solid fa-feather text-yellow-700 text-xs"></i>
+      <span class="text-tiny text-yellow-950 font-bold">
+        黃金極客工具箱：即開即用，無需連網，自動維護本地數據。
+      </span>
+    </div>
+    <div class="flex space-x-1.5 w-full md:w-auto">
+      <button onclick="downloadSelfCode()" class="flex-1 md:flex-none gold-btn px-3 py-1 text-tiny rounded flex items-center justify-center">
+        <i class="fa-solid fa-download mr-0.5"></i>下載本系統原始碼 (HTML)
+      </button>
+      <button onclick="clearAllData()" class="flex-1 md:flex-none bg-red-600 hover:bg-red-700 text-white border-2 border-red-800 px-3 py-1 text-tiny rounded font-bold flex items-center justify-center">
+        <i class="fa-solid fa-trash-can mr-0.5"></i>清除所有本地快取
+      </button>
+    </div>
+  </div>
+
+  <!-- 客製化吐司通知器 (Toast) - 免用 Alert -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 px-4 py-3 rounded-lg toast-box transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none flex items-center space-x-2">
+    <i class="fa-solid fa-circle-check text-yellow-700 text-xs"></i>
+    <span id="toastMsg" class="text-tiny font-bold"></span>
+  </div>
+
+  <!-- 程式本體邏輯控制中心 -->
+  <script>
+    // 預設字庫設定 (包含類別劃分)
+    const DEFAULT_COMMON_WORDS = [
+      { word: "阿凱", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Anna", category: "人名", count: 0, lastUsed: 0 },
+      { word: "諾拉", category: "人名", count: 0, lastUsed: 0 },
+      { word: "莉莉絲", category: "人名", count: 0, lastUsed: 0 },
+      { word: "芙蕾雅", category: "人名", count: 0, lastUsed: 0 },
+      { word: "美咲", category: "人名", count: 0, lastUsed: 0 },
+      { word: "藤田", category: "人名", count: 0, lastUsed: 0 },
+      { word: "小晴", category: "人名", count: 0, lastUsed: 0 },
+      { word: "小琪", category: "人名", count: 0, lastUsed: 0 },
+      { word: "小雅", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Victoria", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Emily", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Harper", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Sarah", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Mia", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Chloe", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Luna", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Lady", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Margaret", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Lena", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Elena", category: "人名", count: 0, lastUsed: 0 },
+      { word: "Rossi", category: "人名", count: 0, lastUsed: 0 },
+      { word: "女媧", category: "神話", count: 0, lastUsed: 0 },
+      { word: "波塞冬", category: "神話", count: 0, lastUsed: 0 },
+      { word: "薇兒丹蒂", category: "神話", count: 0, lastUsed: 0 },
+      { word: "刑天", category: "神話", count: 0, lastUsed: 0 },
+      { word: "爆炎", category: "技能", count: 0, lastUsed: 0 },
+      { word: "霜華", category: "技能", count: 0, lastUsed: 0 },
+      { word: "影刃", category: "技能", count: 0, lastUsed: 0 },
+      { word: "雷娜", category: "人名", count: 0, lastUsed: 0 },
+      { word: "白櫻", category: "地點", count: 0, lastUsed: 0 },
+      { word: "記憶", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "疼痛", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "身體", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "空間", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "力量", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "絕望", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "崩潰", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "現實", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "靈魂", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "主人", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "房間", category: "地點", count: 0, lastUsed: 0 },
+      { word: "希望", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "光芒", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "深淵", category: "地點", count: 0, lastUsed: 0 },
+      { word: "治療", category: "技能", count: 0, lastUsed: 0 },
+      { word: "精神力", category: "技能", count: 0, lastUsed: 0 },
+      { word: "生命能量", category: "技能", count: 0, lastUsed: 0 },
+      { word: "能量", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "虛空", category: "地點", count: 0, lastUsed: 0 },
+      { word: "時間之力", category: "技能", count: 0, lastUsed: 0 },
+      { word: "創世之力", category: "技能", count: 0, lastUsed: 0 },
+      { word: "水元素", category: "技能", count: 0, lastUsed: 0 },
+      { word: "系統", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "財富", category: "投資", count: 0, lastUsed: 0 },
+      { word: "投資", category: "投資", count: 0, lastUsed: 0 },
+      { word: "風險", category: "投資", count: 0, lastUsed: 0 },
+      { word: "成功率", category: "投資", count: 0, lastUsed: 0 },
+      { word: "忠誠", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "情緒", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "恐懼", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "習慣", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "預測", category: "投資", count: 0, lastUsed: 0 },
+      { word: "多巴胺", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "獎勵", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "系統1", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "系統2", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "決策神經科學", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "展望理論", category: "投資", count: 0, lastUsed: 0 },
+      { word: "fMRI", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "EEG", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "證據累積", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "回饋迴圈", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "閉迴路", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "執行引擎", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "高原期", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "身份強化", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "最小行動", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "立即獎勵", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "防火牆", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "誘惑捆綁", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "習慣堆疊", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "證據日誌", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "公開承諾", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "神經自查", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "每週審核", category: "心理學", count: 0, lastUsed: 0 },
+      { word: "時間之宮", category: "地點", count: 0, lastUsed: 0 },
+      { word: "後宮之殿", category: "地點", count: 0, lastUsed: 0 },
+      { word: "空間裂縫", category: "地點", count: 0, lastUsed: 0 },
+      { word: "神話時刻", category: "世界觀", count: 0, lastUsed: 0 },
+      { word: "黑暗咒文", category: "技能", count: 0, lastUsed: 0 },
+      { word: "白骨廣場", category: "地點", count: 0, lastUsed: 0 }
+    ];
+
+    // 全域變數定義
+    let appWords = [];
+    let historyDiaries = [];
+    let activeCategoryFilter = "全部";
+    let lastMatchList = []; // 當前符合的推薦列表
+
+    // 介面 DOM 節點
+    const diaryInput = document.getElementById('diaryInput');
+    const candidateBar = document.getElementById('candidateBar');
+    const wordsTableBody = document.getElementById('wordsTableBody');
+    const categoryFiltersDiv = document.getElementById('categoryFilters');
+    const historyListDiv = document.getElementById('historyList');
+    const charCountSpan = document.getElementById('charCount');
+    const saveStatusSpan = document.getElementById('saveStatus');
+
+    // 啟動程序
+    window.addEventListener('DOMContentLoaded', () => {
+      initDatabase();
+      loadActiveDiary();
+      renderCategoryFilters();
+      renderWordsTable();
+      renderHistoryList();
+      updateLineCounter();
+
+      // 計算目前輸入框字數
+      charCountSpan.textContent = `字數：${diaryInput.value.length} 字`;
+    });
+
+    // 1️⃣ 初始化資料庫與 LocalStorage
+    function initDatabase() {
+      const storedWords = localStorage.getItem('gold_words_library');
+      if (storedWords) {
+        appWords = JSON.parse(storedWords);
+      } else {
+        appWords = [...DEFAULT_COMMON_WORDS];
+        saveWordsToStorage();
+      }
+
+      const storedHistory = localStorage.getItem('gold_diaries_history');
+      if (storedHistory) {
+        historyDiaries = JSON.parse(storedHistory);
+      } else {
+        historyDiaries = [];
+      }
+    }
+
+    function saveWordsToStorage() {
+      localStorage.setItem('gold_words_library', JSON.stringify(appWords));
+    }
+
+    function saveHistoryToStorage() {
+      localStorage.setItem('gold_diaries_history', JSON.stringify(historyDiaries));
+    }
+
+    // 載入未完成的草稿日記
+    function loadActiveDiary() {
+      const activeDraft = localStorage.getItem('gold_diary_active_draft');
+      if (activeDraft) {
+        diaryInput.value = activeDraft;
+      }
+    }
+
+    // 2️⃣ 智慧聯想引擎核心邏輯
+    // 解析取得當前游標左側最新輸入字
+    function getLastKeyword(text) {
+      // 依據常見標點符號與空白進行切分
+      const parts = text.split(/[\s\n，。,、：；！？「」\[\]{}()]/);
+      return parts[parts.length - 1] ? parts[parts.length - 1].trim() : "";
+    }
+
+    // 搜尋符合候選詞並排序 (優先度：點擊頻率 > 最近使用 > 字母開頭)
+    function getSuggestions(keyword) {
+      if (!keyword) return [];
+      const lowerKey = keyword.toLowerCase();
+
+      return appWords
+        .filter(item => item.word.toLowerCase().includes(lowerKey))
+        .sort((a, b) => {
+          // 優先比對：剛好是開頭匹配的排前面
+          const aStarts = a.word.toLowerCase().startsWith(lowerKey);
+          const bStarts = b.word.toLowerCase().startsWith(lowerKey);
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+
+          // 次要比對：頻率較高的排前面
+          if (b.count !== a.count) {
+            return b.count - a.count;
+          }
+
+          // 三度比對：最近使用的排前面
+          return b.lastUsed - a.lastUsed;
+        })
+        .slice(0, 20); // 最多呈現前 20 個最精選詞彙
+    }
+
+    // 渲染手機候選滑動欄 (已完美定位於輸入框之上)
+    function updateSuggestionsUI() {
+      const text = diaryInput.value;
+      const cursorPos = diaryInput.selectionStart;
+      const leftText = text.substring(0, cursorPos);
+      const keyword = getLastKeyword(leftText);
+
+      if (!keyword) {
+        lastMatchList = [];
+        candidateBar.innerHTML = `<span class="text-tiny text-yellow-700 italic px-2">請開始輸入日記，系統將在此呈現黃金聯想字...</span>`;
+        return;
+      }
+
+      lastMatchList = getSuggestions(keyword);
+
+      if (lastMatchList.length === 0) {
+        candidateBar.innerHTML = `<span class="text-tiny text-red-800 italic px-2">無匹配詞彙：可以前往「詞庫黃金殿」鑄造此新詞</span>`;
+        return;
+      }
+
+      candidateBar.innerHTML = '';
+      lastMatchList.forEach((item, index) => {
+        const btn = document.createElement('button');
+        // 第一個項目特別加黃金框醒目，提示空白鍵自動補全
+        const isFirst = index === 0;
+        btn.className = `flex-shrink-0 px-3 py-1 text-tiny rounded-full border-2 transition-all ${
+          isFirst 
+          ? 'bg-yellow-400 border-red-700 font-black text-red-950 scale-105 shadow-md' 
+          : 'bg-white border-yellow-500 text-yellow-950 hover:bg-yellow-100'
+        }`;
+        
+        // 類別標籤（小字0.5rem）
+        const badge = `<span class="text-tiny bg-red-100 text-red-800 px-1 rounded ml-1 font-normal">${item.category}</span>`;
+        
+        btn.innerHTML = `${item.word}${badge}`;
+        btn.onclick = (e) => {
+          e.preventDefault();
+          insertSelectedWord(item.word);
+        };
+        candidateBar.appendChild(btn);
+      });
+    }
+
+    // 點擊或代入字彙核心邏輯
+    function insertSelectedWord(word) {
+      const cursorPos = diaryInput.selectionStart;
+      const text = diaryInput.value;
+
+      const leftText = text.substring(0, cursorPos);
+      const rightText = text.substring(cursorPos);
+
+      const keyword = getLastKeyword(leftText);
+      const newLeft = leftText.substring(0, leftText.length - keyword.length);
+
+      // 代入字彙，後面貼心地補上一個空白
+      diaryInput.value = newLeft + word + ' ' + rightText;
+      const newPos = (newLeft + word + ' ').length;
+
+      diaryInput.focus();
+      diaryInput.setSelectionRange(newPos, newPos);
+
+      // 更新使用紀錄
+      recordWordUsage(word);
+
+      // 清除候選UI並更新字數
+      updateSuggestionsUI();
+      charCountSpan.textContent = `字數：${diaryInput.value.length} 字`;
+      
+      showToast(`已代入黃金詞彙：「${word}」`);
+    }
+
+    // 更新字詞使用頻率與最後使用時間
+    function recordWordUsage(wordText) {
+      const index = appWords.findIndex(item => item.word === wordText);
+      if (index !== -1) {
+        appWords[index].count += 1;
+        appWords[index].lastUsed = Date.now();
+        saveWordsToStorage();
+        renderWordsTable(); // 重新整理詞彙表格
+      }
+    }
+
+    function clearCurrentKeyword() {
+      // 快速復原推薦欄狀態
+      updateSuggestionsUI();
+    }
+
+    // 3️⃣ 監聽日記輸入行為
+    diaryInput.addEventListener('input', () => {
+      // 限制草稿儲存
+      localStorage.setItem('gold_diary_active_draft', diaryInput.value);
+      charCountSpan.textContent = `字數：${diaryInput.value.length} 字`;
+      
+      // 動態更新候選字
+      updateSuggestionsUI();
+
+      // 自動存入動畫
+      saveStatusSpan.style.opacity = '1';
+      setTimeout(() => {
+        saveStatusSpan.style.opacity = '0';
+      }, 1000);
+    });
+
+    // 支援空白鍵補全 (當有推薦字詞且最後輸入不是純空白時)
+    diaryInput.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Spacebar') {
+        const text = diaryInput.value;
+        const cursorPos = diaryInput.selectionStart;
+        const leftText = text.substring(0, cursorPos);
+        const keyword = getLastKeyword(leftText);
+
+        // 如果目前有匹配到至少一個候選詞
+        if (keyword && lastMatchList.length > 0) {
+          e.preventDefault(); // 阻止原本的空白鍵行為
+          insertSelectedWord(lastMatchList[0].word); // 自動補全第一個推薦項
+        }
+      }
+    });
+
+    // 4️⃣ 分頁轉換控制
+    function switchTab(tabName) {
+      const tabs = ['write', 'words', 'history'];
+      tabs.forEach(tab => {
+        const content = document.getElementById(`tab-${tab}`);
+        const btn = document.getElementById(`tabBtn-${tab}`);
+        if (tab === tabName) {
+          content.classList.remove('hidden');
+          content.classList.add('block');
+          btn.classList.add('gold-btn-active');
+        } else {
+          content.classList.add('hidden');
+          content.classList.remove('block');
+          btn.classList.remove('gold-btn-active');
+        }
+      });
+
+      // 轉換時重整歷史或詞庫狀態
+      if (tabName === 'history') {
+        renderHistoryList();
+      } else if (tabName === 'words') {
+        renderWordsTable();
+      }
+    }
+
+    // 5️⃣ 詞庫管理面板控制
+    const CATEGORIES = ["全部", "人名", "世界觀", "技能", "心理學", "投資", "地點", "神話", "自訂"];
+
+    function renderCategoryFilters() {
+      categoryFiltersDiv.innerHTML = '';
+      CATEGORIES.forEach(cat => {
+        const btn = document.createElement('button');
+        const isActive = activeCategoryFilter === cat;
+        btn.className = `px-1.5 py-0.5 text-tiny rounded transition-all border ${
+          isActive 
+          ? 'bg-red-800 text-white border-red-950 font-bold' 
+          : 'bg-yellow-200 text-red-900 border-yellow-400 hover:bg-yellow-300'
+        }`;
+        btn.textContent = cat;
+        btn.onclick = () => {
+          activeCategoryFilter = cat;
+          renderCategoryFilters();
+          renderWordsTable();
+        };
+        categoryFiltersDiv.appendChild(btn);
+      });
+    }
+
+    function renderWordsTable() {
+      wordsTableBody.innerHTML = '';
+      
+      const filteredWords = activeCategoryFilter === "全部" 
+        ? appWords 
+        : appWords.filter(item => item.category === activeCategoryFilter);
+
+      if (filteredWords.length === 0) {
+        wordsTableBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="p-4 text-center text-tiny text-yellow-800 italic">
+              此分類目前空空如也，請於上方鑄造您的專屬黃金詞彙
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      // 按使用次數降序排列
+      const sorted = [...filteredWords].sort((a,b) => b.count - a.count);
+
+      sorted.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-yellow-50 border-b border-yellow-300";
+        tr.innerHTML = `
+          <td class="p-1.5 font-bold text-red-950 text-tiny">${item.word}</td>
+          <td class="p-1.5 text-tiny"><span class="bg-yellow-300 text-yellow-950 px-1.5 py-0.5 rounded">${item.category}</span></td>
+          <td class="p-1.5 font-mono text-tiny">${item.count} 次</td>
+          <td class="p-1.5 text-center">
+            <button onclick="deleteWord('${item.word}')" class="text-tiny bg-red-100 hover:bg-red-200 text-red-700 px-1.5 py-0.5 rounded">
+              <i class="fa-solid fa-trash mr-0.5"></i>刪除
+            </button>
+          </td>
+        `;
+        wordsTableBody.appendChild(tr);
+      });
+    }
+
+    // 增加自訂詞彙
+    function addNewWord() {
+      const nameInput = document.getElementById('newWordName');
+      const catSelect = document.getElementById('newWordCategory');
+
+      const wordText = nameInput.value.trim();
+      const catText = catSelect.value;
+
+      if (!wordText) {
+        showToast("錯誤：詞彙名稱不可為空白");
+        return;
+      }
+
+      if (appWords.some(item => item.word.toLowerCase() === wordText.toLowerCase())) {
+        showToast("提示：此詞彙已存在於您的黃金庫房中");
+        return;
+      }
+
+      appWords.push({
+        word: wordText,
+        category: catText,
+        count: 0,
+        lastUsed: 0
+      });
+
+      saveWordsToStorage();
+      nameInput.value = '';
+      
+      renderWordsTable();
+      updateSuggestionsUI();
+      showToast(`完美鑄造新詞：「${wordText}」`);
+    }
+
+    // 刪除詞彙
+    function deleteWord(wordText) {
+      appWords = appWords.filter(item => item.word !== wordText);
+      saveWordsToStorage();
+      renderWordsTable();
+      updateSuggestionsUI();
+      showToast(`已移除詞彙：「${wordText}」`);
+    }
+
+    // 還原系統預設詞庫
+    function resetDefaultWords() {
+      appWords = [...DEFAULT_COMMON_WORDS];
+      saveWordsToStorage();
+      renderWordsTable();
+      updateSuggestionsUI();
+      showToast("詞庫已成功還原為帝國預設設定！");
+    }
+
+    // 6️⃣ 歷史日記管理
+    function manualSaveDiary() {
+      const content = diaryInput.value.trim();
+      if (!content) {
+        showToast("錯誤：寫點日記才能封存至藏寶閣喔");
+        return;
+      }
+
+      const timestamp = Date.now();
+      const dateString = new Date().toLocaleString('zh-TW', { hour12: false });
+      
+      historyDiaries.unshift({
+        id: timestamp,
+        time: dateString,
+        content: content
+      });
+
+      saveHistoryToStorage();
+      
+      // 清空目前輸入框
+      diaryInput.value = '';
+      localStorage.removeItem('gold_diary_active_draft');
+      charCountSpan.textContent = `字數：0 字`;
+      updateSuggestionsUI();
+
+      showToast("日記已成功封存入歷史藏寶閣！");
+      renderHistoryList();
+    }
+
+    function renderHistoryList() {
+      historyListDiv.innerHTML = '';
+      
+      if (historyDiaries.length === 0) {
+        historyListDiv.innerHTML = `
+          <div class="p-4 text-center text-tiny text-yellow-800 italic gold-card">
+            <i class="fa-solid fa-hourglass-empty text-xs mb-1 block text-yellow-600"></i>
+            藏寶閣目前空無一人。快在日記本揮灑您的文采並進行封存。
+          </div>
+        `;
+        return;
+      }
+
+      historyDiaries.forEach(item => {
+        const card = document.createElement('div');
+        card.className = "p-2 bg-white rounded border border-yellow-400 shadow-sm flex flex-col justify-between gap-1";
+        
+        // 限制顯示過長的部分
+        const truncated = item.content.length > 100 ? item.content.substring(0, 100) + "..." : item.content;
+
+        card.innerHTML = `
+          <div>
+            <div class="flex justify-between items-center border-b border-yellow-200 pb-0.5 mb-1">
+              <span class="text-tiny font-bold text-yellow-800"><i class="fa-solid fa-clock mr-0.5"></i>${item.time}</span>
+              <span class="text-tiny text-red-800 bg-red-100 px-1 py-0.5 rounded font-mono">${item.content.length} 字</span>
+            </div>
+            <p class="text-tiny text-red-950 whitespace-pre-wrap leading-relaxed">${truncated}</p>
+          </div>
+          <div class="flex justify-end space-x-1 mt-1 pt-1 border-t border-yellow-100">
+            <button onclick="restoreDiaryToDraft('${item.id}')" class="text-tiny bg-yellow-100 hover:bg-yellow-200 text-yellow-900 px-1.5 py-0.5 rounded">
+              <i class="fa-solid fa-file-signature mr-0.5"></i>呼回編輯器
+            </button>
+            <button onclick="deleteHistoryDiary('${item.id}')" class="text-tiny bg-red-100 hover:bg-red-200 text-red-700 px-1.5 py-0.5 rounded">
+              <i class="fa-solid fa-trash mr-0.5"></i>銷毀
+            </button>
+          </div>
+        `;
+        historyListDiv.appendChild(card);
+      });
+    }
+
+    // 呼回並覆蓋當前草稿
+    function restoreDiaryToDraft(id) {
+      const found = historyDiaries.find(item => item.id == id);
+      if (found) {
+        diaryInput.value = found.content;
+        localStorage.setItem('gold_diary_active_draft', found.content);
+        charCountSpan.textContent = `字數：${found.content.length} 字`;
+        switchTab('write');
+        updateSuggestionsUI();
+        showToast("日記已還原至主編輯器！");
+      }
+    }
+
+    // 刪除歷史日記
+    function deleteHistoryDiary(id) {
+      historyDiaries = historyDiaries.filter(item => item.id != id);
+      saveHistoryToStorage();
+      renderHistoryList();
+      showToast("日記已被銷毀並還原空間。");
+    }
+
+    // 7️⃣ 頂級輔助功能與自我代碼下載
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.textContent = msg;
+      
+      toast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-10', 'pointer-events-none');
+      }, 2500);
+    }
+
+    // 自動計算本代碼實際行數並呈現在右上角
+    function updateLineCounter() {
+      // 獲取當前頁面所有內容並依換行計算行數
+      const completeCode = document.documentElement.outerHTML;
+      const lines = completeCode.split('\n').length;
+      document.getElementById('lineCounter').textContent = `實際代碼總行數：${lines} 行`;
+    }
+
+    // 下載本體 HTML 的極客功能
+    function downloadSelfCode() {
+      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "gold_diary_system_complete.html";
+      link.click();
+      showToast("本系統單檔下載成功！可在任何地方離線執行。");
+    }
+
+    // 帝國大掃除
+    function clearAllData() {
+      localStorage.removeItem('gold_words_library');
+      localStorage.removeItem('gold_diaries_history');
+      localStorage.removeItem('gold_diary_active_draft');
+      
+      diaryInput.value = '';
+      appWords = [...DEFAULT_COMMON_WORDS];
+      historyDiaries = [];
+      
+      renderWordsTable();
+      renderHistoryList();
+      updateSuggestionsUI();
+      
+      showToast("所有本地快取資料已被彻底清除。");
+    }
+  </script>
+</body>
+</html>
+
+```
