@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Duplicate Cleaner V3</title>
+
+<style>
+body{
+    margin:0;
+    background:#0b1220;
+    color:#fff;
+    font-family:Arial;
+}
+
+header{
+    padding:14px;
+    background:#111827;
+    position:sticky;
+    top:0;
+}
+
+button{
+    padding:10px 14px;
+    margin:5px;
+    border:0;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.primary{background:#2563eb;color:#fff;}
+.success{background:#16a34a;color:#fff;}
+.danger{background:#dc2626;color:#fff;}
+.gray{background:#374151;color:#fff;}
+
+.container{padding:12px;}
+
+.card{
+    background:#1f2937;
+    padding:12px;
+    border-radius:12px;
+    margin-top:10px;
+}
+
+.item{
+    background:#374151;
+    padding:8px;
+    border-radius:10px;
+    font-size:12px;
+    margin-bottom:10px;
+    word-break:break-all;
+}
+
+pre{
+    background:black;
+    padding:10px;
+    border-radius:10px;
+    white-space:pre-wrap;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>🔥 AI Duplicate Cleaner V3 (真正AI相似版)</h2>
+
+<input type="file" id="picker" webkitdirectory multiple hidden>
+
+<button class="primary" onclick="picker.click()">選資料夾</button>
+<button class="success" onclick="scan()">AI 掃描</button>
+<button class="danger" onclick="exportList()">匯出刪除清單</button>
+<button class="gray" onclick="copyList()">複製路徑</button>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h3>📊 狀態</h3>
+<div id="status">等待</div>
+</div>
+
+<div class="card">
+<h3>📁 重複群組</h3>
+<div id="result"></div>
+</div>
+
+<div class="card">
+<h3>🧾 delete_list.txt</h3>
+<pre id="list"></pre>
+</div>
+
+</div>
+
+<script>
+
+let groups = [];
+let deleteList = [];
+
+/* =========================
+   pHash（圖片AI核心）
+========================= */
+async function imageHash(file){
+
+    return new Promise((resolve)=>{
+
+        const img = new Image();
+
+        img.onload = ()=>{
+
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = 32;
+            canvas.height = 32;
+
+            ctx.drawImage(img,0,0,32,32);
+
+            const data = ctx.getImageData(0,0,32,32).data;
+
+            let gray = [];
+
+            for(let i=0;i<data.length;i+=4){
+                gray.push((data[i]+data[i+1]+data[i+2])/3);
+            }
+
+            const avg = gray.reduce((a,b)=>a+b)/gray.length;
+
+            let hash = "";
+
+            gray.forEach(v=>{
+                hash += v>avg ? "1":"0";
+            });
+
+            resolve(hash);
+        };
+
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+/* =========================
+   影片 AI（frame sampling）
+========================= */
+async function videoHash(file){
+
+    return new Promise((resolve)=>{
+
+        const video = document.createElement("video");
+        video.muted = true;
+
+        video.onloadeddata = ()=>{
+
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+
+            canvas.width = 32;
+            canvas.height = 32;
+
+            ctx.drawImage(video,0,0,32,32);
+
+            const data = ctx.getImageData(0,0,32,32).data;
+
+            let gray = [];
+
+            for(let i=0;i<data.length;i+=4){
+                gray.push((data[i]+data[i+1]+data[i+2])/3);
+            }
+
+            const avg = gray.reduce((a,b)=>a+b)/gray.length;
+
+            let hash = "";
+
+            gray.forEach(v=>{
+                hash += v>avg ? "1":"0";
+            });
+
+            resolve(hash);
+        };
+
+        video.src = URL.createObjectURL(file);
+    });
+}
+
+/* =========================
+   主掃描
+========================= */
+async function scan(){
+
+    const files = picker.files;
+
+    if(!files.length){
+        alert("請選資料夾");
+        return;
+    }
+
+    groups = [];
+    deleteList = [];
+
+    const map = {};
+
+    let i = 0;
+
+    for(let file of files){
+
+        if(!file.type.startsWith("image/")
+        && !file.type.startsWith("video/")) continue;
+
+        let hash;
+
+        if(file.type.startsWith("image/")){
+            hash = await imageHash(file);
+        }else{
+            hash = await videoHash(file);
+        }
+
+        const path = file.webkitRelativePath;
+
+        if(!map[hash]){
+            map[hash] = [];
+        }
+
+        map[hash].push({
+            path,
+            name:file.name,
+            size:file.size,
+            time:file.lastModified
+        });
+
+        i++;
+        if(i%100===0){
+            status.innerText = "AI分析中..." + i;
+        }
+    }
+
+    /* build groups */
+    Object.values(map).forEach(g=>{
+        if(g.length>1){
+            g.sort((a,b)=>b.time-a.time);
+            groups.push(g);
+        }
+    });
+
+    render();
+
+    status.innerText =
+        `完成 AI 分析：${groups.length} 群`;
+}
+
+/* =========================
+   render
+========================= */
+function render(){
+
+    const box = result;
+    const list = document.getElementById("list");
+
+    box.innerHTML = "";
+    deleteList = [];
+
+    groups.forEach((g,i)=>{
+
+        let div = document.createElement("div");
+        div.className = "item";
+
+        let html = `<b>群組 ${i+1}</b><br><br>`;
+
+        g.forEach((f,idx)=>{
+
+            const tag = idx===0 ? "✅保留" : "❌刪除";
+
+            html += `${tag}<br>${f.path}<br><br>`;
+
+            if(idx!==0){
+                deleteList.push(f.path);
+            }
+        });
+
+        div.innerHTML = html;
+        box.appendChild(div);
+    });
+
+    list.innerText = deleteList.join("\n");
+}
+
+/* =========================
+   export
+========================= */
+function exportList(){
+
+    const blob = new Blob(
+        [deleteList.join("\n")],
+        {type:"text/plain"}
+    );
+
+    const a = document.createElement("a");
+
+    a.href = URL.createObjectURL(blob);
+    a.download = "delete_list.txt";
+
+    a.click();
+}
+
+/* =========================
+   copy
+========================= */
+function copyList(){
+
+    navigator.clipboard.writeText(deleteList.join("\n"));
+
+    alert("已複製全部刪除路徑");
+}
+
+</script>
+
+</body>
+</html>
