@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Cleaner V4 Ultra</title>
+
+<style>
+body{margin:0;background:#0b1220;color:#fff;font-family:Arial;}
+header{padding:12px;background:#111827;position:sticky;top:0;}
+button{padding:10px 12px;margin:4px;border:0;border-radius:10px;cursor:pointer;}
+.primary{background:#2563eb;color:#fff;}
+.success{background:#16a34a;color:#fff;}
+.gray{background:#374151;color:#fff;}
+.danger{background:#dc2626;color:#fff;}
+.container{padding:10px;}
+.card{background:#1f2937;padding:10px;border-radius:12px;margin-top:10px;}
+.item{background:#374151;padding:8px;border-radius:10px;font-size:12px;margin-bottom:8px;word-break:break-all;}
+pre{background:black;padding:10px;border-radius:10px;white-space:pre-wrap;}
+.progress{height:8px;background:#374151;border-radius:10px;overflow:hidden;margin-top:6px;}
+.bar{height:8px;width:0%;background:#22c55e;}
+</style>
+</head>
+
+<body>
+
+<header>
+<h3>🔥 AI Cleaner V4 Ultra</h3>
+
+<input type="file" id="picker" webkitdirectory multiple hidden>
+
+<button class="primary" onclick="picker.click()">選資料夾</button>
+<button class="success" onclick="startScan()">開始掃描</button>
+<button class="gray" onclick="togglePause()">暫停/繼續</button>
+<button class="danger" onclick="exportList()">匯出刪除</button>
+
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div id="status">等待</div>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h3>📁 重複群組</h3>
+<div id="result"></div>
+</div>
+
+<div class="card">
+<h3>🧾 delete_list</h3>
+<pre id="list"></pre>
+</div>
+
+</div>
+
+<script>
+
+let worker;
+let groups=[];
+let deleteList=[];
+let paused=false;
+let threshold=8;
+
+/* ================= Worker ================= */
+function createWorker(){
+
+const code=`
+self.onmessage=async function(e){
+
+const files=e.data;
+
+function hash(buf){
+let u=new Uint8Array(buf);
+let g=[];
+for(let i=0;i<u.length;i+=500) g.push(u[i]);
+let avg=g.reduce((a,b)=>a+b)/g.length;
+let h="";
+for(let i=0;i<64;i++) h+=g[i*2]>avg?1:0;
+return h;
+}
+
+let res=[];
+for(let i=0;i<files.length;i++){
+
+const f=files[i];
+if(!f.type.startsWith('image/') && !f.type.startsWith('video/')) continue;
+
+const buf=await f.arrayBuffer();
+
+res.push({
+path:f.webkitRelativePath,
+time:f.lastModified,
+hash:hash(buf)
+});
+
+if(i%200==0){
+self.postMessage({type:'progress',value:i});
+}
+}
+
+self.postMessage({type:'done',data:res});
+};
+`;
+
+return new Worker(URL.createObjectURL(new Blob([code],{type:'application/javascript'})));
+}
+
+/* ================= Hamming ================= */
+function hamming(a,b){
+let d=0;
+for(let i=0;i<a.length;i++) if(a[i]!==b[i]) d++;
+return d;
+}
+
+/* ================= Start ================= */
+function startScan(){
+
+let files=[...picker.files];
+if(!files.length)return alert('選資料夾');
+
+groups=[];
+deleteList=[];
+
+worker=createWorker();
+
+worker.onmessage=(e)=>{
+
+if(e.data.type==='progress'){
+bar.style.width=(e.data.value/files.length*100)+'%';
+status.innerText="掃描中 "+e.data.value;
+}
+
+if(e.data.type==='done'){
+build(e.data.data);
+}
+};
+
+worker.postMessage(files);
+}
+
+/* ================= Build Groups ================= */
+function build(data){
+
+let map=[];
+
+for(let f of data){
+
+let found=false;
+
+for(let g of map){
+if(hamming(g.hash,f.hash)<threshold){
+g.files.push(f);
+found=true;
+break;
+}
+}
+
+if(!found){
+map.push({hash:f.hash,files:[f]});
+}
+}
+
+groups=map.filter(g=>g.files.length>1);
+
+render();
+
+status.innerText="完成 "+groups.length+" 群";
+bar.style.width="100%";
+}
+
+/* ================= Render ================= */
+function render(){
+
+result.innerHTML="";
+deleteList=[];
+
+groups.forEach((g,i)=>{
+
+let div=document.createElement("div");
+div.className="item";
+
+g.files.sort((a,b)=>b.time-a.time);
+
+let html="<b>群組 "+(i+1)+"</b><br><br>";
+
+g.files.forEach((f,idx)=>{
+
+let tag=idx==0?"✅保留":"❌刪除";
+html+=tag+"<br>"+f.path+"<br><br>";
+
+if(idx>0) deleteList.push(f.path);
+});
+
+div.innerHTML=html;
+result.appendChild(div);
+});
+
+list.innerText=deleteList.join("\n");
+}
+
+/* ================= Export ================= */
+function exportList(){
+let blob=new Blob([deleteList.join("\n")],{type:"text/plain"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="delete_list.txt";
+a.click();
+}
+
+/* ================= Pause ================= */
+function togglePause(){
+paused=!paused;
+status.innerText=paused?"已暫停":"繼續";
+}
+
+</script>
+
+</body>
+</html>
