@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Duplicate Cleaner Pro</title>
+
+<style>
+body{
+    margin:0;
+    background:#0b1220;
+    color:#fff;
+    font-family:Arial;
+}
+
+header{
+    padding:16px;
+    background:#111827;
+    position:sticky;
+    top:0;
+}
+
+h1{ font-size:20px; margin:0; }
+
+.container{ padding:12px; }
+
+button{
+    padding:10px 14px;
+    margin:5px;
+    border:0;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.primary{ background:#2563eb; color:#fff; }
+.success{ background:#16a34a; color:#fff; }
+.danger{ background:#dc2626; color:#fff; }
+.gray{ background:#374151; color:#fff; }
+
+.card{
+    background:#1f2937;
+    padding:12px;
+    border-radius:12px;
+    margin-top:10px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:10px;
+}
+
+.item{
+    background:#374151;
+    border-radius:10px;
+    padding:8px;
+    font-size:12px;
+    word-break:break-all;
+}
+
+pre{
+    white-space:pre-wrap;
+    background:#000;
+    padding:10px;
+    border-radius:10px;
+    overflow:auto;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>📱 AI 重複檔案清理 Pro（本機版）</h1>
+
+<input type="file" id="picker" webkitdirectory multiple hidden>
+
+<button class="primary" onclick="document.getElementById('picker').click()">
+選資料夾
+</button>
+
+<button class="success" onclick="scan()">AI 掃描</button>
+
+<button class="danger" onclick="exportList()">匯出刪除清單</button>
+
+<button class="gray" onclick="copyAll()">複製全部路徑</button>
+</header>
+
+<div class="container">
+
+<div class="card">
+<h3>📊 統計</h3>
+<div id="stats">等待掃描</div>
+</div>
+
+<div class="card">
+<h3>📁 重複群組</h3>
+<div id="result"></div>
+</div>
+
+<div class="card">
+<h3>🧾 Delete List</h3>
+<pre id="listBox"></pre>
+</div>
+
+</div>
+
+<script>
+
+let groups = [];
+let deleteList = [];
+
+function logStats(text){
+    document.getElementById("stats").innerText = text;
+}
+
+/* ===== hash ===== */
+async function hashFile(file){
+    const buf = await file.arrayBuffer();
+    const h = await crypto.subtle.digest("SHA-256", buf);
+    return [...new Uint8Array(h)]
+        .map(b=>b.toString(16).padStart(2,"0"))
+        .join("");
+}
+
+/* ===== scan ===== */
+async function scan(){
+
+    const files = document.getElementById("picker").files;
+
+    if(!files.length){
+        alert("請選資料夾");
+        return;
+    }
+
+    groups = [];
+    deleteList = [];
+
+    const map = {};
+    let total = 0;
+    let dup = 0;
+
+    for(let f of files){
+
+        if(!f.type.startsWith("image/")
+        && !f.type.startsWith("video/")) continue;
+
+        total++;
+
+        const h = await hashFile(f);
+
+        const path = f.webkitRelativePath;
+
+        if(map[h]){
+
+            if(!map[h].files){
+                map[h].files = [map[h]];
+            }
+
+            map[h].files.push({
+                name:f.name,
+                path,
+                size:f.size,
+                lastModified:f.lastModified
+            });
+
+        } else {
+
+            map[h] = {
+                name:f.name,
+                path,
+                size:f.size,
+                lastModified:f.lastModified,
+                files:null
+            };
+        }
+    }
+
+    /* build groups */
+    Object.values(map).forEach(g=>{
+        if(g.files && g.files.length>1){
+            groups.push(g);
+        }
+    });
+
+    render();
+
+    logStats(`檔案:${total} / 重複群組:${groups.length}`);
+}
+
+/* ===== render ===== */
+function render(){
+
+    const box = document.getElementById("result");
+    const listBox = document.getElementById("listBox");
+
+    box.innerHTML = "";
+    deleteList = [];
+
+    groups.forEach((g,i)=>{
+
+        const div = document.createElement("div");
+        div.className = "item";
+
+        let html = `<b>群組 ${i+1}</b><br><br>`;
+
+        /* sort by newest */
+        g.files.sort((a,b)=>b.lastModified-a.lastModified);
+
+        g.files.forEach((f,idx)=>{
+
+            const role = idx===0 ? "✅ 保留" : "❌ 刪除";
+
+            html += `${role}<br>${f.path}<br><br>`;
+
+            if(idx !== 0){
+                deleteList.push(f.path);
+            }
+        });
+
+        div.innerHTML = html;
+        box.appendChild(div);
+    });
+
+    listBox.innerText = deleteList.join("\n");
+}
+
+/* ===== export txt ===== */
+function exportList(){
+
+    const content = deleteList.join("\n");
+
+    const blob = new Blob([content],{type:"text/plain"});
+
+    const a = document.createElement("a");
+
+    a.href = URL.createObjectURL(blob);
+    a.download = "delete_list.txt";
+
+    a.click();
+}
+
+/* ===== copy ===== */
+function copyAll(){
+
+    navigator.clipboard.writeText(deleteList.join("\n"));
+
+    alert("已複製全部刪除路徑");
+}
+
+</script>
+
+</body>
+</html>
