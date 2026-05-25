@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="
+width=device-width,
+initial-scale=1.0,
+maximum-scale=1.0,
+user-scalable=no,
+viewport-fit=cover
+">
+
+<title>黃金日記 GitHub Pages 完整版</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link
+rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+/>
+
+<style>
+
+/* ===== 基本 ===== */
+
+*{
+  box-sizing:border-box;
+  overscroll-behavior:none;
+}
+
+html{
+  height:100%;
+}
+
+body{
+
+  margin:0;
+  padding:0;
+
+  min-height:100vh;
+
+  background:
+  radial-gradient(
+    circle at center,
+    #ffe066 0%,
+    #f5b041 50%,
+    #cb4335 100%
+  );
+
+  font-family:
+  -apple-system,
+  BlinkMacSystemFont,
+  "Segoe UI",
+  sans-serif;
+
+  color:#78281f;
+
+  overflow:hidden;
+
+}
+
+/* ===== 主容器 ===== */
+
+.main-app{
+
+  width:100%;
+  max-width:480px;
+
+  min-height:100vh;
+
+  margin:auto;
+
+  display:flex;
+  flex-direction:column;
+
+  padding:8px;
+
+  overflow:hidden;
+
+}
+
+@supports(height:100dvh){
+
+  .main-app{
+    min-height:100dvh;
+  }
+
+}
+
+/* ===== 卡片 ===== */
+
+.gold-card{
+
+  flex:1;
+
+  display:flex;
+  flex-direction:column;
+
+  min-height:0;
+
+  overflow:hidden;
+
+  border-radius:20px;
+
+  border:3px solid #d4ac0d;
+
+  background:
+  linear-gradient(
+    135deg,
+    #fdf2e9 0%,
+    #fbeee6 100%
+  );
+
+  box-shadow:
+  0 12px 28px rgba(120,40,31,0.35);
+
+}
+
+/* ===== Header ===== */
+
+.header{
+
+  padding:10px;
+
+  border-bottom:2px solid #f4d03f;
+
+  background:#fff7cc;
+
+  flex-shrink:0;
+
+}
+
+.header-title{
+
+  font-size:0.8rem;
+
+  font-weight:bold;
+
+}
+
+/* ===== Tabs ===== */
+
+.tabs{
+
+  display:grid;
+
+  grid-template-columns:
+  repeat(3,1fr);
+
+  gap:6px;
+
+  padding:8px;
+
+  background:#fff3cd;
+
+  flex-shrink:0;
+
+}
+
+.tab-btn{
+
+  border:none;
+
+  border-radius:12px;
+
+  padding:10px;
+
+  font-size:0.7rem;
+
+  font-weight:bold;
+
+  background:
+  linear-gradient(
+    135deg,
+    #f1c40f,
+    #f39c12
+  );
+
+  color:#78281f;
+
+}
+
+.tab-btn.active{
+
+  background:
+  linear-gradient(
+    135deg,
+    #b9770e,
+    #d35400
+  );
+
+  color:white;
+
+}
+
+/* ===== Tab內容 ===== */
+
+.tab-content{
+
+  flex:1;
+
+  display:none;
+
+  flex-direction:column;
+
+  min-height:0;
+
+  overflow:hidden;
+
+}
+
+.tab-content.active{
+  display:flex;
+}
+
+/* ===== 候選列 ===== */
+
+.candidate-bar{
+
+  display:flex;
+
+  overflow-x:auto;
+
+  gap:6px;
+
+  padding:8px;
+
+  background:#fff8dc;
+
+  border-top:2px solid #f4d03f;
+  border-bottom:2px solid #f4d03f;
+
+  flex-shrink:0;
+
+  scrollbar-width:none;
+
+}
+
+.candidate-bar::-webkit-scrollbar{
+  display:none;
+}
+
+/* ===== 候選按鈕 ===== */
+
+.word-btn{
+
+  flex-shrink:0;
+
+  border:none;
+
+  border-radius:999px;
+
+  padding:8px 12px;
+
+  background:white;
+
+  border:2px solid #d4ac0d;
+
+  font-size:0.7rem;
+
+  font-weight:bold;
+
+  white-space:nowrap;
+
+}
+
+/* ===== 編輯器 ===== */
+
+.editor-wrap{
+
+  flex:1;
+
+  display:flex;
+
+  flex-direction:column;
+
+  min-height:0;
+
+  overflow:hidden;
+
+}
+
+#diaryInput{
+
+  flex:1;
+
+  width:100%;
+
+  min-height:0;
+
+  border:none;
+  outline:none;
+
+  resize:none;
+
+  overflow-y:auto;
+  overflow-x:hidden;
+
+  background:#fffef8;
+
+  color:#641e16;
+
+  padding:14px;
+
+  font-size:16px;
+
+  line-height:1.7;
+
+  white-space:pre-wrap;
+
+  word-break:break-all;
+
+  overflow-wrap:anywhere;
+
+  font-family:
+  ui-monospace,
+  SFMono-Regular,
+  monospace;
+
+}
+
+/* ===== 底部 ===== */
+
+.bottom-info{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  padding:8px;
+
+  background:#fff3cd;
+
+  font-size:0.65rem;
+
+  flex-shrink:0;
+
+}
+
+/* ===== 搜尋 ===== */
+
+.search-wrap{
+
+  padding:8px;
+
+  background:#fff7cc;
+
+  border-bottom:2px solid #f4d03f;
+
+}
+
+.search-input{
+
+  width:100%;
+
+  padding:10px;
+
+  border-radius:12px;
+
+  border:2px solid #d4ac0d;
+
+  outline:none;
+
+  font-size:0.75rem;
+
+}
+
+/* ===== 詞庫 ===== */
+
+.words-list{
+
+  flex:1;
+
+  overflow-y:auto;
+
+  overflow-x:hidden;
+
+  padding:8px;
+
+  display:flex;
+  flex-direction:column;
+
+  gap:6px;
+
+}
+
+.words-list::-webkit-scrollbar{
+  width:8px;
+}
+
+.words-list::-webkit-scrollbar-thumb{
+
+  background:#d4ac0d;
+
+  border-radius:999px;
+
+}
+
+.word-card{
+
+  padding:10px;
+
+  border-radius:12px;
+
+  background:white;
+
+  border:2px solid #f4d03f;
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  gap:8px;
+
+  font-size:0.7rem;
+
+}
+
+/* ===== 歷史 ===== */
+
+.history-list{
+
+  flex:1;
+
+  overflow-y:auto;
+
+  padding:8px;
+
+  display:flex;
+  flex-direction:column;
+
+  gap:8px;
+
+}
+
+.history-card{
+
+  padding:10px;
+
+  border-radius:14px;
+
+  background:white;
+
+  border:2px solid #f4d03f;
+
+  font-size:0.7rem;
+
+}
+
+/* ===== 按鈕 ===== */
+
+.gold-btn{
+
+  border:none;
+
+  border-radius:10px;
+
+  padding:8px 10px;
+
+  font-size:0.7rem;
+
+  font-weight:bold;
+
+  background:
+  linear-gradient(
+    135deg,
+    #f1c40f,
+    #f39c12
+  );
+
+  color:#78281f;
+
+  flex-shrink:0;
+
+}
+
+/* ===== Toast ===== */
+
+.toast{
+
+  position:fixed;
+
+  bottom:20px;
+
+  left:50%;
+
+  transform:translateX(-50%);
+
+  background:#fff3cd;
+
+  border:2px solid #d4ac0d;
+
+  padding:10px 16px;
+
+  border-radius:12px;
+
+  font-size:0.7rem;
+
+  font-weight:bold;
+
+  opacity:0;
+
+  pointer-events:none;
+
+  transition:0.3s;
+
+  z-index:9999;
+
+}
+
+.toast.show{
+  opacity:1;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="main-app">
+
+<div class="gold-card">
+
+<!-- Header -->
+
+<div class="header">
+
+<div class="flex justify-between items-center">
+
+<div class="header-title">
+<i class="fa-solid fa-feather"></i>
+黃金日記 GitHub Pages 完整版
+</div>
+
+<div id="saveStatus" style="font-size:0.65rem;">
+自動保存
+</div>
+
+</div>
+
+</div>
+
+<!-- Tabs -->
+
+<div class="tabs">
+
+<button
+class="tab-btn active"
+id="tab-write-btn"
+onclick="switchTab('write')"
+>
+寫作
+</button>
+
+<button
+class="tab-btn"
+id="tab-words-btn"
+onclick="switchTab('words')"
+>
+詞庫
+</button>
+
+<button
+class="tab-btn"
+id="tab-history-btn"
+onclick="switchTab('history')"
+>
+歷史
+</button>
+
+</div>
+
+<!-- ===== 寫作 ===== -->
+
+<div
+class="tab-content active"
+id="tab-write"
+>
+
+<div
+id="candidateBar"
+class="candidate-bar"
+>
+<span style="font-size:0.65rem;">
+開始輸入...
+</span>
+</div>
+
+<div class="editor-wrap">
+
+<textarea
+id="diaryInput"
+placeholder="開始輸入日記..."
+spellcheck="false"
+autocorrect="off"
+autocomplete="off"
+autocapitalize="off"
+></textarea>
+
+</div>
+
+<div class="bottom-info">
+
+<div id="charCount">
+字數：0
+</div>
+
+<div>
+14字換行
+</div>
+
+</div>
+
+</div>
+
+<!-- ===== 詞庫 ===== -->
+
+<div
+class="tab-content"
+id="tab-words"
+>
+
+<!-- 搜尋 -->
+
+<div class="search-wrap">
+
+<input
+id="searchWord"
+class="search-input"
+placeholder="搜尋詞庫..."
+/>
+
+</div>
+
+<!-- 新增 -->
+
+<div style="padding:8px;">
+
+<div class="flex gap-2">
+
+<input
+id="newWord"
+placeholder="新增詞"
+class="search-input flex-1"
+/>
+
+<button
+class="gold-btn"
+onclick="addWord()"
+>
+新增
+</button>
+
+</div>
+
+</div>
+
+<!-- 詞庫列表 -->
+
+<div
+id="wordsList"
+class="words-list"
+></div>
+
+</div>
+
+<!-- ===== 歷史 ===== -->
+
+<div
+class="tab-content"
+id="tab-history"
+>
+
+<div style="padding:8px;">
+
+<button
+class="gold-btn w-full"
+onclick="saveHistory()"
+>
+保存目前日記
+</button>
+
+</div>
+
+<div
+id="historyList"
+class="history-list"
+></div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- Toast -->
+
+<div
+id="toast"
+class="toast"
+>
+已保存
+</div>
+
+<script>
+
+/* ===== 預設詞庫 ===== */
+
+const DEFAULT_WORDS = [
+
+"阿凱",
+"Anna",
+"諾拉",
+"莉莉絲",
+"芙蕾雅",
+"美咲",
+"藤田",
+"小晴",
+"小琪",
+"小雅",
+"Victoria",
+"Emily",
+"Luna",
+"Lady",
+"女媧",
+"波塞冬",
+"刑天",
+"爆炎",
+"霜華",
+"影刃",
+"記憶",
+"疼痛",
+"身體",
+"空間",
+"力量",
+"絕望",
+"崩潰",
+"現實",
+"靈魂",
+"主人",
+"房間",
+"希望",
+"光芒",
+"深淵",
+"治療",
+"精神力",
+"生命能量",
+"能量",
+"虛空",
+"時間之力",
+"創世之力",
+"水元素",
+"系統",
+"財富",
+"投資",
+"風險",
+"成功率",
+"忠誠",
+"情緒",
+"恐懼",
+"習慣",
+"預測",
+"多巴胺",
+"獎勵",
+"系統1",
+"系統2"
+
+];
+
+/* ===== 資料 ===== */
+
+let appWords = [];
+let historyData = [];
+
+/* ===== DOM ===== */
+
+const diaryInput =
+document.getElementById('diaryInput');
+
+const candidateBar =
+document.getElementById('candidateBar');
+
+const charCount =
+document.getElementById('charCount');
+
+const wordsList =
+document.getElementById('wordsList');
+
+const historyList =
+document.getElementById('historyList');
+
+const toast =
+document.getElementById('toast');
+
+/* ===== 初始化 ===== */
+
+window.addEventListener(
+'DOMContentLoaded',
+() => {
+
+  loadWords();
+
+  loadDraft();
+
+  loadHistory();
+
+  renderWords();
+
+  renderHistory();
+
+  updateChar();
+
+  updateSuggestions();
+
+}
+);
+
+/* ===== Tabs ===== */
+
+function switchTab(tab){
+
+  document
+  .querySelectorAll('.tab-content')
+  .forEach(el => {
+    el.classList.remove('active');
+  });
+
+  document
+  .querySelectorAll('.tab-btn')
+  .forEach(el => {
+    el.classList.remove('active');
+  });
+
+  document
+  .getElementById(`tab-${tab}`)
+  .classList.add('active');
+
+  document
+  .getElementById(`tab-${tab}-btn`)
+  .classList.add('active');
+
+}
+
+/* ===== Toast ===== */
+
+function showToast(msg){
+
+  toast.textContent = msg;
+
+  toast.classList.add('show');
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+  },1000);
+
+}
+
+/* ===== Draft ===== */
+
+function loadDraft(){
+
+  const saved =
+  localStorage.getItem(
+    'gold_diary_draft'
+  );
+
+  if(saved){
+    diaryInput.value = saved;
+  }
+
+}
+
+function saveDraft(){
+
+  localStorage.setItem(
+    'gold_diary_draft',
+    diaryInput.value
+  );
+
+}
+
+/* ===== History ===== */
+
+function loadHistory(){
+
+  const saved =
+  localStorage.getItem(
+    'gold_history'
+  );
+
+  if(saved){
+
+    historyData =
+    JSON.parse(saved);
+
+  }
+
+}
+
+function saveHistory(){
+
+  if(!diaryInput.value.trim()){
+    return;
+  }
+
+  historyData.unshift({
+
+    time:
+    new Date().toLocaleString(),
+
+    content:
+    diaryInput.value
+
+  });
+
+  localStorage.setItem(
+    'gold_history',
+    JSON.stringify(historyData)
+  );
+
+  renderHistory();
+
+  showToast('已保存歷史');
+
+}
+
+function renderHistory(){
+
+  historyList.innerHTML = '';
+
+  historyData.forEach(item => {
+
+    const div =
+    document.createElement('div');
+
+    div.className =
+    'history-card';
+
+    div.innerHTML = `
+    <div style="
+    font-size:0.6rem;
+    color:#999;
+    margin-bottom:6px;
+    ">
+    ${item.time}
+    </div>
+
+    <div>
+    ${item.content}
+    </div>
+    `;
+
+    historyList.appendChild(div);
+
+  });
+
+}
+
+/* ===== 詞庫 ===== */
+
+function loadWords(){
+
+  const saved =
+  localStorage.getItem(
+    'gold_words'
+  );
+
+  if(saved){
+
+    appWords =
+    JSON.parse(saved);
+
+  }else{
+
+    appWords =
+    [...DEFAULT_WORDS];
+
+  }
+
+}
+
+function saveWords(){
+
+  localStorage.setItem(
+    'gold_words',
+    JSON.stringify(appWords)
+  );
+
+}
+
+function renderWords(){
+
+  const search =
+  document
+  .getElementById('searchWord')
+  .value
+  .trim()
+  .toLowerCase();
+
+  wordsList.innerHTML = '';
+
+  const filtered =
+  appWords.filter(word => {
+
+    return word
+    .toLowerCase()
+    .includes(search);
+
+  });
+
+  filtered.forEach(word => {
+
+    const div =
+    document.createElement('div');
+
+    div.className =
+    'word-card';
+
+    div.innerHTML = `
+
+    <div style="
+    flex:1;
+    word-break:break-all;
+    ">
+    ${word}
+    </div>
+
+    <button
+    class="gold-btn"
+    onclick="insertWord('${word}')"
+    >
+    插入
+    </button>
+
+    <button
+    class="gold-btn"
+    onclick="deleteWord('${word}')"
+    >
+    刪除
+    </button>
+
+    `;
+
+    wordsList.appendChild(div);
+
+  });
+
+}
+
+function addWord(){
+
+  const input =
+  document.getElementById(
+    'newWord'
+  );
+
+  const value =
+  input.value.trim();
+
+  if(!value) return;
+
+  if(appWords.includes(value)){
+
+    showToast('已存在');
+
+    return;
+
+  }
+
+  appWords.unshift(value);
+
+  saveWords();
+
+  renderWords();
+
+  input.value = '';
+
+  showToast('新增成功');
+
+}
+
+function deleteWord(word){
+
+  appWords =
+  appWords.filter(
+    w => w !== word
+  );
+
+  saveWords();
+
+  renderWords();
+
+  showToast('已刪除');
+
+}
+
+/* ===== 搜尋 ===== */
+
+function getLastKeyword(text){
+
+  const parts =
+  text.split(
+  /[\s\n，。,、：；！？]/
+  );
+
+  return parts[
+    parts.length - 1
+  ] || '';
+
+}
+
+function getSuggestions(keyword){
+
+  if(!keyword) return [];
+
+  return appWords
+  .filter(word =>
+    word.includes(keyword)
+  )
+  .slice(0,20);
+
+}
+
+/* ===== 更新候選 ===== */
+
+function updateSuggestions(){
+
+  const cursor =
+  diaryInput.selectionStart;
+
+  const left =
+  diaryInput.value.substring(
+    0,
+    cursor
+  );
+
+  const keyword =
+  getLastKeyword(left);
+
+  const list =
+  getSuggestions(keyword);
+
+  candidateBar.innerHTML = '';
+
+  if(list.length === 0){
+
+    candidateBar.innerHTML =
+    `<span style="font-size:0.65rem;">無匹配</span>`;
+
+    return;
+
+  }
+
+  list.forEach(word => {
+
+    const btn =
+    document.createElement('button');
+
+    btn.className =
+    'word-btn';
+
+    btn.textContent =
+    word;
+
+    btn.onclick = () => {
+      insertWord(word);
+    };
+
+    candidateBar.appendChild(btn);
+
+  });
+
+}
+
+/* ===== 插入詞 ===== */
+
+function insertWord(word){
+
+  switchTab('write');
+
+  const cursor =
+  diaryInput.selectionStart;
+
+  const text =
+  diaryInput.value;
+
+  const left =
+  text.substring(0,cursor);
+
+  const right =
+  text.substring(cursor);
+
+  const keyword =
+  getLastKeyword(left);
+
+  const newLeft =
+  left.substring(
+    0,
+    left.length - keyword.length
+  );
+
+  diaryInput.value =
+  newLeft +
+  word +
+  ' ' +
+  right;
+
+  const pos =
+  (newLeft + word + ' ').length;
+
+  diaryInput.focus();
+
+  diaryInput.setSelectionRange(
+    pos,
+    pos
+  );
+
+  updateSuggestions();
+
+  updateChar();
+
+  saveDraft();
+
+}
+
+/* ===== 字數 ===== */
+
+function updateChar(){
+
+  charCount.textContent =
+  `字數：${diaryInput.value.length}`;
+
+}
+
+/* ===== 14字換行 ===== */
+
+function autoWrapChineseText(
+  text,
+  limit = 14
+){
+
+  return text
+  .split('\n')
+  .map(line => {
+
+    let result = '';
+
+    for(
+      let i = 0;
+      i < line.length;
+      i++
+    ){
+
+      result += line[i];
+
+      if(
+        (i + 1) % limit === 0
+      ){
+
+        result += '\n';
+
+      }
+
+    }
+
+    return result;
+
+  })
+  .join('\n');
+
+}
+
+let formatting = false;
+
+/* ===== 輸入 ===== */
+
+diaryInput.addEventListener(
+'input',
+() => {
+
+  if(formatting) return;
+
+  formatting = true;
+
+  const cursor =
+  diaryInput.selectionStart;
+
+  const original =
+  diaryInput.value;
+
+  const formatted =
+  autoWrapChineseText(
+    original,
+    14
+  );
+
+  diaryInput.value =
+  formatted;
+
+  diaryInput.setSelectionRange(
+    cursor,
+    cursor
+  );
+
+  formatting = false;
+
+  updateSuggestions();
+
+  updateChar();
+
+  saveDraft();
+
+}
+);
+
+/* ===== 空白補全 ===== */
+
+diaryInput.addEventListener(
+'keydown',
+(e) => {
+
+  if(e.key === ' '){
+
+    const cursor =
+    diaryInput.selectionStart;
+
+    const left =
+    diaryInput.value.substring(
+      0,
+      cursor
+    );
+
+    const keyword =
+    getLastKeyword(left);
+
+    const list =
+    getSuggestions(keyword);
+
+    if(
+      keyword &&
+      list.length > 0
+    ){
+
+      e.preventDefault();
+
+      insertWord(list[0]);
+
+    }
+
+  }
+
+}
+);
+
+/* ===== 詞庫搜尋 ===== */
+
+const searchWordInput =
+document.getElementById(
+  'searchWord'
+);
+
+searchWordInput.addEventListener(
+'input',
+() => {
+
+  renderWords();
+
+}
+);
+
+searchWordInput.addEventListener(
+'keyup',
+() => {
+
+  renderWords();
+
+}
+);
+
+searchWordInput.addEventListener(
+'change',
+() => {
+
+  renderWords();
+
+}
+);
+
+/* ===== 離開保存 ===== */
+
+window.addEventListener(
+'beforeunload',
+saveDraft
+);
+
+</script>
+
+</body>
+</html>
