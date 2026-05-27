@@ -1,0 +1,1740 @@
+<html lang="zh-Hant">
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="
+width=device-width,
+initial-scale=1.0,
+maximum-scale=1.0,
+user-scalable=no,
+viewport-fit=cover
+">
+
+<title>黃金日記 Ultimate AI Cloud</title>
+
+<style>
+
+/* =========================================
+RESET
+========================================= */
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,
+body{
+
+  margin:0;
+  padding:0;
+
+  width:100%;
+  height:100%;
+
+  overflow:hidden;
+
+  font-family:
+  -apple-system,
+  BlinkMacSystemFont,
+  "Segoe UI",
+  sans-serif;
+
+  background:
+  linear-gradient(
+    180deg,
+    #ffe082 0%,
+    #ffca28 100%
+  );
+
+}
+
+/* =========================================
+APP
+========================================= */
+
+.app{
+
+  width:100%;
+  height:100dvh;
+
+  display:flex;
+  flex-direction:column;
+
+  overflow:hidden;
+
+}
+
+/* =========================================
+HEADER
+========================================= */
+
+.header{
+
+  padding:
+
+  max(env(safe-area-inset-top),12px)
+  16px
+  12px
+  16px;
+
+  background:
+
+  linear-gradient(
+    135deg,
+    #f1c40f,
+    #f39c12
+  );
+
+  color:#5c3b00;
+
+  font-size:20px;
+
+  font-weight:700;
+
+  flex-shrink:0;
+
+  box-shadow:
+  0 2px 10px rgba(0,0,0,0.12);
+
+}
+
+/* =========================================
+TABS
+========================================= */
+
+.tabs{
+
+  display:grid;
+
+  grid-template-columns:
+  repeat(4,1fr);
+
+  gap:8px;
+
+  padding:10px;
+
+  background:#fff3cd;
+
+  flex-shrink:0;
+
+}
+
+.tab-btn{
+
+  border:none;
+
+  border-radius:16px;
+
+  padding:14px 8px;
+
+  background:white;
+
+  color:#8a5a00;
+
+  font-size:15px;
+
+  font-weight:700;
+
+  min-height:52px;
+
+}
+
+.tab-btn.active{
+
+  background:
+
+  linear-gradient(
+    135deg,
+    #d68910,
+    #b9770e
+  );
+
+  color:white;
+
+}
+
+/* =========================================
+TAB
+========================================= */
+
+.tab{
+
+  flex:1;
+
+  display:none;
+
+  flex-direction:column;
+
+  overflow:hidden;
+
+  min-height:0;
+
+}
+
+.tab.active{
+  display:flex;
+}
+
+/* =========================================
+SEARCH
+========================================= */
+
+.search-wrap{
+
+  padding:10px;
+
+  background:#fff3cd;
+
+  flex-shrink:0;
+
+}
+
+.search-input{
+
+  width:100%;
+
+  border:none;
+  outline:none;
+
+  border-radius:18px;
+
+  padding:16px;
+
+  font-size:18px;
+
+  background:white;
+
+  box-shadow:
+  0 2px 8px rgba(0,0,0,0.08);
+
+}
+
+/* =========================================
+QUICK LIST
+========================================= */
+
+.quick-list{
+
+  display:flex;
+
+  gap:10px;
+
+  overflow-x:auto;
+  overflow-y:hidden;
+
+  padding:10px;
+
+  background:#fff8dc;
+
+  scrollbar-width:none;
+
+  -webkit-overflow-scrolling:touch;
+
+  flex-shrink:0;
+
+}
+
+.quick-list::-webkit-scrollbar{
+  display:none;
+}
+
+/* =========================================
+WORD BUTTON
+========================================= */
+
+.word-btn{
+
+  flex-shrink:0;
+
+  border:none;
+
+  border-radius:999px;
+
+  padding:12px 18px;
+
+  background:
+
+  linear-gradient(
+    135deg,
+    #f1c40f,
+    #f39c12
+  );
+
+  color:#5c3b00;
+
+  font-size:18px;
+
+  font-weight:700;
+
+  white-space:nowrap;
+
+  cursor:pointer;
+
+}
+
+.word-btn:active{
+
+  transform:scale(0.96);
+
+}
+
+/* =========================================
+EDITOR
+========================================= */
+
+.editor-wrap{
+
+  flex:1;
+
+  overflow:hidden;
+
+  display:flex;
+  flex-direction:column;
+
+}
+
+#diaryInput{
+
+  flex:1;
+
+  width:100%;
+
+  border:none;
+  outline:none;
+
+  resize:none;
+
+  overflow-y:auto;
+  overflow-x:hidden;
+
+  background:#fffef8;
+
+  color:#4a2c00;
+
+  padding:18px;
+
+  font-size:20px;
+
+  line-height:1.9;
+
+  white-space:pre-wrap;
+
+  word-break:break-word;
+
+  -webkit-overflow-scrolling:touch;
+
+}
+
+/* =========================================
+BOTTOM
+========================================= */
+
+.bottom{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  padding:12px;
+
+  background:#fff3cd;
+
+  color:#7d6608;
+
+  font-size:14px;
+
+  flex-shrink:0;
+
+}
+
+/* =========================================
+WORDS
+========================================= */
+
+.words-list{
+
+  flex:1;
+
+  overflow-y:auto;
+
+  padding:12px;
+
+  display:flex;
+  flex-direction:column;
+
+  gap:10px;
+
+  -webkit-overflow-scrolling:touch;
+
+}
+
+.word-card{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+
+  background:white;
+
+  border-radius:18px;
+
+  padding:14px;
+
+}
+
+.word-text{
+
+  flex:1;
+
+  font-size:18px;
+
+  word-break:break-word;
+
+}
+
+/* =========================================
+BUTTON
+========================================= */
+
+.gold-btn{
+
+  border:none;
+
+  border-radius:14px;
+
+  padding:12px 16px;
+
+  background:
+
+  linear-gradient(
+    135deg,
+    #f1c40f,
+    #f39c12
+  );
+
+  color:#5c3b00;
+
+  font-size:15px;
+
+  font-weight:bold;
+
+}
+
+/* =========================================
+HISTORY
+========================================= */
+
+.history-list{
+
+  flex:1;
+
+  overflow-y:auto;
+
+  padding:12px;
+
+  display:flex;
+  flex-direction:column;
+
+  gap:10px;
+
+}
+
+.history-card{
+
+  background:white;
+
+  border-radius:18px;
+
+  padding:14px;
+
+  line-height:1.8;
+
+}
+
+/* =========================================
+CLOUD
+========================================= */
+
+.cloud-wrap{
+
+  flex:1;
+
+  overflow-y:auto;
+
+  padding:16px;
+
+}
+
+.cloud-card{
+
+  background:white;
+
+  border-radius:18px;
+
+  padding:18px;
+
+  margin-bottom:14px;
+
+  line-height:1.8;
+
+}
+
+/* =========================================
+TOAST
+========================================= */
+
+.toast{
+
+  position:fixed;
+
+  left:50%;
+
+  bottom:30px;
+
+  transform:translateX(-50%);
+
+  background:#5c3b00;
+
+  color:white;
+
+  padding:14px 20px;
+
+  border-radius:999px;
+
+  opacity:0;
+
+  transition:0.3s;
+
+  pointer-events:none;
+
+  z-index:99999;
+
+}
+
+.toast.show{
+  opacity:1;
+}
+
+/* =========================================
+MOBILE
+========================================= */
+
+@media(max-width:768px){
+
+  .header{
+    font-size:18px;
+  }
+
+  .search-input{
+    font-size:16px;
+    padding:14px;
+  }
+
+  #diaryInput{
+    font-size:18px;
+    line-height:1.8;
+  }
+
+  .word-btn{
+    font-size:16px;
+    padding:10px 16px;
+  }
+
+}
+
+/* =========================================
+DARK
+========================================= */
+
+.dark body,
+.dark .app{
+  background:#111;
+}
+
+.dark #diaryInput{
+  background:#1a1a1a;
+  color:white;
+}
+
+.dark .word-card,
+.dark .history-card,
+.dark .cloud-card{
+  background:#222;
+  color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- HEADER -->
+
+<div class="header">
+
+☁️ 黃金日記 Ultimate AI Cloud
+
+</div>
+
+<!-- TABS -->
+
+<div class="tabs">
+
+<button
+class="tab-btn active"
+id="tabWriteBtn"
+onclick="switchTab('write')"
+>
+寫作
+</button>
+
+<button
+class="tab-btn"
+id="tabWordsBtn"
+onclick="switchTab('words')"
+>
+詞庫
+</button>
+
+<button
+class="tab-btn"
+id="tabHistoryBtn"
+onclick="switchTab('history')"
+>
+歷史
+</button>
+
+<button
+class="tab-btn"
+id="tabCloudBtn"
+onclick="switchTab('cloud')"
+>
+雲端
+</button>
+
+</div>
+
+<!-- WRITE -->
+
+<div
+class="tab active"
+id="tabWrite"
+>
+
+<div class="search-wrap">
+
+<input
+id="quickSearch"
+class="search-input"
+placeholder="輸入字串快速搜尋..."
+autocomplete="off"
+>
+
+</div>
+
+<!-- 全域搜尋 -->
+
+<div
+id="quickList"
+class="quick-list"
+></div>
+
+<!-- 即時推薦 -->
+
+<div
+id="liveCandidateBar"
+class="quick-list"
+></div>
+
+<!-- EDITOR -->
+
+<div class="editor-wrap">
+
+<textarea
+id="diaryInput"
+placeholder="開始輸入..."
+spellcheck="false"
+></textarea>
+
+</div>
+
+<!-- BOTTOM -->
+
+<div class="bottom">
+
+<div id="charCount">
+字數：0
+</div>
+
+<div id="cloudStatus">
+詞庫載入中...
+</div>
+
+</div>
+
+</div>
+
+<!-- WORDS -->
+
+<div
+class="tab"
+id="tabWords"
+>
+
+<div class="search-wrap">
+
+<input
+id="wordSearch"
+class="search-input"
+placeholder="搜尋詞庫..."
+>
+
+</div>
+
+<div style="padding:10px;">
+
+<div style="
+display:flex;
+gap:8px;
+">
+
+<input
+id="newWord"
+class="search-input"
+placeholder="新增詞語..."
+style="flex:1;"
+>
+
+<button
+class="gold-btn"
+onclick="addWord()"
+>
+新增
+</button>
+
+</div>
+
+</div>
+
+<div
+id="wordsList"
+class="words-list"
+></div>
+
+</div>
+
+<!-- HISTORY -->
+
+<div
+class="tab"
+id="tabHistory"
+>
+
+<div style="padding:10px;">
+
+<button
+class="gold-btn"
+style="width:100%;"
+onclick="saveHistory()"
+>
+保存目前日記
+</button>
+
+</div>
+
+<div
+id="historyList"
+class="history-list"
+></div>
+
+</div>
+
+<!-- CLOUD -->
+
+<div
+class="tab"
+id="tabCloud"
+>
+
+<div class="cloud-wrap">
+
+<div class="cloud-card">
+
+<div style="
+font-size:18px;
+font-weight:bold;
+margin-bottom:10px;
+">
+
+Google Sheets 詞庫 API
+
+</div>
+
+<div style="
+word-break:break-all;
+font-size:14px;
+line-height:1.8;
+">
+
+https://script.google.com/macros/s/AKfycbwexNPWR9JAvxECey9N0hcth7FYy6aZzU8ha2OpO0VBAO659UStk0wxTDXHD85Pqj1z/exec?sheet=WordList
+
+</div>
+
+<br>
+
+<button
+class="gold-btn"
+onclick="reloadCloudWords()"
+>
+重新同步詞庫
+</button>
+
+<button
+class="gold-btn"
+onclick="toggleDarkMode()"
+style="margin-left:8px;"
+>
+夜間模式
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- TOAST -->
+
+<div
+id="toast"
+class="toast"
+>
+已完成
+</div>
+
+<script>
+
+/* =========================================
+WORD API
+========================================= */
+
+const WORD_API =
+
+'https://script.google.com/macros/s/AKfycbwexNPWR9JAvxECey9N0hcth7FYy6aZzU8ha2OpO0VBAO659UStk0wxTDXHD85Pqj1z/exec?sheet=WordList';
+
+/* =========================================
+DATA
+========================================= */
+
+let appWords = [];
+let historyData = [];
+
+/* =========================================
+DOM
+========================================= */
+
+const diaryInput =
+document.getElementById(
+'diaryInput'
+);
+
+const quickList =
+document.getElementById(
+'quickList'
+);
+
+const liveCandidateBar =
+document.getElementById(
+'liveCandidateBar'
+);
+
+const wordsList =
+document.getElementById(
+'wordsList'
+);
+
+const historyList =
+document.getElementById(
+'historyList'
+);
+
+const charCount =
+document.getElementById(
+'charCount'
+);
+
+const toast =
+document.getElementById(
+'toast'
+);
+
+const cloudStatus =
+document.getElementById(
+'cloudStatus'
+);
+
+/* =========================================
+INIT
+========================================= */
+
+window.addEventListener(
+'DOMContentLoaded',
+async () => {
+
+  loadDraft();
+
+  loadHistory();
+
+  await loadCloudWords();
+
+  renderWords();
+
+  renderQuickList('');
+
+  renderHistory();
+
+  updateCount();
+
+  updateLiveCandidates();
+
+}
+);
+
+/* =========================================
+LOAD CLOUD WORDS
+========================================= */
+
+async function loadCloudWords(){
+
+  try{
+
+    cloudStatus.textContent =
+    '同步詞庫中...';
+
+    const res =
+    await fetch(WORD_API);
+
+    const data =
+    await res.json();
+
+    /* 支援格式 */
+
+    if(Array.isArray(data)){
+
+      appWords = data;
+
+    }else if(Array.isArray(data.data)){
+
+      appWords = data.data.map(item => {
+
+        /* 字串 */
+
+        if(typeof item === 'string'){
+
+          return item;
+
+        }
+
+        /* {word:"阿凱"} */
+
+        return item.word || '';
+
+      });
+
+    }else{
+
+      appWords = [];
+
+    }
+
+    /* 清理 */
+
+    appWords = appWords
+
+    .filter(Boolean)
+
+    .map(v => String(v).trim());
+
+    /* 去重 */
+
+    appWords =
+    [...new Set(appWords)];
+
+    /* 快取 */
+
+    localStorage.setItem(
+      'cloud_words_cache',
+      JSON.stringify(appWords)
+    );
+
+    cloudStatus.textContent =
+
+    '詞庫 ' +
+    appWords.length +
+    ' 筆';
+
+  }catch(err){
+
+    console.error(err);
+
+    const cache =
+    localStorage.getItem(
+      'cloud_words_cache'
+    );
+
+    if(cache){
+
+      appWords =
+      JSON.parse(cache);
+
+      cloudStatus.textContent =
+      '離線詞庫';
+
+    }else{
+
+      appWords = [];
+
+      cloudStatus.textContent =
+      '詞庫載入失敗';
+
+    }
+
+  }
+
+}
+
+/* =========================================
+RELOAD
+========================================= */
+
+async function reloadCloudWords(){
+
+  await loadCloudWords();
+
+  renderWords();
+
+  renderQuickList('');
+
+  updateLiveCandidates();
+
+  showToast('詞庫同步完成');
+
+}
+
+/* =========================================
+TABS
+========================================= */
+
+function switchTab(tab){
+
+  document
+  .querySelectorAll('.tab')
+  .forEach(el => {
+
+    el.classList.remove(
+      'active'
+    );
+
+  });
+
+  document
+  .querySelectorAll('.tab-btn')
+  .forEach(el => {
+
+    el.classList.remove(
+      'active'
+    );
+
+  });
+
+  document
+  .getElementById(
+    'tab' +
+    capitalize(tab)
+  )
+  .classList
+  .add('active');
+
+  document
+  .getElementById(
+    'tab' +
+    capitalize(tab) +
+    'Btn'
+  )
+  .classList
+  .add('active');
+
+}
+
+function capitalize(str){
+
+  return str.charAt(0)
+  .toUpperCase() +
+  str.slice(1);
+
+}
+
+/* =========================================
+TOAST
+========================================= */
+
+function showToast(msg){
+
+  toast.textContent = msg;
+
+  toast.classList.add('show');
+
+  setTimeout(() => {
+
+    toast.classList.remove(
+      'show'
+    );
+
+  },1200);
+
+}
+
+/* =========================================
+SAVE DRAFT
+========================================= */
+
+function saveDraft(){
+
+  localStorage.setItem(
+    'gold_draft',
+    diaryInput.value
+  );
+
+}
+
+function loadDraft(){
+
+  const saved =
+  localStorage.getItem(
+    'gold_draft'
+  );
+
+  if(saved){
+
+    diaryInput.value =
+    saved;
+
+  }
+
+}
+
+/* =========================================
+HISTORY
+========================================= */
+
+function loadHistory(){
+
+  const saved =
+  localStorage.getItem(
+    'gold_history'
+  );
+
+  if(saved){
+
+    historyData =
+    JSON.parse(saved);
+
+  }
+
+}
+
+function saveHistory(){
+
+  if(
+    !diaryInput.value.trim()
+  ) return;
+
+  historyData.unshift({
+
+    time:
+    new Date()
+    .toLocaleString(),
+
+    content:
+    diaryInput.value
+
+  });
+
+  localStorage.setItem(
+    'gold_history',
+    JSON.stringify(historyData)
+  );
+
+  renderHistory();
+
+  showToast('已保存');
+
+}
+
+function renderHistory(){
+
+  historyList.innerHTML = '';
+
+  historyData.forEach(item => {
+
+    const div =
+    document.createElement(
+      'div'
+    );
+
+    div.className =
+    'history-card';
+
+    div.innerHTML = `
+
+    <div style="
+      font-size:13px;
+      color:#999;
+      margin-bottom:8px;
+    ">
+      ${item.time}
+    </div>
+
+    <div>
+      ${item.content}
+    </div>
+
+    `;
+
+    historyList.appendChild(div);
+
+  });
+
+}
+
+/* =========================================
+WORDS
+========================================= */
+
+function renderWords(){
+
+  const search =
+  document
+  .getElementById(
+    'wordSearch'
+  )
+  .value
+  .trim()
+  .toLowerCase();
+
+  wordsList.innerHTML = '';
+
+  const filtered =
+  appWords.filter(word => {
+
+    return String(word)
+    .toLowerCase()
+    .includes(search);
+
+  });
+
+  filtered.forEach(word => {
+
+    const div =
+    document.createElement(
+      'div'
+    );
+
+    div.className =
+    'word-card';
+
+    div.innerHTML = `
+
+    <div class="word-text">
+      ${word}
+    </div>
+
+    <button
+    class="gold-btn"
+    onclick="insertWord('${escapeQuote(word)}')"
+    >
+    插入
+    </button>
+
+    `;
+
+    wordsList.appendChild(div);
+
+  });
+
+}
+
+function addWord(){
+
+  const input =
+  document.getElementById(
+    'newWord'
+  );
+
+  const value =
+  input.value.trim();
+
+  if(!value) return;
+
+  appWords.unshift(value);
+
+  renderWords();
+
+  renderQuickList('');
+
+  updateLiveCandidates();
+
+  input.value = '';
+
+  showToast('已新增');
+
+}
+
+/* =========================================
+ESCAPE
+========================================= */
+
+function escapeQuote(str){
+
+  return String(str)
+  .replace(/'/g,"\\'");
+
+}
+
+/* =========================================
+SMART SEARCH
+========================================= */
+
+function smartSearch(keyword){
+
+  const search =
+  keyword
+  .trim()
+  .toLowerCase();
+
+  if(!search){
+
+    return appWords.slice(0,20);
+
+  }
+
+  /* 前一字 + 現在字 */
+
+  const fragments = [];
+
+  for(
+    let i = 1;
+    i <= Math.min(search.length,6);
+    i++
+  ){
+
+    fragments.push(
+      search.slice(-i)
+    );
+
+  }
+
+  const scored =
+  appWords.map(word => {
+
+    let score = 0;
+
+    const lower =
+    String(word)
+    .toLowerCase();
+
+    fragments.forEach(f => {
+
+      if(lower.startsWith(f)){
+
+        score += 120;
+
+      }
+
+      if(lower.includes(f)){
+
+        score += 60;
+
+      }
+
+    });
+
+    return {
+
+      word,
+      score
+
+    };
+
+  });
+
+  return scored
+
+  .filter(item => item.score > 0)
+
+  .sort((a,b) => {
+
+    return b.score - a.score;
+
+  })
+
+  .map(item => item.word)
+
+  .slice(0,20);
+
+}
+
+/* =========================================
+QUICK LIST
+========================================= */
+
+function renderQuickList(keyword){
+
+  quickList.innerHTML = '';
+
+  const result =
+  smartSearch(keyword);
+
+  if(result.length === 0){
+
+    quickList.innerHTML = `
+    <div style="
+      padding:10px;
+      color:#999;
+      white-space:nowrap;
+    ">
+      無匹配詞
+    </div>
+    `;
+
+    return;
+
+  }
+
+  result.forEach(word => {
+
+    const btn =
+    document.createElement(
+      'button'
+    );
+
+    btn.className =
+    'word-btn';
+
+    btn.textContent =
+    word;
+
+    btn.onclick = () => {
+
+      insertWord(word);
+
+    };
+
+    quickList.appendChild(btn);
+
+  });
+
+}
+
+/* =========================================
+CURRENT KEYWORD
+========================================= */
+
+function getCurrentKeyword(){
+
+  const cursor =
+  diaryInput.selectionStart;
+
+  const text =
+  diaryInput.value.substring(
+    0,
+    cursor
+  );
+
+  const parts =
+  text.split(
+  /[\s\n，。,、：；！？]/g
+  );
+
+  return parts[
+    parts.length - 1
+  ] || '';
+
+}
+
+/* =========================================
+LIVE CANDIDATES
+========================================= */
+
+function updateLiveCandidates(){
+
+  liveCandidateBar.innerHTML = '';
+
+  const keyword =
+  getCurrentKeyword();
+
+  const result =
+  smartSearch(keyword);
+
+  result.forEach(word => {
+
+    const btn =
+    document.createElement(
+      'button'
+    );
+
+    btn.className =
+    'word-btn';
+
+    btn.textContent =
+    word;
+
+    btn.onclick = () => {
+
+      insertSmartWord(word);
+
+    };
+
+    liveCandidateBar.appendChild(btn);
+
+  });
+
+}
+
+/* =========================================
+INSERT WORD
+========================================= */
+
+function insertWord(word){
+
+  const cursor =
+  diaryInput.selectionStart;
+
+  const text =
+  diaryInput.value;
+
+  const left =
+  text.substring(0,cursor);
+
+  const right =
+  text.substring(cursor);
+
+  diaryInput.value =
+
+    left +
+    word +
+    right;
+
+  const pos =
+  (left + word).length;
+
+  diaryInput.focus();
+
+  diaryInput.setSelectionRange(
+    pos,
+    pos
+  );
+
+  updateCount();
+
+  saveDraft();
+
+}
+
+/* =========================================
+SMART INSERT
+========================================= */
+
+function insertSmartWord(word){
+
+  const cursor =
+  diaryInput.selectionStart;
+
+  const text =
+  diaryInput.value;
+
+  const left =
+  text.substring(
+    0,
+    cursor
+  );
+
+  const right =
+  text.substring(
+    cursor
+  );
+
+  const parts =
+  left.split(
+  /([\s\n，。,、：；！？])/g
+  );
+
+  let lastWord =
+  parts[parts.length - 1];
+
+  if(!lastWord){
+
+    lastWord = '';
+
+  }
+
+  const replaceLeft =
+  left.substring(
+    0,
+    left.length -
+    lastWord.length
+  );
+
+  diaryInput.value =
+
+    replaceLeft +
+    word +
+    ' ' +
+    right;
+
+  const pos =
+
+    (
+      replaceLeft +
+      word +
+      ' '
+    ).length;
+
+  diaryInput.focus();
+
+  diaryInput.setSelectionRange(
+    pos,
+    pos
+  );
+
+  updateCount();
+
+  saveDraft();
+
+  updateLiveCandidates();
+
+}
+
+/* =========================================
+COUNT
+========================================= */
+
+function updateCount(){
+
+  charCount.textContent =
+
+  '字數：' +
+
+  diaryInput.value.length;
+
+}
+
+/* =========================================
+DARK MODE
+========================================= */
+
+function toggleDarkMode(){
+
+  document.documentElement
+  .classList.toggle('dark');
+
+}
+
+/* =========================================
+EVENTS
+========================================= */
+
+diaryInput.addEventListener(
+'input',
+() => {
+
+  updateCount();
+
+  saveDraft();
+
+  updateLiveCandidates();
+
+}
+);
+
+diaryInput.addEventListener(
+'keydown',
+e => {
+
+  /* 空白鍵自動完成 */
+
+  if(e.key === ' '){
+
+    const keyword =
+    getCurrentKeyword();
+
+    if(!keyword) return;
+
+    const result =
+    smartSearch(keyword);
+
+    if(result.length > 0){
+
+      e.preventDefault();
+
+      insertSmartWord(
+        result[0]
+      );
+
+    }
+
+  }
+
+}
+);
+
+document
+.getElementById(
+'quickSearch'
+)
+.addEventListener(
+'input',
+e => {
+
+  renderQuickList(
+    e.target.value
+  );
+
+}
+);
+
+document
+.getElementById(
+'wordSearch'
+)
+.addEventListener(
+'input',
+() => {
+
+  renderWords();
+
+}
+);
+
+window.addEventListener(
+'beforeunload',
+saveDraft
+);
+
+</script>
+
+</body>
+</html>
