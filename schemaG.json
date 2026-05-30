@@ -114,6 +114,25 @@
     "binding_rules": {
       "moon_phase": "maps.moon_phase[input.moon_phase]"
     },
+    "execution_engine": {
+      "mode": "strict_deterministic_runtime",
+      "rules": {
+        "ALL_VALUES_MUST_BE_RESOLVED": true,
+        "NO_STRING_PASS_THROUGH": true,
+        "NO_UNMAPPED_VALUES": true
+      },
+      "resolution_order": [
+        "input",
+        "map_lookup",
+        "numeric_cast",
+        "formula_compute",
+        "score_compute"
+      ],
+      "enforcement": {
+        "fail_on_missing_map": true,
+        "fail_on_unknown_enum": true
+      }
+    },
     "host_star_policy": {
       "mode": "strict_enum_only",
       "on_unknown": "fallback_75",
