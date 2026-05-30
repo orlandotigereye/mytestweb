@@ -111,6 +111,33 @@
       "no_ai_interpretation": true,
       "force_numeric_cast": true
     },
+    "drift_model": {
+      "trend_jupiter_step": 0.2,
+      "saturn_step": 0.15,
+      "mars_step": 0.3,
+      "mode": "linear_deterministic"
+    },
+    "epoch": {
+      "base_date": "2026-05-30",
+      "unit": "days"
+    },
+    "scan_rule": {
+      "match_condition": "cycle.state == 'D1' AND trend_score >= 85 AND risk_score >= 80 AND volatility_mars >= 85",
+      "stop_at_first_hit": true
+    },
+    "time_propagation": {
+      "enabled": true,
+      "rules": {
+        "moon_jupiter": "+0.25 per day",
+        "moon_saturn": "+0.18 per day",
+        "mars_angle": "+0.35 per day"
+      },
+      "wrap": {
+        "moon_jupiter": 360,
+        "moon_saturn": 360,
+        "mars_angle": 360
+      }
+    },
     "binding_rules": {
       "moon_phase": "maps.moon_phase[input.moon_phase]"
     },
