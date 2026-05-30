@@ -97,6 +97,19 @@
         "mars": 0.4
       }
     },
+    "binding_rules": {
+      "moon_phase": "maps.moon_phase[input.moon_phase]"
+    },
+    "host_star_policy": {
+      "mode": "strict_enum_only",
+      "on_unknown": "fallback_75",
+      "no_inference": true
+    },
+    "scan_execution": {
+      "mode": "pure_stateless_per_day",
+      "no_memory": true,
+      "no_carry_forward": true
+    },
     "moon_phase_score_source": "maps.moon_phase",
     "maps": {
       "moon_phase": {
