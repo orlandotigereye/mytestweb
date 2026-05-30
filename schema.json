@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WhiteGui Astro Cycle FULL LOCK V1.1",
+  "type": "object",
+  "additionalProperties": false,
+
+  "required": ["input", "engine"],
+
+  "properties": {
+
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": [
+        "moon_jupiter",
+        "moon_saturn",
+        "mars_angle",
+        "moon_phase",
+        "host_star",
+        "five_elements",
+        "solar_term_days",
+        "ganzhi"
+      ],
+
+      "properties": {
+
+        "moon_jupiter": { "type": "number" },
+        "moon_saturn": { "type": "number" },
+        "mars_angle": { "type": "number" },
+
+        "moon_phase": {
+          "type": "string",
+          "enum": ["new_moon", "first_quarter", "full_moon", "last_quarter"]
+        },
+
+        "host_star": {
+          "type": "string",
+          "enum": [
+            "角木蛟","亢金龍","氐土貉","房日兔","心月狐","尾火虎","箕水豹",
+            "斗木獬","牛金牛","女土蝠","虛日鼠","危月燕","室火豬","壁水貐",
+            "奎木狼","婁金狗","胃土雉","昴日雞","畢月烏","觜火猴","參水猿",
+            "井木犴","鬼金羊","柳土獐","星日馬","張月鹿","翼火蛇","軫水蚓"
+          ]
+        },
+
+        "ganzhi": {
+          "type": "string",
+          "enum": [
+            "甲子","乙丑","丙寅","丁卯","戊辰","己巳","庚午","辛未","壬申","癸酉",
+            "甲戌","乙亥","丙子","丁丑","戊寅","己卯","庚辰","辛巳","壬午","癸未",
+            "甲申","乙酉","丙戌","丁亥","戊子","己丑","庚寅","辛卯","壬辰","癸巳",
+            "甲午","乙未","丙申","丁酉","戊戌","己亥","庚子","辛丑","壬寅","癸卯",
+            "甲辰","乙巳","丙午","丁未","戊申","己酉","庚戌","辛亥","壬子","癸丑",
+            "甲寅","乙卯","丙辰","丁巳","戊午","己未","庚申","辛酉","壬戌","癸亥"
+          ]
+        },
+
+        "five_elements": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["wood", "fire", "earth", "metal", "water"],
+
+          "properties": {
+            "wood": { "type": "number" },
+            "fire": { "type": "number" },
+            "earth": { "type": "number" },
+            "metal": { "type": "number" },
+            "water": { "type": "number" }
+          }
+        },
+
+        "solar_term_days": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        }
+      }
+    },
+
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+
+      "required": ["constants", "weights", "formulas", "cycle"],
+
+      "properties": {
+
+        "constants": {
+          "type": "object",
+          "additionalProperties": false,
+
+          "properties": {
+            "trend_center": { "type": "number", "const": 120 },
+            "risk_center": { "type": "number", "const": 180 },
+            "vol_center": { "type": "number", "const": 180 },
+            "cycle_length": { "type": "integer", "const": 4 }
+          }
+        },
+
+        "weights": {
+          "type": "object",
+          "additionalProperties": false,
+
+          "properties": {
+            "trend_jupiter": { "type": "number", "const": 0.40 },
+            "moon_phase": { "type": "number", "const": 0.20 },
+            "host_star": { "type": "number", "const": 0.15 },
+            "five_elements": { "type": "number", "const": 0.15 },
+            "solar_term": { "type": "number", "const": 0.10 },
+
+            "risk_saturn": { "type": "number", "const": 0.60 },
+            "volatility_mars": { "type": "number", "const": 0.40 }
+          }
+        },
+
+        "formulas": {
+          "type": "object",
+
+          "properties": {
+
+            "trend_jupiter": {
+              "type": "string",
+              "const": "100 - (abs(moon_jupiter - 120) / 120 * 100)"
+            },
+
+            "risk_saturn": {
+              "type": "string",
+              "const": "100 - (abs(moon_saturn - 180) / 180 * 100)"
+            },
+
+            "volatility_mars": {
+              "type": "string",
+              "const": "100 - (abs(mars_angle - 180) / 180 * 100)"
+            },
+
+            "element_score": {
+              "type": "string",
+              "const": "100 - ((max(five_elements) - min(five_elements)) * 2)"
+            },
+
+            "solar_term_score": {
+              "type": "string",
+              "const": "max(0, 100 - (solar_term_days / 15 * 100))"
+            },
+
+            "trend_score": {
+              "type": "string",
+              "const": "0.40*trend_jupiter + 0.20*moon_phase + 0.15*host_star + 0.15*element_score + 0.10*solar_term_score"
+            },
+
+            "risk_score": {
+              "type": "string",
+              "const": "0.60*risk_saturn + 0.40*volatility_mars"
+            },
+
+            "final_score": {
+              "type": "string",
+              "const": "trend_score - (risk_score * 0.3)"
+            }
+          }
+        },
+
+        "cycle": {
+          "type": "object",
+
+          "properties": {
+
+            "d1_rule": {
+              "type": "string",
+              "const": "trend_score >= 85 AND risk_score >= 80 AND volatility_mars >= 85"
+            },
+
+            "cycle_length": {
+              "type": "integer",
+              "const": 4
+            },
+
+            "state_machine": {
+              "type": "string",
+              "const": "IDLE -> D1 -> D2 -> D3 -> D4 -> IDLE"
+            },
+
+            "lock_rule": {
+              "type": "string",
+              "const": "no_retrigger_during_cycle"
+            },
+
+            "min_gap_days": {
+              "type": "integer",
+              "const": 4
+            }
+          }
+        }
+      }
+    }
+  }
+}
