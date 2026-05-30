@@ -6,6 +6,12 @@
     "consistency_level": "strict_deterministic_cross_ai",
     "checksum_method": "sha256"
   },
+  "compatibility": {
+    "schema_version": "5.0",
+    "allow_future_fields": false,
+    "allow_formula_override": false,
+    "allow_weight_override": false
+  },
   "schema": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
@@ -90,8 +96,7 @@
               "張月鹿",
               "翼火蛇",
               "軫水蚓"
-            ],
-            "description": "28 lunar mansions (Chinese calendar)"
+            ]
           },
           "ganzhi": {
             "type": "string",
@@ -354,6 +359,16 @@
       }
     }
   },
+  "validation": {
+    "abort_on_error": true,
+    "checks": [
+      "input_range",
+      "enum_match",
+      "map_exists",
+      "formula_result",
+      "score_range"
+    ]
+  },
   "computation_rules": {
     "precision": {
       "floating_point_standard": "IEEE_754_double_precision",
@@ -404,6 +419,15 @@
         "clamp_before_next_step": true
       }
     }
+  },
+  "precision_control": {
+    "rounding_mode": "HALF_UP",
+    "decimal_places": 4,
+    "apply_to": [
+      "trend_score",
+      "risk_score",
+      "final_score"
+    ]
   },
   "maps": {
     "moon_phase": {
@@ -483,7 +507,7 @@
       "辛丑": 53,
       "壬寅": 52,
       "癸卯": 51,
-      "甲���": 50,
+      "甲辰": 50,
       "乙巳": 51,
       "丙午": 52,
       "丁未": 53,
@@ -1101,6 +1125,14 @@
       }
     }
   },
+  "d1_resolution": {
+    "allow_multiple": false,
+    "winner": "highest_final_score",
+    "tie_breaker": [
+      "earliest_date",
+      "highest_trend_score"
+    ]
+  },
   "epoch_anchor": {
     "type": "fixed_origin",
     "origin_date": "1900-01-01",
@@ -1239,6 +1271,17 @@
       "unknown_enum": "use_fallback_or_reject",
       "computation_error": "reject_execution"
     }
+  },
+  "output_schema": {
+    "required": [
+      "date",
+      "ganzhi",
+      "trend_score",
+      "risk_score",
+      "final_score",
+      "state"
+    ],
+    "additionalProperties": false
   },
   "time_runtime": {
     "ganzhi_runtime": {
