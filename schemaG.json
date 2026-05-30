@@ -1,0 +1,351 @@
+{
+  "system": {
+    "name": "WhiteGui_Astro_System",
+    "version": "V5.0_CLEAN_ARCH",
+    "type": "single_source_truth_engine"
+  },
+  "schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "input"
+    ],
+    "properties": {
+      "input": {
+        "type": "object",
+        "required": [
+          "moon_jupiter",
+          "moon_saturn",
+          "mars_angle",
+          "moon_phase",
+          "host_star",
+          "wood",
+          "fire",
+          "earth",
+          "metal",
+          "water",
+          "solar_term_days",
+          "ganzhi"
+        ],
+        "properties": {
+          "moon_jupiter": {
+            "type": "number"
+          },
+          "moon_saturn": {
+            "type": "number"
+          },
+          "mars_angle": {
+            "type": "number"
+          },
+          "moon_phase": {
+            "type": "string",
+            "enum": [
+              "new_moon",
+              "first_quarter",
+              "full_moon",
+              "last_quarter"
+            ]
+          },
+          "host_star": {
+            "type": "string"
+          },
+          "ganzhi": {
+            "type": "string"
+          },
+          "wood": {
+            "type": "number"
+          },
+          "fire": {
+            "type": "number"
+          },
+          "earth": {
+            "type": "number"
+          },
+          "metal": {
+            "type": "number"
+          },
+          "water": {
+            "type": "number"
+          },
+          "solar_term_days": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 30
+          }
+        }
+      }
+    }
+  },
+  "engine": {
+    "constants": {
+      "trend_anchor": 120,
+      "risk_anchor": 180,
+      "vol_anchor": 180,
+      "cycle_length": 4
+    },
+    "weights": {
+      "trend": {
+        "jupiter": 0.4,
+        "moon_phase": 0.2,
+        "host_star": 0.15,
+        "elements": 0.15,
+        "solar_term": 0.1
+      },
+      "risk": {
+        "saturn": 0.6,
+        "mars": 0.4
+      }
+    },
+    "determinism_hash": {
+      "enabled": true,
+      "method": "sha256(input + epoch + rules)"
+    },
+    "execution_lock": {
+      "enforce_strict_mapping": true,
+      "bindings": {
+        "moon_phase": "maps.moon_phase[input.moon_phase]",
+        "host_star": "maps.host_star_score[input.host_star]"
+      },
+      "no_raw_string_usage": true,
+      "no_ai_interpretation": true,
+      "force_numeric_cast": true
+    },
+    "binding_rules": {
+      "moon_phase": "maps.moon_phase[input.moon_phase]"
+    },
+    "host_star_policy": {
+      "mode": "strict_enum_only",
+      "on_unknown": "fallback_75",
+      "no_inference": true
+    },
+    "scan_execution": {
+      "mode": "pure_stateless_per_day",
+      "no_memory": true,
+      "no_carry_forward": true
+    },
+    "moon_phase_score_source": "maps.moon_phase",
+    "maps": {
+      "moon_phase": {
+        "new_moon": 65,
+        "first_quarter": 75,
+        "full_moon": 85,
+        "last_quarter": 70
+      },
+      "host_star_score": {
+        "角木蛟": 80,
+        "亢金龍": 82,
+        "氐土貉": 78,
+        "房日兔": 76,
+        "心月狐": 81,
+        "尾火虎": 83,
+        "箕水豹": 77,
+        "斗木獬": 79,
+        "牛金牛": 80,
+        "女土蝠": 78,
+        "虛日鼠": 79,
+        "危月燕": 81,
+        "室火豬": 82,
+        "壁水貐": 80,
+        "奎木狼": 81,
+        "婁金狗": 78,
+        "胃土雉": 75,
+        "昴日雞": 85,
+        "畢月烏": 80,
+        "觜火猴": 82,
+        "參水猿": 79,
+        "井木犴": 78,
+        "鬼金羊": 77,
+        "柳土獐": 76,
+        "星日馬": 80,
+        "張月鹿": 81,
+        "翼火蛇": 83,
+        "軫水蚓": 79
+      }
+    },
+    "formulas": {
+      "trend_jupiter": "100 - abs(moon_jupiter - 120) / 120 * 100",
+      "risk_saturn": "100 - abs(moon_saturn - 180) / 180 * 100",
+      "volatility_mars": "100 - abs(mars_angle - 180) / 180 * 100",
+      "element_score": "100 - (max(wood,fire,earth,metal,water) - min(wood,fire,earth,metal,water)) * 2",
+      "solar_term_score": "max(0, 100 - (solar_term_days / 15 * 100))"
+    },
+    "scoring": {
+      "trend_score": {
+        "formula": "0.40*trend_jupiter + 0.20*moon_phase + 0.15*host_star + 0.15*element_score + 0.10*solar_term_score"
+      },
+      "risk_score": {
+        "formula": "0.60*risk_saturn + 0.40*volatility_mars"
+      },
+      "final_score": {
+        "formula": "trend_score - (risk_score * 0.3)"
+      }
+    },
+    "cycle": {
+      "length": 4,
+      "states": [
+        "IDLE",
+        "D1",
+        "D2",
+        "D3",
+        "D4"
+      ],
+      "tie_breaker": {
+        "method": "earliest_date_wins",
+        "score_priority": "final_score",
+        "deterministic_sort": true
+      },
+      "state_snapshot": {
+        "enabled": true,
+        "store_each_day": true
+      },
+      "priority": {
+        "D1": 3,
+        "D2": 2,
+        "D3": 1,
+        "D4": 0
+      },
+      "d1_trigger": {
+        "trend_score_gte": 85,
+        "risk_score_gte": 80,
+        "volatility_mars_gte": 85
+      },
+      "lock": true
+    },
+    "decision_zones": {
+      "final_score": {
+        "85_100": "main_uptrend",
+        "75_85": "bull",
+        "65_75": "range",
+        "55_65": "consolidation",
+        "45_55": "bearish",
+        "0_45": "high_risk"
+      }
+    }
+  },
+  "epoch_anchor": {
+    "type": "fixed_origin",
+    "origin_date": "1900-01-01",
+    "rule": "days % 60"
+  },
+  "astronomy_engine": {
+    "source": "undefined",
+    "mode": "precomputed | ephemeris",
+    "precision": "degree",
+    "update_rule": "daily"
+  },
+  "scan_engine": {
+    "mode": "forward_search",
+    "termination_condition": "first_exact_match_only",
+    "goal": "first_d1_hit",
+    "logic": "iterate 40 days → find first match",
+    "output": "first_d1_date"
+  },
+  "drift_control": {
+    "type": "bounded_accumulation",
+    "max_trend": 100,
+    "min_trend": 0
+  },
+  "time_dependency": "previous_day_state_only",
+  "time_granularity": {
+    "levels": [
+      "1d",
+      "60m",
+      "15m"
+    ],
+    "active": "1d"
+  },
+  "scan_state_mode": {
+    "type": "stateless_per_day",
+    "no_carry_over": true
+  },
+  "host_star_fallback": {
+    "unknown_value": 75,
+    "strict_enum": true
+  },
+  "runtime": {
+    "mode": "deterministic_forward_simulation",
+    "horizon_days": 40,
+    "pipeline": [
+      "validate_input",
+      "map_values",
+      "compute_base_scores",
+      "compute_trend_risk",
+      "compute_final",
+      "evaluate_cycle",
+      "output"
+    ]
+  },
+  "time_runtime": {
+    "ganzhi_runtime": {
+      "enabled": true,
+      "type": "60_jiazi_cycle",
+      "cycle": [
+        "甲子",
+        "乙丑",
+        "丙寅",
+        "丁卯",
+        "戊辰",
+        "己巳",
+        "庚午",
+        "辛未",
+        "壬申",
+        "癸酉",
+        "甲戌",
+        "乙亥",
+        "丙子",
+        "丁丑",
+        "戊寅",
+        "己卯",
+        "庚辰",
+        "辛巳",
+        "壬午",
+        "癸未",
+        "甲申",
+        "乙酉",
+        "丙戌",
+        "丁亥",
+        "戊子",
+        "己丑",
+        "庚寅",
+        "辛卯",
+        "壬辰",
+        "癸巳",
+        "甲午",
+        "乙未",
+        "丙申",
+        "丁酉",
+        "戊戌",
+        "己亥",
+        "庚子",
+        "辛丑",
+        "壬寅",
+        "癸卯",
+        "甲辰",
+        "乙巳",
+        "丙午",
+        "丁未",
+        "戊申",
+        "己酉",
+        "庚戌",
+        "辛亥",
+        "壬子",
+        "癸丑",
+        "甲寅",
+        "乙卯",
+        "丙辰",
+        "丁巳",
+        "戊午",
+        "己未",
+        "庚申",
+        "辛酉",
+        "壬戌",
+        "癸亥"
+      ],
+      "mapping": {
+        "formula": "index = days_from_epoch % 60",
+        "output": "cycle[index]"
+      }
+    }
+  }
+}
