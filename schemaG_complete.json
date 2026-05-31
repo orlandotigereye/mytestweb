@@ -6,6 +6,116 @@
     "consistency_level": "strict_deterministic_cross_ai",
     "checksum_method": "sha256"
   },
+  "numeric_limits": {
+    "moon_jupiter": {
+      "min": 0,
+      "max": 360
+    },
+    "moon_saturn": {
+      "min": 0,
+      "max": 360
+    },
+    "mars_angle": {
+      "min": 0,
+      "max": 360
+    },
+    "element_value": {
+      "min": 0,
+      "max": 100
+    }
+  },
+  "rounding_policy": {
+    "score_precision": 2,
+    "formula_precision": 6,
+    "method": "round_half_up",
+    "final_score_precision": 2
+  },
+  "formula_execution": {
+    "engine": "strict_math_only",
+    "allowed_functions": [
+      "abs",
+      "min",
+      "max",
+      "round"
+    ],
+    "forbidden": [
+      "eval",
+      "ai_guess",
+      "string_math"
+    ]
+  },
+  "missing_value_policy": {
+    "mode": "fail_fast",
+    "allow_null": false,
+    "allow_empty_string": false,
+    "allow_nan": false
+  },
+  "score_clamp": {
+    "trend_jupiter": {
+      "min": 0,
+      "max": 100
+    },
+    "risk_saturn": {
+      "min": 0,
+      "max": 100
+    },
+    "volatility_mars": {
+      "min": 0,
+      "max": 100
+    },
+    "element_score": {
+      "min": 0,
+      "max": 100
+    },
+    "solar_term_score": {
+      "min": 0,
+      "max": 100
+    },
+    "trend_score": {
+      "min": 0,
+      "max": 100
+    },
+    "risk_score": {
+      "min": 0,
+      "max": 100
+    },
+    "final_score": {
+      "min": 0,
+      "max": 100
+    }
+  },
+  "state_machine": {
+    "mode": "strict_cycle",
+    "transitions": {
+      "IDLE": ["D1"],
+      "D1": ["D2"],
+      "D2": ["D3"],
+      "D3": ["D4"],
+      "D4": ["IDLE"]
+    },
+    "invalid_transition": "reject"
+  },
+  "output_contract": {
+    "required_fields": [
+      "date",
+      "ganzhi",
+      "trend_score",
+      "risk_score",
+      "final_score",
+      "cycle_state",
+      "decision_zone"
+    ],
+    "additionalProperties": false,
+    "type_requirements": {
+      "date": "string_yyyy-mm-dd",
+      "ganzhi": "string_enum",
+      "trend_score": "number_0_to_100",
+      "risk_score": "number_0_to_100",
+      "final_score": "number_0_to_100",
+      "cycle_state": "string_enum_idle_d1_d2_d3_d4",
+      "decision_zone": "string_enum_main_uptrend_bull_range_consolidation_bearish_high_risk"
+    }
+  },
   "compatibility": {
     "schema_version": "5.0",
     "allow_future_fields": false,
@@ -1272,17 +1382,6 @@
       "computation_error": "reject_execution"
     }
   },
-  "output_schema": {
-    "required": [
-      "date",
-      "ganzhi",
-      "trend_score",
-      "risk_score",
-      "final_score",
-      "state"
-    ],
-    "additionalProperties": false
-  },
   "time_runtime": {
     "ganzhi_runtime": {
       "enabled": true,
@@ -1363,28 +1462,50 @@
       }
     }
   },
-  "integration_guide": {
-    "for_ai_implementations": {
-      "step_1": "Load this entire JSON file as the authoritative source",
-      "step_2": "Implement validation_layer exactly as specified",
-      "step_3": "Use maps section for all string-to-number conversions",
-      "step_4": "Follow computation_rules.precision for all math operations",
-      "step_5": "Execute formulas in order defined in runtime.pipeline",
-      "step_6": "Clamp all intermediate results to [0, 100]",
-      "step_7": "Use determinism_hash to verify outputs",
-      "step_8": "Document any deviations from this schema"
-    },
-    "verification_checklist": [
-      "Input validation against exact ranges",
-      "String enum validation before lookup",
-      "Map lookup fallback handling",
-      "IEEE 754 double precision for all calculations",
-      "Rounding to 2 decimal places",
-      "Clamping at 0 and 100 boundaries",
-      "Linear time propagation with modulo 360",
-      "Stateless daily evaluation",
-      "D1 trigger: all three thresholds met",
-      "Output SHA256 checksum matches"
+  "implementation_guide": {
+    "critical_rules": [
+      "✅ 必須使用 IEEE 754 雙精度浮點",
+      "✅ 必須使用 ROUND_HALF_UP 舍入",
+      "✅ 必須於每步檢查 numeric_limits",
+      "✅ 必須於每步後夾緊 score_clamp",
+      "✅ 必須遵循 formula_execution 白名單",
+      "✅ 必須檢查 missing_value_policy",
+      "✅ 必須遵循 state_machine 轉移規則",
+      "✅ 輸出必須符合 output_contract"
+    ],
+    "validation_order": [
+      "1. 檢查輸入值是否在 numeric_limits 範圍內",
+      "2. 檢查所有必需欄位是否存在(missing_value_policy)",
+      "3. 檢查 Enum 值是否有效",
+      "4. 執行所有計算(使用 formula_execution 白名單函數)",
+      "5. 在每次計算後夾緊結果(score_clamp)",
+      "6. 應用 rounding_policy",
+      "7. 檢查狀態轉移是否有效(state_machine)",
+      "8. 驗證最終輸出符合 output_contract"
+    ],
+    "precision_checklist": [
+      "所有中間計算使用 6 位精度(formula_precision)",
+      "所有分數使用 2 位精度(score_precision)",
+      "最終分數使用 2 位精度(final_score_precision)",
+      "使用 ROUND_HALF_UP 而非其他舍入模式",
+      "不使用任何 AI 解釋或猜測",
+      "不允許空值或 NaN(missing_value_policy)"
     ]
+  },
+  "implementation_status": {
+    "JSON_Schema_structure": "✅",
+    "60_jiazi_runtime": "✅",
+    "D1_scan": "✅",
+    "Deterministic": "✅",
+    "Mapping_lock": "✅",
+    "Stateless_scan": "✅",
+    "Hash_consistency": "✅",
+    "numeric_limits": "✅ NEW",
+    "rounding_policy": "✅ NEW",
+    "score_clamp": "✅ NEW",
+    "state_machine": "✅ NEW",
+    "missing_value_policy": "✅ NEW",
+    "output_contract": "✅ NEW",
+    "formula_whitelist": "✅ NEW"
   }
 }
