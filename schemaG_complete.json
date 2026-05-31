@@ -1462,6 +1462,230 @@
       }
     }
   },
+  "asset_layer": {
+    "mode": "dynamic_inference",
+    "source": "external_universe_or_input_stream",
+    "universe_rules": {
+      "type": "market_universe_filter",
+      "constraints": {
+        "min_volume": "auto",
+        "price_filter": "auto",
+        "trend_filter": "computed",
+        "volatility_filter": "computed"
+      }
+    },
+    "role_assignment": {
+      "leader": {
+        "method": "highest_trend_score",
+        "criteria": "trend_score >= 85"
+      },
+      "core_trend": {
+        "method": "stable_high_trend_score",
+        "criteria": "trend_score >= 75 AND risk_score <= 70"
+      },
+      "lagger": {
+        "method": "trend_delay_detection",
+        "criteria": "trend_score >= 65 AND velocity_decreasing"
+      },
+      "volatile": {
+        "method": "high_mars_volatility",
+        "criteria": "volatility_mars >= 85"
+      },
+      "defensive": {
+        "method": "low_risk_score + stable_risk_curve",
+        "criteria": "risk_score <= 60"
+      }
+    },
+    "selection_engine": {
+      "top_n": 5,
+      "ranking_basis": [
+        "trend_score",
+        "risk_score",
+        "volatility_mars",
+        "liquidity_score"
+      ],
+      "recompute_daily": true,
+      "deterministic_rank_seed": "date + universe_hash",
+      "rank_stability": "preserve_order_if_scores_equal"
+    },
+    "output": {
+      "format": "dynamic_watchlist",
+      "structure": [
+        "asset_id",
+        "role",
+        "trend_score",
+        "risk_score",
+        "volatility_mars",
+        "rank_position"
+      ]
+    }
+  },
+  "narrative_engine": {
+    "input": "phase + scores",
+    "output_style": "market_commentary",
+    "templates": [
+      "trend_expansion",
+      "distribution_warning",
+      "shakeout_alert",
+      "second_rally_setup"
+    ],
+    "template_mapping": {
+      "trend_expansion": {
+        "condition": "trend_score >= 85 AND risk_score < 70",
+        "narrative": "Market in strong uptrend expansion phase"
+      },
+      "distribution_warning": {
+        "condition": "risk_score >= 75",
+        "narrative": "Distribution phase detected - caution advised"
+      },
+      "shakeout_alert": {
+        "condition": "volatility_mars >= 85",
+        "narrative": "High volatility shakeout pattern active"
+      },
+      "second_rally_setup": {
+        "condition": "trend_score >= 75 AND cycle_state == 'D2'",
+        "narrative": "Second rally setup conditions forming"
+      }
+    }
+  },
+  "timeline_generator": {
+    "horizon": 40,
+    "output_format": "daily_state",
+    "fields": [
+      "date",
+      "phase",
+      "trend_score",
+      "risk_score",
+      "volatility_mars",
+      "cycle_state",
+      "final_score"
+    ],
+    "generation_mode": "forward_rolling_window",
+    "step_size_days": 1
+  },
+  "sentiment_layer": {
+    "trend_states": [
+      "trend_push",
+      "emotion_push",
+      "distribution_push",
+      "panic_phase"
+    ],
+    "mapping": {
+      "fire": "emotion_intensity",
+      "water": "panic_pressure",
+      "wood": "growth_momentum",
+      "metal": "contraction_pressure",
+      "earth": "stability_anchor"
+    },
+    "state_inference": {
+      "trend_push": {
+        "condition": "trend_score >= 80 AND fire >= 60",
+        "description": "Uptrend driven by positive sentiment"
+      },
+      "emotion_push": {
+        "condition": "fire >= 75",
+        "description": "Market driven by emotional buying"
+      },
+      "distribution_push": {
+        "condition": "risk_score >= 75 AND water >= 60",
+        "description": "Sellers dominating - panic selling pressure"
+      },
+      "panic_phase": {
+        "condition": "water >= 80 AND volatility_mars >= 85",
+        "description": "Extreme panic and volatility"
+      }
+    }
+  },
+  "market_phase_classifier": {
+    "rules": [
+      {
+        "name": "high_extension",
+        "condition": "trend_score > 80 AND risk_score < 70",
+        "description": "Strong trend with low risk - continuation likely"
+      },
+      {
+        "name": "distribution",
+        "condition": "risk_score > 75",
+        "description": "Distribution phase - sellers taking control"
+      },
+      {
+        "name": "shakeout",
+        "condition": "volatility_mars > 85",
+        "description": "High volatility shakeout in progress"
+      },
+      {
+        "name": "accumulation",
+        "condition": "trend_score < 60 AND volatility_mars < 60",
+        "description": "Low trend and volatility - accumulation phase"
+      },
+      {
+        "name": "breakout_setup",
+        "condition": "trend_score > 70 AND volatility_mars < 70",
+        "description": "Building momentum for breakout"
+      }
+    ]
+  },
+  "scan_enhancer": {
+    "mode": "rolling_window_40d",
+    "step": "1d",
+    "output": "phase_sequence",
+    "stop_condition": "none",
+    "generate": [
+      "cycle_state",
+      "trend_score",
+      "risk_score",
+      "volatility_mars",
+      "market_phase",
+      "final_score"
+    ],
+    "persistence": "store_daily_snapshots"
+  },
+  "market_drift": {
+    "phases": [
+      "early_expansion",
+      "late_expansion",
+      "distribution",
+      "shakeout",
+      "accumulation",
+      "second_rally",
+      "exhaustion"
+    ],
+    "phase_transitions": {
+      "early_expansion": {
+        "entry": "trend_score >= 70 AND risk_score < 60",
+        "exit": "trend_score > 85"
+      },
+      "late_expansion": {
+        "entry": "trend_score > 85 AND risk_score < 70",
+        "exit": "risk_score >= 75"
+      },
+      "distribution": {
+        "entry": "risk_score >= 75",
+        "exit": "trend_score < 60"
+      },
+      "shakeout": {
+        "entry": "volatility_mars > 85 AND trend_score < 70",
+        "exit": "volatility_mars < 70"
+      },
+      "accumulation": {
+        "entry": "trend_score < 60 AND volatility_mars < 60",
+        "exit": "trend_score >= 70"
+      },
+      "second_rally": {
+        "entry": "trend_score >= 75 AND previous_phase == 'shakeout'",
+        "exit": "risk_score >= 75"
+      },
+      "exhaustion": {
+        "entry": "trend_score > 85 AND volatility_mars > 80",
+        "exit": "trend_score < 70"
+      }
+    },
+    "mapping_rules": {
+      "trend_score": "threshold_based",
+      "risk_score": "threshold_based",
+      "volatility": "mars_based"
+    }
+  },
   "implementation_guide": {
     "critical_rules": [
       "✅ 必須使用 IEEE 754 雙精度浮點",
@@ -1471,7 +1695,9 @@
       "✅ 必須遵循 formula_execution 白名單",
       "✅ 必須檢查 missing_value_policy",
       "✅ 必須遵循 state_machine 轉移規則",
-      "✅ 輸出必須符合 output_contract"
+      "✅ 輸出必須符合 output_contract",
+      "✅ 資產排名必須使用 deterministic_rank_seed",
+      "✅ 市場階段分類必須基於規則引擎"
     ],
     "validation_order": [
       "1. 檢查輸入值是否在 numeric_limits 範圍內",
@@ -1481,7 +1707,9 @@
       "5. 在每次計算後夾緊結果(score_clamp)",
       "6. 應用 rounding_policy",
       "7. 檢查狀態轉移是否有效(state_machine)",
-      "8. 驗證最終輸出符合 output_contract"
+      "8. 執行資產層推斷和排名",
+      "9. 執行市場階段分類",
+      "10. 驗證最終輸出符合 output_contract"
     ],
     "precision_checklist": [
       "所有中間計算使用 6 位精度(formula_precision)",
@@ -1489,7 +1717,8 @@
       "最終分數使用 2 位精度(final_score_precision)",
       "使用 ROUND_HALF_UP 而非其他舍入模式",
       "不使用任何 AI 解釋或猜測",
-      "不允許空值或 NaN(missing_value_policy)"
+      "不允許空值或 NaN(missing_value_policy)",
+      "資產排名使用 deterministic_rank_seed 確保跨平台一致"
     ]
   },
   "implementation_status": {
@@ -1500,12 +1729,20 @@
     "Mapping_lock": "✅",
     "Stateless_scan": "✅",
     "Hash_consistency": "✅",
-    "numeric_limits": "✅ NEW",
-    "rounding_policy": "✅ NEW",
-    "score_clamp": "✅ NEW",
-    "state_machine": "✅ NEW",
-    "missing_value_policy": "✅ NEW",
-    "output_contract": "✅ NEW",
-    "formula_whitelist": "✅ NEW"
+    "numeric_limits": "✅",
+    "rounding_policy": "✅",
+    "score_clamp": "✅",
+    "state_machine": "✅",
+    "missing_value_policy": "✅",
+    "output_contract": "✅",
+    "formula_whitelist": "✅",
+    "asset_layer": "✅ NEW",
+    "narrative_engine": "✅ NEW",
+    "timeline_generator": "✅ NEW",
+    "sentiment_layer": "✅ NEW",
+    "market_phase_classifier": "✅ NEW",
+    "scan_enhancer": "✅ NEW",
+    "market_drift": "✅ NEW",
+    "deterministic_rank_seed": "✅ NEW"
   }
 }
