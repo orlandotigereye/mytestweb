@@ -1,10 +1,105 @@
 {
   "system": {
-    "name": "WhiteGui_Astro_System",
-    "version": "V5.0_CLEAN_ARCH",
+     "name": "SchemaG_Market_Engine",
+    "version": "V6.0",
     "type": "single_source_truth_engine",
     "consistency_level": "strict_deterministic_cross_ai",
     "checksum_method": "sha256"
+  },
+  "core": {
+    "inputs": [
+      "price",
+      "volume",
+      "market_structure"
+    ],
+    "outputs": [
+      "trend_score",
+      "risk_score",
+      "cycle_state",
+      "market_phase"
+    ]
+  },
+  "engine": {
+    "scoring_engine": {
+      "type": "deterministic"
+    },
+    "cycle_engine": {
+      "enabled": true
+    },
+    "scan_engine": {
+      "mode": "rolling_window",
+      "window_days": 40
+    }
+  },
+  "market_model": {
+    "behavior_layer": {
+      "signals": [
+        "breakout",
+        "fake_breakout",
+        "accumulation",
+        "distribution",
+        "trend_continuation",
+        "exhaustion"
+      ],
+      "inputs": [
+        "price_action",
+        "volume_profile",
+        "range_structure"
+      ]
+    },
+    "phase_semantics": {
+      "accumulation": "smart money building position",
+      "early_expansion": "trend ignition phase",
+      "late_expansion": "public participation phase",
+      "distribution": "smart money exit phase",
+      "shakeout": "weak hands removal",
+      "exhaustion": "trend fatigue"
+    },
+    "adaptive_weights": {
+      "by_phase": {
+        "accumulation": {
+          "volume": 0.5,
+          "trend": 0.3,
+          "risk": 0.2
+        },
+        "distribution": {
+          "risk": 0.5,
+          "volume": 0.3,
+          "trend": 0.2
+        },
+        "trend": {
+          "trend": 0.6,
+          "volume": 0.3,
+          "risk": 0.1
+        }
+      }
+    },
+    "rotation_engine": {
+      "flow_states": [
+        "leader_run",
+        "sector_rotation",
+        "lagger_catchup",
+        "defensive_flow"
+      ],
+      "rules": {
+        "leader_run": "trend_score > 80",
+        "rotation": "leader_fading AND lagger_strengthening"
+      }
+    },
+    "scenario_engine": {
+      "horizon_days": 40,
+      "paths": [
+        "bull_continuation",
+        "distribution_top",
+        "shakeout_rebound",
+        "trend_reversal"
+      ],
+      "output": "probability_tree"
+    }
+  },
+  "output": {
+    "format": "structured_json",
+    "include_narrative": true
   },
   "numeric_limits": {
     "moon_jupiter": {
