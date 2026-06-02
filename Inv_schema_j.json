@@ -1,0 +1,2193 @@
+{
+	"system": {
+		"name": "SchemaI_Market_Engine",
+		"version": "V7.2",
+		"type": "single_source_truth_engine",
+		"consistency_level": "strict_deterministic_cross_ai",
+		"checksum_method": "sha256"
+	},
+	"core": {
+		"inputs": [
+			"price",
+			"volume",
+			"market_structure"
+		],
+		"outputs": [
+			"trend_score",
+			"risk_score",
+			"cycle_state",
+			"market_phase"
+		]
+	},
+	"engine": {
+		"constants": {
+			"trend_anchor": 120,
+			"risk_anchor": 180,
+			"vol_anchor": 180,
+			"cycle_length": 4,
+			"ganzhi_cycle_length": 60,
+			"lunar_mansion_count": 28
+		},
+		"weights": {
+			"trend": {
+				"jupiter": 0.4,
+				"moon_phase": 0.2,
+				"host_star": 0.15,
+				"elements": 0.15,
+				"solar_term": 0.1,
+				"total": 1
+			},
+			"risk": {
+				"saturn": 0.6,
+				"mars": 0.4,
+				"total": 1
+			}
+		},
+		"determinism_hash": {
+			"enabled": true,
+			"method": "sha256",
+			"input_for_hash": "sorted_json(input) + epoch_date + deterministic_rules",
+			"purpose": "cross_ai_verification"
+		},
+		"execution_lock": {
+			"enforce_strict_mapping": true,
+			"bindings": {
+				"moon_phase": "maps.moon_phase[input.moon_phase]",
+				"host_star": "maps.host_star_score[input.host_star]",
+				"ganzhi": "maps.ganzhi_score[input.ganzhi]"
+			},
+			"no_raw_string_usage": true,
+			"no_ai_interpretation": true,
+			"no_inference": true,
+			"force_numeric_cast": true,
+			"fail_on_unmapped": true
+		},
+		"drift_model": {
+			"description": "How values change over time",
+			"trend_jupiter_step": 0.2,
+			"saturn_step": 0.15,
+			"mars_step": 0.3,
+			"mode": "linear_deterministic",
+			"steps": [
+				{
+					"day": 0,
+					"moon_jupiter_change": 0,
+					"moon_saturn_change": 0,
+					"mars_angle_change": 0
+				},
+				{
+					"day": 1,
+					"moon_jupiter_change": 0.25,
+					"moon_saturn_change": 0.18,
+					"mars_angle_change": 0.35
+				}
+			]
+		},
+		"epoch": {
+			"base_date": "2026-05-30",
+			"base_date_format": "YYYY-MM-DD",
+			"unit": "days",
+			"reference_system": "gregorian_calendar",
+			"timezone": "UTC"
+		},
+		"scan_rule": {
+			"condition": "cycle.state == 'D1' AND trend_score >= 85 AND risk_score >= 80 AND volatility_mars >= 85",
+			"description": "D1 trigger condition",
+			"thresholds": {
+				"trend_score_min": 85,
+				"risk_score_min": 80,
+				"volatility_mars_min": 85,
+				"cycle_state_required": "D1"
+			},
+			"stop_at_first_hit": true,
+			"evaluation_order": [
+				"cycle_state_check",
+				"trend_score_check",
+				"risk_score_check",
+				"volatility_mars_check"
+			]
+		},
+		"time_propagation": {
+			"enabled": true,
+			"mode": "linear_accumulation",
+			"rules": {
+				"moon_jupiter": {
+					"change_per_day": 0.25,
+					"unit": "degrees",
+					"description": "Jupiter moves 0.25° per day"
+				},
+				"moon_saturn": {
+					"change_per_day": 0.18,
+					"unit": "degrees",
+					"description": "Saturn moves 0.18° per day"
+				},
+				"mars_angle": {
+					"change_per_day": 0.35,
+					"unit": "degrees",
+					"description": "Mars moves 0.35° per day"
+				}
+			},
+			"wrap": {
+				"moon_jupiter": 360,
+				"moon_saturn": 360,
+				"mars_angle": 360
+			},
+			"wrap_operation": "modulo_360",
+			"formula": {
+				"moon_jupiter_day_n": "(input.moon_jupiter + 0.25 * days_elapsed) % 360",
+				"moon_saturn_day_n": "(input.moon_saturn + 0.18 * days_elapsed) % 360",
+				"mars_angle_day_n": "(input.mars_angle + 0.35 * days_elapsed) % 360"
+			}
+		},
+		"binding_rules": {
+			"moon_phase": {
+				"source": "input.moon_phase",
+				"lookup": "maps.moon_phase",
+				"output_name": "moon_phase_value"
+			},
+			"host_star": {
+				"source": "input.host_star",
+				"lookup": "maps.host_star_score",
+				"output_name": "host_star_value",
+				"fallback": 75
+			},
+			"ganzhi": {
+				"source": "input.ganzhi",
+				"lookup": "maps.ganzhi_score",
+				"output_name": "ganzhi_value"
+			}
+		},
+		"execution_engine": {
+			"mode": "strict_deterministic_runtime",
+			"rules": {
+				"ALL_VALUES_MUST_BE_RESOLVED": true,
+				"NO_STRING_PASS_THROUGH": true,
+				"NO_UNMAPPED_VALUES": true,
+				"ALL_ENUMS_MUST_BE_VALIDATED": true,
+				"ALL_RESULTS_MUST_BE_CLAMPED": true
+			},
+			"resolution_order": [
+				"validate_input",
+				"lookup_map_values",
+				"numeric_cast",
+				"compute_base_formulas",
+				"compute_composite_formulas",
+				"compute_final_score",
+				"evaluate_cycle_state",
+				"output_results"
+			],
+			"enforcement": {
+				"fail_on_missing_map": true,
+				"fail_on_unknown_enum": true,
+				"fail_on_type_mismatch": true,
+				"fail_on_range_violation": true
+			}
+		},
+		"host_star_policy": {
+			"mode": "strict_enum_only",
+			"on_unknown": "fallback_75",
+			"no_inference": true,
+			"allowed_values": 28,
+			"fallback_logic": "Use 75 if host_star is not in the 28 lunar mansions list"
+		},
+		"scan_execution": {
+			"mode": "pure_stateless_per_day",
+			"no_memory": true,
+			"no_carry_forward": true,
+			"fresh_evaluation": "each day from base_date"
+		},
+		"moon_phase_score_source": "maps.moon_phase",
+		"maps": {
+			"moon_phase": {
+				"new_moon": 65,
+				"first_quarter": 75,
+				"full_moon": 85,
+				"last_quarter": 70
+			},
+			"host_star_score": {
+				"角木蛟": 80,
+				"亢金龍": 82,
+				"氐土貉": 78,
+				"房日兔": 76,
+				"心月狐": 81,
+				"尾火虎": 83,
+				"箕水豹": 77,
+				"斗木獬": 79,
+				"牛金牛": 80,
+				"女土蝠": 78,
+				"虛日鼠": 79,
+				"危月燕": 81,
+				"室火豬": 82,
+				"壁水貐": 80,
+				"奎木狼": 81,
+				"婁金狗": 78,
+				"胃土雉": 75,
+				"昴日雞": 85,
+				"畢月烏": 80,
+				"觜火猴": 82,
+				"參水猿": 79,
+				"井木犴": 78,
+				"鬼金羊": 77,
+				"柳土獐": 76,
+				"星日馬": 80,
+				"張月鹿": 81,
+				"翼火蛇": 83,
+				"軫水蚓": 79
+			},
+			"ganzhi_score": {
+				"甲子": 50,
+				"乙丑": 51,
+				"丙寅": 52,
+				"丁卯": 53,
+				"戊辰": 54,
+				"己巳": 55,
+				"庚午": 56,
+				"辛未": 57,
+				"壬申": 58,
+				"癸酉": 59,
+				"甲戌": 60,
+				"乙亥": 59,
+				"丙子": 58,
+				"丁丑": 57,
+				"戊寅": 56,
+				"己卯": 55,
+				"庚辰": 54,
+				"辛巳": 53,
+				"壬午": 52,
+				"癸未": 51,
+				"甲申": 50,
+				"乙酉": 51,
+				"丙戌": 52,
+				"丁亥": 53,
+				"戊子": 54,
+				"己丑": 55,
+				"庚寅": 56,
+				"辛卯": 57,
+				"壬辰": 58,
+				"癸巳": 59,
+				"甲午": 60,
+				"乙未": 59,
+				"丙申": 58,
+				"丁酉": 57,
+				"戊戌": 56,
+				"己亥": 55,
+				"庚子": 54,
+				"辛丑": 53,
+				"壬寅": 52,
+				"癸卯": 51,
+				"甲辰": 50,
+				"乙巳": 51,
+				"丙午": 52,
+				"丁未": 53,
+				"戊申": 54,
+				"己酉": 55,
+				"庚戌": 56,
+				"辛亥": 57,
+				"壬子": 58,
+				"癸丑": 59,
+				"甲寅": 60,
+				"乙卯": 59,
+				"丙辰": 58,
+				"丁巳": 57,
+				"戊午": 56,
+				"己未": 55,
+				"庚申": 54,
+				"辛酉": 53,
+				"壬戌": 52,
+				"癸亥": 51
+			}
+		},
+		"formulas": {
+			"trend_jupiter": "100 - abs(moon_jupiter - 120) / 120 * 100",
+			"risk_saturn": "100 - abs(moon_saturn - 180) / 180 * 100",
+			"volatility_mars": "100 - abs(mars_angle - 180) / 180 * 100",
+			"element_score": "100 - (max(wood,fire,earth,metal,water) - min(wood,fire,earth,metal,water)) * 2",
+			"solar_term_score": "max(0, 100 - (solar_term_days / 15 * 100))"
+		},
+		"scoring": {
+			"trend_score": {
+				"formula": "0.40*trend_jupiter + 0.20*moon_phase + 0.15*host_star + 0.15*element_score + 0.10*solar_term_score",
+				"weights": {
+					"trend_jupiter": 0.4,
+					"moon_phase": 0.2,
+					"host_star": 0.15,
+					"element_score": 0.15,
+					"solar_term_score": 0.1
+				},
+				"min": 0,
+				"max": 100
+			},
+			"risk_score": {
+				"formula": "0.60*risk_saturn + 0.40*volatility_mars",
+				"weights": {
+					"risk_saturn": 0.6,
+					"volatility_mars": 0.4
+				},
+				"min": 0,
+				"max": 100
+			},
+			"final_score": {
+				"formula": "trend_score - (risk_score * 0.3)",
+				"description": "Trend reduced by risk component",
+				"min": 0,
+				"max": 100
+			}
+		},
+		"cycle": {
+			"length": 4,
+			"states": [
+				"IDLE",
+				"D1",
+				"D2",
+				"D3",
+				"D4"
+			],
+			"state_descriptions": {
+				"IDLE": "No signal",
+				"D1": "Primary signal (highest priority)",
+				"D2": "Secondary signal",
+				"D3": "Tertiary signal",
+				"D4": "Quaternary signal"
+			},
+			"tie_breaker": {
+				"method": "earliest_date_wins",
+				"score_priority": "final_score",
+				"deterministic_sort": true,
+				"secondary_sort": "ganzhi_index_asc"
+			},
+			"state_snapshot": {
+				"enabled": true,
+				"store_each_day": true,
+				"fields_captured": [
+					"date",
+					"trend_score",
+					"risk_score",
+					"volatility_mars",
+					"final_score",
+					"cycle_state",
+					"moon_jupiter",
+					"moon_saturn",
+					"mars_angle"
+				]
+			},
+			"priority": {
+				"D1": 3,
+				"D2": 2,
+				"D3": 1,
+				"D4": 0,
+				"IDLE": -1
+			},
+			"d1_trigger": {
+				"trend_score_gte": 85,
+				"risk_score_gte": 80,
+				"volatility_mars_gte": 85,
+				"all_conditions_must_be_met": true
+			},
+			"d2_trigger": {
+				"trend_score_gte": 75,
+				"risk_score_gte": 70,
+				"description": "When D1 not met but trend is strong"
+			},
+			"d3_trigger": {
+				"trend_score_gte": 65,
+				"description": "When D2 not met but trend is moderate"
+			},
+			"d4_trigger": {
+				"trend_score_gte": 55,
+				"description": "When D3 not met but trend is present"
+			},
+			"lock": true
+		},
+		"decision_zones": {
+			"final_score": {
+				"85_100": {
+					"label": "main_uptrend",
+					"description": "Strong uptrend signal"
+				},
+				"75_85": {
+					"label": "bull",
+					"description": "Bullish momentum"
+				},
+				"65_75": {
+					"label": "range",
+					"description": "Range-bound trading"
+				},
+				"55_65": {
+					"label": "consolidation",
+					"description": "Consolidation pattern"
+				},
+				"45_55": {
+					"label": "bearish",
+					"description": "Bearish pressure"
+				},
+				"0_45": {
+					"label": "high_risk",
+					"description": "High risk zone"
+				}
+			}
+		}
+	},
+	"market_model": {
+		"behavior_layer": {
+			"signals": [
+				"breakout",
+				"fake_breakout",
+				"accumulation",
+				"distribution",
+				"trend_continuation",
+				"exhaustion"
+			],
+			"inputs": [
+				"price_action",
+				"volume_profile",
+				"range_structure"
+			]
+		},
+		"engine": {
+			"probability_engine": {
+				"enabled": true,
+				"normalization": "softmax",
+				"inputs": [
+					"trend_score",
+					"risk_score",
+					"cycle_score",
+					"market_phase"
+				],
+				"scenario_weights": {
+					"bull_continuation": {
+						"trend_score": 0.5,
+						"risk_score": -0.2,
+						"cycle_score": 0.3
+					},
+					"distribution_top": {
+						"trend_score": 0.1,
+						"risk_score": 0.6,
+						"cycle_score": 0.3
+					},
+					"shakeout_rebound": {
+						"trend_score": 0.2,
+						"risk_score": 0.4,
+						"cycle_score": 0.4
+					},
+					"trend_reversal": {
+						"trend_score": -0.4,
+						"risk_score": 0.5,
+						"cycle_score": 0.1
+					}
+				},
+				"output": {
+					"top_scenario": true,
+					"all_probabilities": true
+				}
+			},
+			"day_by_day_simulator": {
+				"enabled": true,
+				"horizon_days": 40,
+				"step_unit": "day",
+				"generate": [
+					"date",
+					"phase",
+					"trend_score",
+					"risk_score",
+					"cycle_state",
+					"market_behavior"
+				],
+				"phase_transition_matrix": {
+					"accumulation": [
+						"early_expansion"
+					],
+					"early_expansion": [
+						"late_expansion"
+					],
+					"late_expansion": [
+						"distribution",
+						"second_rally"
+					],
+					"distribution": [
+						"shakeout"
+					],
+					"shakeout": [
+						"accumulation"
+					],
+					"second_rally": [
+						"exhaustion"
+					],
+					"exhaustion": [
+						"distribution"
+					]
+				},
+				"daily_drift": {
+					"trend_score": 2,
+					"risk_score": 1
+				}
+			},
+			"feedback_loop": {
+				"enabled": true,
+				"compare_fields": [
+					"trend_score",
+					"risk_score",
+					"market_phase"
+				],
+				"adjustment": {
+					"mode": "incremental",
+					"learning_rate": 0.05,
+					"max_adjustment": 0.2
+				},
+				"triggers": {
+					"trend_error": 10,
+					"risk_error": 10
+				},
+				"actions": [
+					"update_weights",
+					"update_phase_confidence"
+				]
+			}
+		},
+		"phase_semantics": {
+			"accumulation": "smart money building position",
+			"early_expansion": "trend ignition phase",
+			"late_expansion": "public participation phase",
+			"distribution": "smart money exit phase",
+			"shakeout": "weak hands removal",
+			"exhaustion": "trend fatigue"
+		},
+		"backtest_validator": {
+			"enabled": true,
+			"lookback_days": 365,
+			"metrics": [
+				"phase_accuracy",
+				"trend_accuracy",
+				"scenario_accuracy"
+			]
+		},
+		"smart_money_engine": {
+			"enabled": true,
+			"signals": [
+				"accumulation",
+				"markup",
+				"distribution",
+				"markdown",
+				"spring",
+				"upthrust",
+				"absorption",
+				"reaccumulation"
+			],
+			"confidence_mode": "weighted",
+			"inputs": [
+				"trend_score",
+				"risk_score",
+				"volume_strength",
+				"market_phase"
+			],
+			"signal_weights": {
+				"trend_score": 0.35,
+				"volume_strength": 0.35,
+				"market_phase": 0.2,
+				"risk_score": 0.1
+			},
+			"outputs": [
+				"smart_money_state",
+				"confidence_score"
+			]
+		},
+		"confidence_engine": {
+			"enabled": true,
+			"score_range": [
+				0,
+				100
+			],
+			"inputs": [
+				"backtest_accuracy",
+				"phase_stability",
+				"signal_quality",
+				"scenario_probability"
+			],
+			"weights": {
+				"backtest_accuracy": 0.35,
+				"phase_stability": 0.25,
+				"signal_quality": 0.2,
+				"scenario_probability": 0.2
+			},
+			"outputs": [
+				"confidence_score",
+				"confidence_band"
+			]
+		},
+		"signal_engine": {
+			"enabled": true,
+			"signal_types": [
+				"buy",
+				"add_position",
+				"hold",
+				"reduce",
+				"exit"
+			],
+			"rules": {
+				"buy": {
+					"trend_score_min": 70,
+					"risk_score_max": 40
+				},
+				"add_position": {
+					"trend_score_min": 80,
+					"risk_score_max": 50
+				},
+				"reduce": {
+					"risk_score_min": 70
+				},
+				"exit": {
+					"risk_score_min": 85
+				}
+			},
+			"outputs": [
+				"signal",
+				"signal_strength"
+			]
+		},
+		"risk_management_engine": {
+			"enabled": true,
+			"max_portfolio_risk": 0.02,
+			"position_sizing": {
+				"mode": "risk_based"
+			},
+			"stop_loss": {
+				"enabled": true,
+				"default_percent": 8
+			},
+			"take_profit": {
+				"enabled": true,
+				"default_percent": 20
+			},
+			"outputs": [
+				"recommended_position_size",
+				"recommended_stop_loss",
+				"recommended_take_profit"
+			]
+		},
+		"adaptive_weights": {
+			"by_phase": {
+				"accumulation": {
+					"volume": 0.5,
+					"trend": 0.3,
+					"risk": 0.2
+				},
+				"distribution": {
+					"risk": 0.5,
+					"volume": 0.3,
+					"trend": 0.2
+				},
+				"trend": {
+					"trend": 0.6,
+					"volume": 0.3,
+					"risk": 0.1
+				}
+			}
+		},
+		"rotation_engine": {
+			"flow_states": [
+				"leader_run",
+				"sector_rotation",
+				"lagger_catchup",
+				"defensive_flow"
+			],
+			"rules": {
+				"leader_run": "trend_score > 80",
+				"rotation": "leader_fading AND lagger_strengthening"
+			}
+		},
+		"advanced_simulation": {
+			"probability_engine": {
+				"enabled": true,
+				"version": "V1",
+				"normalization": "softmax",
+				"inputs": [
+					"trend_score",
+					"risk_score",
+					"cycle_score",
+					"market_phase",
+					"market_behavior"
+				],
+				"confidence_bands": {
+					"very_high": 0.8,
+					"high": 0.65,
+					"medium": 0.5,
+					"low": 0.35
+				},
+				"scenario_weights": {
+					"bull_continuation": {
+						"trend_score": 0.5,
+						"risk_score": -0.2,
+						"cycle_score": 0.3,
+						"market_phase": 0.2
+					},
+					"distribution_top": {
+						"trend_score": 0.1,
+						"risk_score": 0.6,
+						"cycle_score": 0.3,
+						"market_phase": 0.2
+					},
+					"shakeout_rebound": {
+						"trend_score": 0.2,
+						"risk_score": 0.4,
+						"cycle_score": 0.4,
+						"market_phase": 0.1
+					},
+					"trend_reversal": {
+						"trend_score": -0.4,
+						"risk_score": 0.5,
+						"cycle_score": 0.1,
+						"market_phase": 0.3
+					}
+				},
+				"outputs": [
+					"scenario_probability",
+					"top_scenario",
+					"confidence_score"
+				]
+			},
+			"daily_simulator": {
+				"enabled": true,
+				"horizon_days": 40,
+				"step_size_days": 1,
+				"simulation_mode": "state_transition",
+				"outputs": [
+					"date",
+					"trend_score",
+					"risk_score",
+					"cycle_state",
+					"market_phase",
+					"market_behavior"
+				],
+				"transition_matrix": {
+					"accumulation": [
+						"early_expansion"
+					],
+					"early_expansion": [
+						"late_expansion"
+					],
+					"late_expansion": [
+						"distribution",
+						"second_rally"
+					],
+					"distribution": [
+						"shakeout"
+					],
+					"shakeout": [
+						"accumulation"
+					],
+					"second_rally": [
+						"exhaustion"
+					],
+					"exhaustion": [
+						"distribution"
+					]
+				},
+				"daily_drift": {
+					"trend_score": 2,
+					"risk_score": 1
+				},
+				"stop_conditions": {
+					"risk_score_max": 100,
+					"trend_score_min": 0
+				}
+			},
+			"feedback_loop": {
+				"enabled": true,
+				"mode": "incremental_learning",
+				"learning_rate": 0.05,
+				"compare_fields": [
+					"trend_score",
+					"risk_score",
+					"market_phase"
+				],
+				"error_thresholds": {
+					"trend_score": 10,
+					"risk_score": 10,
+					"market_phase": 1
+				},
+				"actions": [
+					"adjust_probability_weights",
+					"adjust_phase_confidence",
+					"adjust_transition_weights"
+				],
+				"max_adjustment": 0.2
+			},
+			"backtest_validator": {
+				"enabled": true,
+				"lookback_days": 365,
+				"benchmark_mode": "historical_replay",
+				"metrics": [
+					"phase_accuracy",
+					"trend_accuracy",
+					"risk_accuracy",
+					"scenario_accuracy"
+				],
+				"acceptance_thresholds": {
+					"phase_accuracy": 0.7,
+					"trend_accuracy": 0.65,
+					"risk_accuracy": 0.65,
+					"scenario_accuracy": 0.6
+				},
+				"outputs": [
+					"accuracy_report",
+					"model_health_score",
+					"recommended_adjustments"
+				]
+			}
+		},
+		"scenario_engine": {
+			"horizon_days": 40,
+			"paths": [
+				"bull_continuation",
+				"distribution_top",
+				"shakeout_rebound",
+				"trend_reversal"
+			],
+			"output": "probability_tree"
+		}
+	},
+	"output": {
+		"format": "structured_json",
+		"include_narrative": true
+	},
+	"numeric_limits": {
+		"moon_jupiter": {
+			"min": 0,
+			"max": 360
+		},
+		"moon_saturn": {
+			"min": 0,
+			"max": 360
+		},
+		"mars_angle": {
+			"min": 0,
+			"max": 360
+		},
+		"element_value": {
+			"min": 0,
+			"max": 100
+		}
+	},
+	"rounding_policy": {
+		"score_precision": 2,
+		"formula_precision": 6,
+		"method": "round_half_up",
+		"final_score_precision": 2
+	},
+	"formula_execution": {
+		"engine": "strict_math_only",
+		"allowed_functions": [
+			"abs",
+			"min",
+			"max",
+			"round"
+		],
+		"forbidden": [
+			"eval",
+			"ai_guess",
+			"string_math"
+		]
+	},
+	"missing_value_policy": {
+		"mode": "fail_fast",
+		"allow_null": false,
+		"allow_empty_string": false,
+		"allow_nan": false
+	},
+	"score_clamp": {
+		"trend_jupiter": {
+			"min": 0,
+			"max": 100
+		},
+		"risk_saturn": {
+			"min": 0,
+			"max": 100
+		},
+		"volatility_mars": {
+			"min": 0,
+			"max": 100
+		},
+		"element_score": {
+			"min": 0,
+			"max": 100
+		},
+		"solar_term_score": {
+			"min": 0,
+			"max": 100
+		},
+		"trend_score": {
+			"min": 0,
+			"max": 100
+		},
+		"risk_score": {
+			"min": 0,
+			"max": 100
+		},
+		"final_score": {
+			"min": 0,
+			"max": 100
+		}
+	},
+	"state_machine": {
+		"mode": "strict_cycle",
+		"transitions": {
+			"IDLE": [
+				"D1"
+			],
+			"D1": [
+				"D2"
+			],
+			"D2": [
+				"D3"
+			],
+			"D3": [
+				"D4"
+			],
+			"D4": [
+				"IDLE"
+			]
+		},
+		"invalid_transition": "reject"
+	},
+	"output_contract": {
+		"required_fields": [
+			"date",
+			"ganzhi",
+			"trend_score",
+			"risk_score",
+			"final_score",
+			"cycle_state",
+			"decision_zone"
+		],
+		"additionalProperties": false,
+		"type_requirements": {
+			"date": "string_yyyy-mm-dd",
+			"ganzhi": "string_enum",
+			"trend_score": "number_0_to_100",
+			"risk_score": "number_0_to_100",
+			"final_score": "number_0_to_100",
+			"cycle_state": "string_enum_idle_d1_d2_d3_d4",
+			"decision_zone": "string_enum_main_uptrend_bull_range_consolidation_bearish_high_risk"
+		}
+	},
+	"compatibility": {
+		"schema_version": "5.0",
+		"allow_future_fields": false,
+		"allow_formula_override": false,
+		"allow_weight_override": false
+	},
+	"schema": {
+		"$schema": "https://json-schema.org/draft/2020-12/schema",
+		"type": "object",
+		"additionalProperties": false,
+		"required": [
+			"input"
+		],
+		"properties": {
+			"input": {
+				"type": "object",
+				"required": [
+					"moon_jupiter",
+					"moon_saturn",
+					"mars_angle",
+					"moon_phase",
+					"host_star",
+					"wood",
+					"fire",
+					"earth",
+					"metal",
+					"water",
+					"solar_term_days",
+					"ganzhi"
+				],
+				"properties": {
+					"moon_jupiter": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 360,
+						"description": "Jupiter's angular position in degrees"
+					},
+					"moon_saturn": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 360,
+						"description": "Saturn's angular position in degrees"
+					},
+					"mars_angle": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 360,
+						"description": "Mars' angular position in degrees"
+					},
+					"moon_phase": {
+						"type": "string",
+						"enum": [
+							"new_moon",
+							"first_quarter",
+							"full_moon",
+							"last_quarter"
+						],
+						"description": "Current lunar phase"
+					},
+					"host_star": {
+						"type": "string",
+						"enum": [
+							"角木蛟",
+							"亢金龍",
+							"氐土貉",
+							"房日兔",
+							"心月狐",
+							"尾火虎",
+							"箕水豹",
+							"斗木獬",
+							"牛金牛",
+							"女土蝠",
+							"虛日鼠",
+							"危月燕",
+							"室火豬",
+							"壁水貐",
+							"奎木狼",
+							"婁金狗",
+							"胃土雉",
+							"昴日雞",
+							"畢月烏",
+							"觜火猴",
+							"參水猿",
+							"井木犴",
+							"鬼金羊",
+							"柳土獐",
+							"星日馬",
+							"張月鹿",
+							"翼火蛇",
+							"軫水蚓"
+						]
+					},
+					"ganzhi": {
+						"type": "string",
+						"enum": [
+							"甲子",
+							"乙丑",
+							"丙寅",
+							"丁卯",
+							"戊辰",
+							"己巳",
+							"庚午",
+							"辛未",
+							"壬申",
+							"癸酉",
+							"甲戌",
+							"乙亥",
+							"丙子",
+							"丁丑",
+							"戊寅",
+							"己卯",
+							"庚辰",
+							"辛巳",
+							"壬午",
+							"癸未",
+							"甲申",
+							"乙酉",
+							"丙戌",
+							"丁亥",
+							"戊子",
+							"己丑",
+							"庚寅",
+							"辛卯",
+							"壬辰",
+							"癸巳",
+							"甲午",
+							"乙未",
+							"丙申",
+							"丁酉",
+							"戊戌",
+							"己亥",
+							"庚子",
+							"辛丑",
+							"壬寅",
+							"癸卯",
+							"甲辰",
+							"乙巳",
+							"丙午",
+							"丁未",
+							"戊申",
+							"己酉",
+							"庚戌",
+							"辛亥",
+							"壬子",
+							"癸丑",
+							"甲寅",
+							"乙卯",
+							"丙辰",
+							"丁巳",
+							"戊午",
+							"己未",
+							"庚申",
+							"辛酉",
+							"壬戌",
+							"癸亥"
+						],
+						"description": "60-day Heavenly Stems & Earthly Branches cycle"
+					},
+					"wood": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 100,
+						"description": "Wood element score (0-100)"
+					},
+					"fire": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 100,
+						"description": "Fire element score (0-100)"
+					},
+					"earth": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 100,
+						"description": "Earth element score (0-100)"
+					},
+					"metal": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 100,
+						"description": "Metal element score (0-100)"
+					},
+					"water": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 100,
+						"description": "Water element score (0-100)"
+					},
+					"solar_term_days": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 30,
+						"description": "Days since last solar term (0-30)"
+					}
+				}
+			}
+		}
+	},
+	"validation_layer": {
+		"input_validation": {
+			"enforce_strict_types": true,
+			"rules": {
+				"angular_values": {
+					"fields": [
+						"moon_jupiter",
+						"moon_saturn",
+						"mars_angle"
+					],
+					"type": "number",
+					"range": {
+						"min": 0,
+						"max": 360,
+						"inclusive": true
+					},
+					"on_out_of_range": "reject_with_error"
+				},
+				"element_values": {
+					"fields": [
+						"wood",
+						"fire",
+						"earth",
+						"metal",
+						"water"
+					],
+					"type": "number",
+					"range": {
+						"min": 0,
+						"max": 100,
+						"inclusive": true
+					},
+					"on_out_of_range": "reject_with_error"
+				},
+				"solar_term_days": {
+					"type": "integer",
+					"range": {
+						"min": 0,
+						"max": 30,
+						"inclusive": true
+					},
+					"on_out_of_range": "reject_with_error"
+				},
+				"enum_validation": {
+					"moon_phase": {
+						"allowed_values": [
+							"new_moon",
+							"first_quarter",
+							"full_moon",
+							"last_quarter"
+						],
+						"on_invalid": "reject_with_error"
+					},
+					"host_star": {
+						"allowed_values": [
+							"角木蛟",
+							"亢金龍",
+							"氐土貉",
+							"房日兔",
+							"心月狐",
+							"尾火虎",
+							"箕水豹",
+							"斗木獬",
+							"牛金牛",
+							"女土蝠",
+							"虛日鼠",
+							"危月燕",
+							"室火豬",
+							"壁水貐",
+							"奎木狼",
+							"婁金狗",
+							"胃土雉",
+							"昴日雞",
+							"畢月烏",
+							"觜火猴",
+							"參水猿",
+							"井木犴",
+							"鬼金羊",
+							"柳土獐",
+							"星日馬",
+							"張月鹿",
+							"翼火蛇",
+							"軫水蚓"
+						],
+						"on_invalid": "use_fallback_75"
+					},
+					"ganzhi": {
+						"allowed_values": [
+							"甲子",
+							"乙丑",
+							"丙寅",
+							"丁卯",
+							"戊辰",
+							"己巳",
+							"庚午",
+							"辛未",
+							"壬申",
+							"癸酉",
+							"甲戌",
+							"乙亥",
+							"丙子",
+							"丁丑",
+							"戊寅",
+							"己卯",
+							"庚辰",
+							"辛巳",
+							"壬午",
+							"癸未",
+							"甲申",
+							"乙酉",
+							"丙戌",
+							"丁亥",
+							"戊子",
+							"己丑",
+							"庚寅",
+							"辛卯",
+							"壬辰",
+							"癸巳",
+							"甲午",
+							"乙未",
+							"丙申",
+							"丁酉",
+							"戊戌",
+							"己亥",
+							"庚子",
+							"辛丑",
+							"壬寅",
+							"癸卯",
+							"甲辰",
+							"乙巳",
+							"丙午",
+							"丁未",
+							"戊申",
+							"己酉",
+							"庚戌",
+							"辛亥",
+							"壬子",
+							"癸丑",
+							"甲寅",
+							"乙卯",
+							"丙辰",
+							"丁巳",
+							"戊午",
+							"己未",
+							"庚申",
+							"辛酉",
+							"壬戌",
+							"癸亥"
+						],
+						"on_invalid": "reject_with_error"
+					}
+				}
+			}
+		}
+	},
+	"validation": {
+		"abort_on_error": true,
+		"checks": [
+			"input_range",
+			"enum_match",
+			"map_exists",
+			"formula_result",
+			"score_range"
+		]
+	},
+	"computation_rules": {
+		"precision": {
+			"floating_point_standard": "IEEE_754_double_precision",
+			"decimal_places": 2,
+			"rounding_mode": "ROUND_HALF_UP",
+			"scientific_notation_threshold": 0.000001,
+			"max_value": 10000000000,
+			"min_value": -10000000000
+		},
+		"operations": {
+			"addition": {
+				"mode": "exact_double_precision",
+				"overflow_handling": "clamp_to_max_value"
+			},
+			"subtraction": {
+				"mode": "exact_double_precision",
+				"underflow_handling": "clamp_to_min_value"
+			},
+			"multiplication": {
+				"mode": "exact_double_precision",
+				"precision_loss_tolerance": 1e-10
+			},
+			"division": {
+				"mode": "exact_double_precision",
+				"zero_division_handling": "use_fallback_value_0",
+				"near_zero_threshold": 1e-10
+			},
+			"modulo": {
+				"mode": "truncated_division",
+				"sign_handling": "dividend_sign"
+			},
+			"absolute_value": {
+				"mode": "standard_mathematical"
+			},
+			"min_max": {
+				"mode": "lexicographic_comparison",
+				"tie_breaking": "first_occurrence"
+			}
+		},
+		"clamping": {
+			"score_bounds": {
+				"enabled": true,
+				"min": 0,
+				"max": 100
+			},
+			"formula_results": {
+				"enabled": true,
+				"clamp_before_next_step": true
+			}
+		}
+	},
+	"precision_control": {
+		"rounding_mode": "HALF_UP",
+		"decimal_places": 4,
+		"apply_to": [
+			"trend_score",
+			"risk_score",
+			"final_score"
+		]
+	},
+	"maps": {
+		"moon_phase": {
+			"new_moon": 65,
+			"first_quarter": 75,
+			"full_moon": 85,
+			"last_quarter": 70
+		},
+		"host_star_score": {
+			"角木蛟": 80,
+			"亢金龍": 82,
+			"氐土貉": 78,
+			"房日兔": 76,
+			"心月狐": 81,
+			"尾火虎": 83,
+			"箕水豹": 77,
+			"斗木獬": 79,
+			"牛金牛": 80,
+			"女土蝠": 78,
+			"虛日鼠": 79,
+			"危月燕": 81,
+			"室火豬": 82,
+			"壁水貐": 80,
+			"奎木狼": 81,
+			"婁金狗": 78,
+			"胃土雉": 75,
+			"昴日雞": 85,
+			"畢月烏": 80,
+			"觜火猴": 82,
+			"參水猿": 79,
+			"井木犴": 78,
+			"鬼金羊": 77,
+			"柳土獐": 76,
+			"星日馬": 80,
+			"張月鹿": 81,
+			"翼火蛇": 83,
+			"軫水蚓": 79
+		},
+		"ganzhi_score": {
+			"甲子": 50,
+			"乙丑": 51,
+			"丙寅": 52,
+			"丁卯": 53,
+			"戊辰": 54,
+			"己巳": 55,
+			"庚午": 56,
+			"辛未": 57,
+			"壬申": 58,
+			"癸酉": 59,
+			"甲戌": 60,
+			"乙亥": 59,
+			"丙子": 58,
+			"丁丑": 57,
+			"戊寅": 56,
+			"己卯": 55,
+			"庚辰": 54,
+			"辛巳": 53,
+			"壬午": 52,
+			"癸未": 51,
+			"甲申": 50,
+			"乙酉": 51,
+			"丙戌": 52,
+			"丁亥": 53,
+			"戊子": 54,
+			"己丑": 55,
+			"庚寅": 56,
+			"辛卯": 57,
+			"壬辰": 58,
+			"癸巳": 59,
+			"甲午": 60,
+			"乙未": 59,
+			"丙申": 58,
+			"丁酉": 57,
+			"戊戌": 56,
+			"己亥": 55,
+			"庚子": 54,
+			"辛丑": 53,
+			"壬寅": 52,
+			"癸卯": 51,
+			"甲辰": 50,
+			"乙巳": 51,
+			"丙午": 52,
+			"丁未": 53,
+			"戊申": 54,
+			"己酉": 55,
+			"庚戌": 56,
+			"辛亥": 57,
+			"壬子": 58,
+			"癸丑": 59,
+			"甲寅": 60,
+			"乙卯": 59,
+			"丙辰": 58,
+			"丁巳": 57,
+			"戊午": 56,
+			"己未": 55,
+			"庚申": 54,
+			"辛酉": 53,
+			"壬戌": 52,
+			"癸亥": 51
+		},
+		"fallback_values": {
+			"host_star_unknown": 75,
+			"ganzhi_unknown": 50,
+			"moon_phase_unknown": 70,
+			"division_by_zero": 0
+		}
+	},
+	"formulas": {
+		"step_1_base_scores": {
+			"trend_jupiter": {
+				"description": "Distance from anchor 120 degrees",
+				"formula": "100 - abs(moon_jupiter - 120) / 120 * 100",
+				"step_by_step": [
+					"diff = moon_jupiter - 120",
+					"abs_diff = abs(diff)",
+					"ratio = abs_diff / 120",
+					"percentage = ratio * 100",
+					"result = 100 - percentage"
+				],
+				"example": {
+					"input": 120,
+					"step_1_diff": 0,
+					"step_2_abs": 0,
+					"step_3_ratio": 0,
+					"step_4_pct": 0,
+					"output": 100
+				},
+				"clamp": true,
+				"min": 0,
+				"max": 100
+			},
+			"risk_saturn": {
+				"description": "Distance from anchor 180 degrees",
+				"formula": "100 - abs(moon_saturn - 180) / 180 * 100",
+				"step_by_step": [
+					"diff = moon_saturn - 180",
+					"abs_diff = abs(diff)",
+					"ratio = abs_diff / 180",
+					"percentage = ratio * 100",
+					"result = 100 - percentage"
+				],
+				"clamp": true,
+				"min": 0,
+				"max": 100
+			},
+			"volatility_mars": {
+				"description": "Distance from anchor 180 degrees",
+				"formula": "100 - abs(mars_angle - 180) / 180 * 100",
+				"step_by_step": [
+					"diff = mars_angle - 180",
+					"abs_diff = abs(diff)",
+					"ratio = abs_diff / 180",
+					"percentage = ratio * 100",
+					"result = 100 - percentage"
+				],
+				"clamp": true,
+				"min": 0,
+				"max": 100
+			},
+			"element_score": {
+				"description": "Inverse of element imbalance",
+				"formula": "100 - (max(wood,fire,earth,metal,water) - min(wood,fire,earth,metal,water)) * 2",
+				"step_by_step": [
+					"elements_list = [wood, fire, earth, metal, water]",
+					"max_val = max(elements_list)",
+					"min_val = min(elements_list)",
+					"diff = max_val - min_val",
+					"weighted_diff = diff * 2",
+					"result = 100 - weighted_diff"
+				],
+				"example": {
+					"wood": 50,
+					"fire": 50,
+					"earth": 50,
+					"metal": 50,
+					"water": 50,
+					"max": 50,
+					"min": 50,
+					"diff": 0,
+					"weighted": 0,
+					"output": 100
+				},
+				"clamp": true,
+				"min": 0,
+				"max": 100
+			},
+			"solar_term_score": {
+				"description": "Days since solar term (0 days = 100, 15 days = 0)",
+				"formula": "max(0, 100 - (solar_term_days / 15 * 100))",
+				"step_by_step": [
+					"ratio = solar_term_days / 15",
+					"percentage = ratio * 100",
+					"result_raw = 100 - percentage",
+					"result = max(0, result_raw)"
+				],
+				"example": {
+					"solar_term_days": 0,
+					"ratio": 0,
+					"percentage": 0,
+					"raw": 100,
+					"output": 100
+				},
+				"clamp": true,
+				"min": 0,
+				"max": 100
+			},
+			"moon_phase_value": {
+				"description": "Map moon phase to score",
+				"operation": "lookup maps.moon_phase[input.moon_phase]",
+				"example": {
+					"input": "full_moon",
+					"output": 85
+				}
+			},
+			"host_star_value": {
+				"description": "Map host star to score",
+				"operation": "lookup maps.host_star_score[input.host_star]",
+				"fallback": "maps.fallback_values.host_star_unknown = 75",
+				"example": {
+					"input": "昴日雞",
+					"output": 85
+				}
+			},
+			"ganzhi_value": {
+				"description": "Map ganzhi to score",
+				"operation": "lookup maps.ganzhi_score[input.ganzhi]",
+				"example": {
+					"input": "甲子",
+					"output": 50
+				}
+			}
+		},
+		"step_2_composite_scores": {
+			"trend_score": {
+				"description": "Composite trend indicator",
+				"formula": "0.40 * trend_jupiter + 0.20 * moon_phase_value + 0.15 * host_star_value + 0.15 * element_score + 0.10 * solar_term_score",
+				"weights": {
+					"trend_jupiter": 0.4,
+					"moon_phase_value": 0.2,
+					"host_star_value": 0.15,
+					"element_score": 0.15,
+					"solar_term_score": 0.1
+				},
+				"weight_sum": 1,
+				"step_by_step": [
+					"w1 = 0.40 * trend_jupiter",
+					"w2 = 0.20 * moon_phase_value",
+					"w3 = 0.15 * host_star_value",
+					"w4 = 0.15 * element_score",
+					"w5 = 0.10 * solar_term_score",
+					"result = w1 + w2 + w3 + w4 + w5"
+				],
+				"clamp": true,
+				"min": 0,
+				"max": 100
+			},
+			"risk_score": {
+				"description": "Composite risk indicator",
+				"formula": "0.60 * risk_saturn + 0.40 * volatility_mars",
+				"weights": {
+					"risk_saturn": 0.6,
+					"volatility_mars": 0.4
+				},
+				"weight_sum": 1,
+				"step_by_step": [
+					"w1 = 0.60 * risk_saturn",
+					"w2 = 0.40 * volatility_mars",
+					"result = w1 + w2"
+				],
+				"clamp": true,
+				"min": 0,
+				"max": 100
+			}
+		},
+		"step_3_final_score": {
+			"final_score": {
+				"description": "Trend adjusted by risk",
+				"formula": "trend_score - (risk_score * 0.3)",
+				"step_by_step": [
+					"risk_adjustment = risk_score * 0.3",
+					"result_raw = trend_score - risk_adjustment",
+					"result = clamp(result_raw, 0, 100)"
+				],
+				"clamp": true,
+				"min": 0,
+				"max": 100
+			}
+		}
+	},
+	"d1_resolution": {
+		"allow_multiple": false,
+		"winner": "highest_final_score",
+		"tie_breaker": [
+			"earliest_date",
+			"highest_trend_score"
+		]
+	},
+	"epoch_anchor": {
+		"type": "fixed_origin",
+		"origin_date": "1900-01-01",
+		"origin_date_format": "YYYY-MM-DD",
+		"rule": "days_since_origin % 60",
+		"usage": "Determine ganzhi cycle position"
+	},
+	"astronomy_engine": {
+		"source": "precomputed",
+		"mode": "precomputed_lookup",
+		"precision": "degree",
+		"precision_decimal_places": 2,
+		"update_rule": "daily",
+		"update_frequency_hours": 24,
+		"timezone": "UTC",
+		"accuracy_note": "±0.5 degree acceptable"
+	},
+	"scan_engine": {
+		"mode": "forward_search",
+		"termination_condition": "first_exact_match_only",
+		"goal": "find_first_d1_hit",
+		"logic": "iterate_40_days_or_until_match",
+		"horizon_days": 40,
+		"output": "first_d1_date",
+		"return_format": {
+			"date": "YYYY-MM-DD",
+			"day_offset": "integer",
+			"state": "D1",
+			"scores": {
+				"trend_score": "number",
+				"risk_score": "number",
+				"final_score": "number"
+			}
+		}
+	},
+	"drift_control": {
+		"type": "bounded_accumulation",
+		"max_trend": 100,
+		"min_trend": 0,
+		"enforcement": "clamp_at_boundaries"
+	},
+	"time_dependency": {
+		"description": "State computation rules",
+		"previous_day_state_only": true,
+		"accumulation": "none",
+		"memory": "stateless"
+	},
+	"time_granularity": {
+		"levels": [
+			"1d",
+			"60m",
+			"15m"
+		],
+		"active": "1d",
+		"active_description": "Daily granularity for all computations"
+	},
+	"scan_state_mode": {
+		"type": "stateless_per_day",
+		"no_carry_over": true,
+		"independent_evaluation": "each day computed independently"
+	},
+	"host_star_fallback": {
+		"unknown_value": 75,
+		"strict_enum": true,
+		"allowed_count": 28,
+		"fallback_only_if_not_in_enum": true
+	},
+	"runtime": {
+		"mode": "deterministic_forward_simulation",
+		"horizon_days": 40,
+		"pipeline": [
+			{
+				"step": 1,
+				"name": "validate_input",
+				"action": "Check all inputs against schema and ranges",
+				"failure_mode": "reject_and_error"
+			},
+			{
+				"step": 2,
+				"name": "map_values",
+				"action": "Convert strings to numeric scores via maps",
+				"lookups": [
+					"moon_phase → moon_phase_value",
+					"host_star → host_star_value",
+					"ganzhi → ganzhi_value"
+				]
+			},
+			{
+				"step": 3,
+				"name": "compute_base_scores",
+				"action": "Calculate trend_jupiter, risk_saturn, volatility_mars, element_score, solar_term_score",
+				"formulas": [
+					"trend_jupiter",
+					"risk_saturn",
+					"volatility_mars",
+					"element_score",
+					"solar_term_score"
+				]
+			},
+			{
+				"step": 4,
+				"name": "compute_trend_risk",
+				"action": "Combine base scores into trend_score and risk_score",
+				"formulas": [
+					"trend_score",
+					"risk_score"
+				]
+			},
+			{
+				"step": 5,
+				"name": "compute_final",
+				"action": "Calculate final_score from trend and risk",
+				"formula": "final_score"
+			},
+			{
+				"step": 6,
+				"name": "evaluate_cycle",
+				"action": "Determine cycle state (IDLE/D1/D2/D3/D4)",
+				"logic": "Check thresholds in order: D1 → D2 → D3 → D4 → IDLE"
+			},
+			{
+				"step": 7,
+				"name": "output_results",
+				"action": "Return scores and state for this day"
+			},
+			{
+				"step": 8,
+				"name": "propagate_time",
+				"action": "Advance to next day and repeat",
+				"repeat_for": "40 days or until D1 found"
+			}
+		],
+		"error_handling": {
+			"invalid_input": "reject_execution",
+			"missing_map": "reject_execution",
+			"unknown_enum": "use_fallback_or_reject",
+			"computation_error": "reject_execution"
+		}
+	},
+	"time_runtime": {
+		"ganzhi_runtime": {
+			"enabled": true,
+			"type": "60_jiazi_cycle",
+			"cycle_length": 60,
+			"cycle": [
+				"甲子",
+				"乙丑",
+				"丙寅",
+				"丁卯",
+				"戊辰",
+				"己巳",
+				"庚午",
+				"辛未",
+				"壬申",
+				"癸酉",
+				"甲戌",
+				"乙亥",
+				"丙子",
+				"丁丑",
+				"戊寅",
+				"己卯",
+				"庚辰",
+				"辛巳",
+				"壬午",
+				"癸未",
+				"甲申",
+				"乙酉",
+				"丙戌",
+				"丁亥",
+				"戊子",
+				"己丑",
+				"庚寅",
+				"辛卯",
+				"壬辰",
+				"癸巳",
+				"甲午",
+				"乙未",
+				"丙申",
+				"丁酉",
+				"戊戌",
+				"己亥",
+				"庚子",
+				"辛丑",
+				"壬寅",
+				"癸卯",
+				"甲辰",
+				"乙巳",
+				"丙午",
+				"丁未",
+				"戊申",
+				"己酉",
+				"庚戌",
+				"辛亥",
+				"壬子",
+				"癸丑",
+				"甲寅",
+				"乙卯",
+				"丙辰",
+				"丁巳",
+				"戊午",
+				"己未",
+				"庚申",
+				"辛酉",
+				"壬戌",
+				"癸亥"
+			],
+			"mapping": {
+				"formula": "index = (days_from_epoch_origin % 60)",
+				"epoch_origin": "1900-01-01",
+				"output": "cycle[index]",
+				"example": {
+					"date": "2026-05-30",
+					"days_from_1900_01_01": 46066,
+					"modulo_60": 46,
+					"cycle_value": "丁酉"
+				}
+			}
+		}
+	},
+	"asset_layer": {
+		"mode": "dynamic_inference",
+		"source": "external_universe_or_input_stream",
+		"universe_rules": {
+			"type": "market_universe_filter",
+			"constraints": {
+				"min_volume": "auto",
+				"price_filter": "auto",
+				"trend_filter": "computed",
+				"volatility_filter": "computed"
+			}
+		},
+		"role_assignment": {
+			"leader": {
+				"method": "highest_trend_score",
+				"criteria": "trend_score >= 85"
+			},
+			"core_trend": {
+				"method": "stable_high_trend_score",
+				"criteria": "trend_score >= 75 AND risk_score <= 70"
+			},
+			"lagger": {
+				"method": "trend_delay_detection",
+				"criteria": "trend_score >= 65 AND velocity_decreasing"
+			},
+			"volatile": {
+				"method": "high_mars_volatility",
+				"criteria": "volatility_mars >= 85"
+			},
+			"defensive": {
+				"method": "low_risk_score + stable_risk_curve",
+				"criteria": "risk_score <= 60"
+			}
+		},
+		"selection_engine": {
+			"top_n": 5,
+			"ranking_basis": [
+				"trend_score",
+				"risk_score",
+				"volatility_mars",
+				"liquidity_score"
+			],
+			"recompute_daily": true,
+			"deterministic_rank_seed": "date + universe_hash",
+			"rank_stability": "preserve_order_if_scores_equal"
+		},
+		"output": {
+			"format": "dynamic_watchlist",
+			"structure": [
+				"asset_id",
+				"role",
+				"trend_score",
+				"risk_score",
+				"volatility_mars",
+				"rank_position"
+			]
+		}
+	},
+	"narrative_engine": {
+		"input": "phase + scores",
+		"output_style": "market_commentary",
+		"templates": [
+			"trend_expansion",
+			"distribution_warning",
+			"shakeout_alert",
+			"second_rally_setup"
+		],
+		"template_mapping": {
+			"trend_expansion": {
+				"condition": "trend_score >= 85 AND risk_score < 70",
+				"narrative": "Market in strong uptrend expansion phase"
+			},
+			"distribution_warning": {
+				"condition": "risk_score >= 75",
+				"narrative": "Distribution phase detected - caution advised"
+			},
+			"shakeout_alert": {
+				"condition": "volatility_mars >= 85",
+				"narrative": "High volatility shakeout pattern active"
+			},
+			"second_rally_setup": {
+				"condition": "trend_score >= 75 AND cycle_state == 'D2'",
+				"narrative": "Second rally setup conditions forming"
+			}
+		}
+	},
+	"timeline_generator": {
+		"horizon": 40,
+		"output_format": "daily_state",
+		"fields": [
+			"date",
+			"phase",
+			"trend_score",
+			"risk_score",
+			"volatility_mars",
+			"cycle_state",
+			"final_score"
+		],
+		"generation_mode": "forward_rolling_window",
+		"step_size_days": 1
+	},
+	"sentiment_layer": {
+		"trend_states": [
+			"trend_push",
+			"emotion_push",
+			"distribution_push",
+			"panic_phase"
+		],
+		"mapping": {
+			"fire": "emotion_intensity",
+			"water": "panic_pressure",
+			"wood": "growth_momentum",
+			"metal": "contraction_pressure",
+			"earth": "stability_anchor"
+		},
+		"state_inference": {
+			"trend_push": {
+				"condition": "trend_score >= 80 AND fire >= 60",
+				"description": "Uptrend driven by positive sentiment"
+			},
+			"emotion_push": {
+				"condition": "fire >= 75",
+				"description": "Market driven by emotional buying"
+			},
+			"distribution_push": {
+				"condition": "risk_score >= 75 AND water >= 60",
+				"description": "Sellers dominating - panic selling pressure"
+			},
+			"panic_phase": {
+				"condition": "water >= 80 AND volatility_mars >= 85",
+				"description": "Extreme panic and volatility"
+			}
+		}
+	},
+	"market_phase_classifier": {
+		"rules": [
+			{
+				"name": "high_extension",
+				"condition": "trend_score > 80 AND risk_score < 70",
+				"description": "Strong trend with low risk - continuation likely"
+			},
+			{
+				"name": "distribution",
+				"condition": "risk_score > 75",
+				"description": "Distribution phase - sellers taking control"
+			},
+			{
+				"name": "shakeout",
+				"condition": "volatility_mars > 85",
+				"description": "High volatility shakeout in progress"
+			},
+			{
+				"name": "accumulation",
+				"condition": "trend_score < 60 AND volatility_mars < 60",
+				"description": "Low trend and volatility - accumulation phase"
+			},
+			{
+				"name": "breakout_setup",
+				"condition": "trend_score > 70 AND volatility_mars < 70",
+				"description": "Building momentum for breakout"
+			}
+		]
+	},
+	"scan_enhancer": {
+		"mode": "rolling_window_40d",
+		"step": "1d",
+		"output": "phase_sequence",
+		"stop_condition": "none",
+		"generate": [
+			"cycle_state",
+			"trend_score",
+			"risk_score",
+			"volatility_mars",
+			"market_phase",
+			"final_score"
+		],
+		"persistence": "store_daily_snapshots"
+	},
+	"market_drift": {
+		"phases": [
+			"early_expansion",
+			"late_expansion",
+			"distribution",
+			"shakeout",
+			"accumulation",
+			"second_rally",
+			"exhaustion"
+		],
+		"phase_transitions": {
+			"early_expansion": {
+				"entry": "trend_score >= 70 AND risk_score < 60",
+				"exit": "trend_score > 85"
+			},
+			"late_expansion": {
+				"entry": "trend_score > 85 AND risk_score < 70",
+				"exit": "risk_score >= 75"
+			},
+			"distribution": {
+				"entry": "risk_score >= 75",
+				"exit": "trend_score < 60"
+			},
+			"shakeout": {
+				"entry": "volatility_mars > 85 AND trend_score < 70",
+				"exit": "volatility_mars < 70"
+			},
+			"accumulation": {
+				"entry": "trend_score < 60 AND volatility_mars < 60",
+				"exit": "trend_score >= 70"
+			},
+			"second_rally": {
+				"entry": "trend_score >= 75 AND previous_phase == 'shakeout'",
+				"exit": "risk_score >= 75"
+			},
+			"exhaustion": {
+				"entry": "trend_score > 85 AND volatility_mars > 80",
+				"exit": "trend_score < 70"
+			}
+		},
+		"mapping_rules": {
+			"trend_score": "threshold_based",
+			"risk_score": "threshold_based",
+			"volatility": "mars_based"
+		}
+	},
+	"implementation_guide": {
+		"critical_rules": [
+			"✅ 必須使用 IEEE 754 雙精度浮點",
+			"✅ 必須使用 ROUND_HALF_UP 舍入",
+			"✅ 必須於每步檢查 numeric_limits",
+			"✅ 必須於每步後夾緊 score_clamp",
+			"✅ 必須遵循 formula_execution 白名單",
+			"✅ 必須檢查 missing_value_policy",
+			"✅ 必須遵循 state_machine 轉移規則",
+			"✅ 輸出必須符合 output_contract",
+			"✅ 資產排名必須使用 deterministic_rank_seed",
+			"✅ 市場階段分類必須基於規則引擎"
+		],
+		"validation_order": [
+			"1. 檢查輸入值是否在 numeric_limits 範圍內",
+			"2. 檢查所有必需欄位是否存在(missing_value_policy)",
+			"3. 檢查 Enum 值是否有效",
+			"4. 執行所有計算(使用 formula_execution 白名單函數)",
+			"5. 在每次計算後夾緊結果(score_clamp)",
+			"6. 應用 rounding_policy",
+			"7. 檢查狀態轉移是否有效(state_machine)",
+			"8. 執行資產層推斷和排名",
+			"9. 執行市場階段分類",
+			"10. 驗證最終輸出符合 output_contract"
+		],
+		"precision_checklist": [
+			"所有中間計算使用 6 位精度(formula_precision)",
+			"所有分數使用 2 位精度(score_precision)",
+			"最終分數使用 2 位精度(final_score_precision)",
+			"使用 ROUND_HALF_UP 而非其他舍入模式",
+			"不使用任何 AI 解釋或猜測",
+			"不允許空值或 NaN(missing_value_policy)",
+			"資產排名使用 deterministic_rank_seed 確保跨平台一致"
+		]
+	},
+	"implementation_status": {
+		"JSON_Schema_structure": "✅",
+		"60_jiazi_runtime": "✅",
+		"D1_scan": "✅",
+		"Deterministic": "✅",
+		"Mapping_lock": "✅",
+		"Stateless_scan": "✅",
+		"Hash_consistency": "✅",
+		"numeric_limits": "✅",
+		"rounding_policy": "✅",
+		"score_clamp": "✅",
+		"state_machine": "✅",
+		"missing_value_policy": "✅",
+		"output_contract": "✅",
+		"formula_whitelist": "✅",
+		"asset_layer": "✅ NEW",
+		"narrative_engine": "✅ NEW",
+		"timeline_generator": "✅ NEW",
+		"sentiment_layer": "✅ NEW",
+		"market_phase_classifier": "✅ NEW",
+		"scan_enhancer": "✅ NEW",
+		"market_drift": "✅ NEW",
+		"deterministic_rank_seed": "✅ NEW"
+	}
+}
