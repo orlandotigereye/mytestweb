@@ -1,0 +1,442 @@
+<!--
+{
+    "AppID": "AppShellD",
+    "Version": "1.0.0",
+    "LastModified": "2026-06-05",
+    "Dependencies": ["font-awesome", "d3.js", "astronomy-engine", "firebase-compat"]
+}
+-->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Royal Gold App Shell Template D</title>
+    
+    <!-- External CSS for Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- External JS Libraries (Add as needed by specific apps) -->
+    <!-- <script src="https://d3js.org/d3.v7.min.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script> -->
+    
+    <!-- Firebase SDKs - Compat versions (Add as needed by specific apps) -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script> -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script> -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script> -->
+
+    <style>
+        /*
+   Global Theme: Royal Gold Universal v3 - Gold Shimmer Edition
+   Path: /public/00css/global.css
+*/
+
+:root {
+    /* Colors - Enhanced Gold Palette from PTTStockA_custom_css */
+    --gold-primary: #ffd700;     /* Standard Gold */
+    --gold-secondary: #ffae00;   /* Slightly more orange gold */
+    --gold-dark: #b8860b;        /* Darker, richer gold */
+    --gold-light: #FFFACD;       /* Light cream gold */
+    --gold-text-hover: #ffffff;  /* White for hover effects on gold elements */
+
+    --primary-color: #333333; /* Dark grey for primary text, good contrast on light bg */
+    --accent-color: var(--gold-primary); /* Main Gold Accent */
+    --accent-dark: var(--gold-dark);     /* Dark Gold Accent */
+    --accent-light: var(--gold-light);   /* Light Gold Accent */
+    --bg-color: #fdf8e8; /* Light warm cream background */
+    --card-bg: rgba(255, 255, 240, 0.95); /* Very light yellow-cream, almost opaque */
+    --text-color: #333333; /* Dark grey for general text, high contrast on light bg */
+    --muted-color: #6a6a6a; /* Medium grey for muted text */
+    --success-color: #27ae60;
+
+    /* Design Tokens (Spacing & Radius) */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 20px;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+
+    /* Fonts */
+    --base-font-size: 13px;
+    --main-font: 'Segoe UI', 'Noto Sans TC', system-ui, sans-serif;
+}
+
+* { 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent; 
+    /* Global subtle text shadow for a rich look */
+    text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.2); 
+    font-size: var(--base-font-size) !important; /* Enforce small font size */
+}      
+
+h1, h1 * { font-size: 1.25rem !important; } /* Allow H1 to be larger */
+
+body {
+    font-family: var(--main-font);
+    font-size: var(--base-font-size);
+    background-color: var(--bg-color); 
+    /* Shimmering gold texture background */
+    background-image: url('https://www.transparenttextures.com/patterns/gold-tips.png');
+    background-attachment: fixed;
+    color: var(--text-color);
+    margin: 0; padding: 0;
+    overflow-x: hidden;
+    line-height: 1.6; 
+    text-align: left;
+    opacity: 0.7; /* Increased opacity for background texture */
+}
+
+/* App Shell Components */
+.tabs-container {
+    display: flex; 
+    background: linear-gradient(to right, var(--gold-dark), var(--gold-primary)); /* Golden gradient for tab background */
+    position: sticky; top: 0; z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5), inset 0 -3px 8px rgba(255,215,0,0.3); /* Enhanced shadow with gold inner sheen */
+}
+
+.tab-btn {
+    flex: 1; padding: var(--space-md); border: none; background: transparent;
+    color: #333333; /* Dark grey for better contrast on gold gradient */ font-size: 11px; font-weight: bold;        
+    cursor: pointer; transition: all 0.3s ease; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;    
+    position: relative;
+    overflow: hidden; /* For shimmering effect */
+}
+
+.tab-btn:hover {
+    color: var(--gold-dark); /* Dark gold on hover for better contrast */
+    background: rgba(var(--gold-primary), 0.1);
+}
+
+.tab-btn.active {
+    color: #000000; /* Pure black for maximum contrast on active gold */
+    background: rgba(var(--gold-primary), 0.5); /* More prominent golden background for active */
+    border-bottom: 3px solid var(--gold-primary); /* Gold active indicator */
+    box-shadow: inset 0 0 10px var(--gold-primary), 0 0 5px var(--gold-secondary);
+}
+
+/* Shimmer effect for active tab */
+.tab-btn.active::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 0;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(45deg);
+    transition: all 0.5s ease;
+    z-index: 1;
+    opacity: 0;
+}
+
+.tab-btn.active:hover::before {
+    width: 200%;
+    opacity: 1;
+    left: 0;
+}
+
+
+.content-section { display: none; padding: var(--space-md); animation: fadeIn 0.4s ease; }
+.content-section.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Shared Layouts - Enhanced with PTTStockA_custom_css gold-border */
+.card {
+    background: var(--card-bg); /* Dark transparent background */
+    border: 2px solid var(--gold-secondary); /* Gold border */
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    box-shadow: 0 0 15px var(--gold-dark); /* Stronger gold shadow */
+    margin-bottom: var(--space-md);
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; /* Added transitions */
+}
+
+.card:hover {
+    transform: translateY(-3px); /* Lift on hover */
+    border-color: var(--gold-primary); /* Highlight border on hover */
+    box-shadow: 0 0 20px var(--gold-primary); /* More intense shadow on hover */
+}
+
+.card h2 {
+    margin-top: 0; font-size: 15px; color: var(--gold-primary); /* Gold heading */
+    border-bottom: 1px solid var(--gold-dark);
+    padding-bottom: var(--space-xs); margin-bottom: var(--space-md);
+}
+
+/* UI Elements - btn-gold from PTTStockA_custom_css */
+.btn-gold {
+    background: linear-gradient(to bottom, var(--gold-primary), var(--gold-dark));
+    color: black; /* Black text for contrast on gold */
+    font-weight: bold;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 999px; /* Pill shape */
+    cursor: pointer;
+    border: 1px solid var(--gold-light); /* Lighter gold border */
+    text-shadow: 0 1px 1px rgba(255,255,255,0.5); /* White text shadow for pop */
+    font-size: var(--base-font-size);
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.2s ease;
+}
+.btn-gold:hover:not(:disabled) {
+    filter: brightness(1.2); /* Brighter on hover */
+    box-shadow: 0 0 15px var(--gold-primary); /* Gold glow on hover */
+    transform: translateY(-1px);
+}
+.btn-gold:active { transform: scale(0.98); opacity: 0.95; } /* Slight press effect */
+
+
+textarea, input {
+    width: 100%; padding: var(--space-sm); border: 1px solid var(--gold-secondary); /* Gold border for inputs */
+    border-radius: var(--radius-sm); font-size: 14px; background: rgba(255, 255, 255, 0.05); /* Slightly transparent dark input */
+    color: var(--text-color); /* Light text */
+}
+
+/* Standard Helpers */
+.toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);   
+    background: linear-gradient(to right, var(--gold-dark), var(--gold-secondary)); /* Gold gradient toast */
+    color: black; padding: 10px 20px;    
+    border-radius: 25px; z-index: 3000; font-size: 12px; display: none;      
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    font-weight: bold;
+}
+
+.spinner-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); /* Darker overlay for spinner */
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center; z-index: 4000;
+}
+
+.loader {
+    border: 4px solid var(--gold-light); /* Lighter gold for loader base */
+    border-top: 4px solid var(--gold-primary); /* Primary gold for spinning part */
+    border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; /* Slightly faster spin */
+    box-shadow: 0 0 10px var(--gold-primary), inset 0 0 5px var(--gold-secondary); /* Gold glow for loader */
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Additional styles from PTTStockA_custom_css context */
+.coin-bg { /* Re-introduce if needed, but body already has a pattern */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.35;
+    background-image: url('https://www.transparenttextures.com/patterns/gold-tips.png');
+}
+
+.xpath-info {
+    background: rgba(var(--gold-dark), 0.3);
+    border-left: 4px solid var(--gold-primary);
+    padding: 6px;
+    margin-bottom: var(--space-md);
+    font-family: monospace;
+    font-size: var(--base-font-size);
+    color: var(--text-color);
+}
+
+.rank-badge {
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+    color: black;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: var(--base-font-size);
+    margin-right: var(--space-sm);
+    border: 1px solid var(--gold-light);
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+/* Specific styles from RichLiveN.html for global UI elements */
+h1 { text-align: center; text-shadow: 1px 1px 0px rgba(255,255,255,0.8); margin: 5px 0; }
+
+.btn-celebrate { background: #ff6f00; animation: pulse 2s infinite; }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+
+.log-entry {
+    border-left: 4px solid var(--accent-dark); padding: var(--space-sm);
+    margin-bottom: var(--space-sm); background: rgba(255, 255, 255, 0.9);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.identity-badge { 
+    display: inline-block; padding: 2px 6px; 
+    background: var(--accent-color); border-radius: 10px; 
+    font-weight: bold; margin-bottom: 5px;
+}
+
+.astro-badge {
+    font-size: 0.45rem; background: var(--text-color); color: var(--accent-color);
+    padding: 2px 5px; border-radius: 4px; margin-bottom: 5px; display: inline-block;
+}
+
+#msg-bar {
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: rgba(255, 255, 255, 0.95); padding: var(--space-sm);
+    text-align: center; border-top: 1px solid var(--accent-dark);
+    font-weight: bold; z-index: 10001;
+}
+#cool-down-overlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9); z-index: 20000;
+    flex-direction: column; justify-content: center; align-items: center; color: var(--accent-color);
+}
+.timer-circle {
+    width: 80px; height: 80px; border: 4px solid var(--accent-color); border-radius: 50%;
+    display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
+}
+
+.check-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-sm); }
+label { display: flex; align-items: center; background: rgba(255,255,255,0.5); padding: var(--space-sm); border-radius: 4px; }
+input[type="checkbox"] { margin-right: var(--space-sm); }
+
+/* Compound Graph Container */
+#compound-viz { width: 100%; height: 100px; background: white; border-radius: 4px; margin-top: var(--space-md); }
+
+/* Styles for Idea Jail Input */
+#ideaJailInput {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--accent-dark);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    z-index: 20002;
+    width: 90%;
+    max-width: 300px;
+    flex-direction: column;
+    gap: 10px;
+}
+#ideaJailInput input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: var(--base-font-size); /* Use global font size */
+}
+#ideaJailInput .btn-group {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+}
+#ideaJailInput .btn-group button {
+    flex: 1;
+}
+
+/* Styles for logList (page-specific display) */
+#log-container {
+    margin-top: var(--space-md);
+    max-height: 400px;
+    overflow-y: auto;
+}
+#serverLogList { /* New style for server log list */
+    margin-top: var(--space-md);
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    background: #f9f9f9;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: #555;
+}
+#serverLogList p {
+    margin: 3px 0;
+    padding-bottom: 3px;
+    border-bottom: 1px dotted #ddd;
+}
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <h1>Royal Gold App Shell Template D</h1>
+
+        <div class="tabs-container">
+            <button id="btn-mainTab" class="tab-btn active">
+                <i class="fas fa-home"></i> 首頁
+            </button>
+            <button id="btn-brainTab" class="tab-btn">
+                <i class="fas fa-brain"></i> 心情自查
+            </button>
+            <button id="btn-marketTab" class="tab-btn">
+                <i class="fas fa-chart-line"></i> 投資環境
+            </button>
+            <button id="btn-habitsTab" class="tab-btn">
+                <i class="fas fa-seedling"></i> 累積好習慣
+            </button>
+            <button id="btn-historyTab" class="tab-btn">
+                <i class="fas fa-book"></i> 我的存摺
+            </button>
+            <button id="btn-serverLogTab" class="tab-btn">
+                <i class="fas fa-server"></i> 伺服器訊息
+            </button>
+            <button id="btn-settingTab" class="tab-btn">
+                <i class="fas fa-cog"></i> 設定
+            </button>
+        </div>
+
+        <!-- Main Tab -->
+        <div id="mainTab" class="content-section active"></div>
+
+        <!-- 頁面: 心情與星象自查 -->
+        <div id="brainTab" class="content-section"></div>
+
+        <!-- 頁面: 投資環境與風向分析 -->
+        <div id="marketTab" class="content-section"></div>
+
+        <!-- 頁面: 累積好習慣與複利視覺化 -->
+        <div id="habitsTab" class="content-section"></div>
+
+        <!-- 頁面: 我的存摺 (歷史回顧) -->
+        <div id="historyTab" class="content-section"></div>
+
+        <!-- 頁面: 伺服器訊息 -->
+        <div id="serverLogTab" class="content-section"></div>
+
+        <!-- 頁面: 設定 -->
+        <div id="settingTab" class="content-section"></div>
+    </div>
+
+    <div id="msg-bar">系統待命：等待您的微小行動累積。</div>
+
+    <!-- 5秒法則遮罩 -->
+    <div id="cool-down-overlay">
+        <div class="timer-circle" id="timer-val">5</div>
+        <div style="margin-top:var(--space-lg); text-align:center; padding: 20px;">
+            <h2 style="color:var(--accent-color);">🧘‍♂️ 理智重新連線中...</h2>
+            <p>深呼吸... 暫停所有的自動反應。<br>讓衝動消散，讓智慧回歸。</p>
+        </div>
+    </div>
+
+    <!-- Idea Jail Input UI -->
+    <div id="ideaJailInput">
+        <h2>🔒 新想法關牢籠</h2>
+        <input type="text" id="ideaJailText" placeholder="輸入新的衝動想法..." style="width:100%;">
+        <div class="btn-group">
+            <button class="btn-gold" onclick="confirmIdeaJail()">確定</button>
+            <button class="btn-gold" onclick="cancelIdeaJail()" style="background:#666;">取消</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- 外部連結的 APP_CORE 核心邏輯 -->
+    <script src="/public/01JS/core.js"></script>
+
+</body>
+</html>
