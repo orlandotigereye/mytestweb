@@ -1,7 +1,7 @@
 {
     "system": {
         "name": "SchemaI_Market_Engine",
-        "version": "V7.3",
+        "version": "V8",
         "type": "single_source_truth_engine",
         "consistency_level": "strict_deterministic_cross_ai",
         "checksum_method": "sha256"
@@ -2881,29 +2881,136 @@
             "narrative_state"
         ]
     },
-    "white_gui_commentary_engine": {
+    "asset_ranking_engine": {
         "enabled": true,
-        "style": "white_gui",
-        "templates": {
-            "accumulation": [
-                "月近土而勢未失，其鋒暫藏而待時。",
-                "勢未盡而市先蓄，宜守不宜躁。",
-                "眾聲雖靜，暗流仍聚。"
+        "ranking_method": "weighted_score",
+        "inputs": [
+            "trend_score",
+            "risk_score",
+            "phase_score",
+            "entry_score",
+            "probability_score",
+            "confidence_score",
+            "asset_role_score"
+        ],
+        "weights": {
+            "trend_score": 0.25,
+            "risk_score": 0.15,
+            "phase_score": 0.15,
+            "entry_score": 0.15,
+            "probability_score": 0.10,
+            "confidence_score": 0.10,
+            "asset_role_score": 0.10
+        },
+        "asset_role_scores": {
+            "leader": 100,
+            "core_trend": 95,
+            "growth": 90,
+            "supplier": 85,
+            "defensive": 80,
+            "lagger": 70
+        },
+        "ranking_bands": {
+            "S": 95,
+            "A": 90,
+            "B": 80,
+            "C": 70
+        },
+        "outputs": [
+            "asset_score",
+            "asset_rank",
+            "asset_grade",
+            "ranking_order"
+        ]
+    },
+    "entry_window_optimizer": {
+        "enabled": true,
+        "lookahead_days": 40,
+        "window_size": 5,
+        "search_method": "max_reward_min_risk",
+        "optimization_targets": {
+            "maximize": [
+                "trend_score",
+                "probability_score",
+                "phase_strength"
             ],
-            "uptrend": [
-                "勢既成而鋒自出，順勢者得其利。",
-                "木火相生，其勢可觀。",
-                "主升已啟，宜擇強而從。"
-            ],
-            "distribution": [
-                "高處不勝寒，利多之際當思退。",
-                "勢猶在而氣已衰，宜慎。",
-                "鋒已露而勢將盡。"
+            "minimize": [
+                "risk_score",
+                "volatility_score"
             ]
         },
-        "output": [
+        "entry_conditions": {
+            "minimum_trend_score": 70,
+            "maximum_risk_score": 70,
+            "minimum_probability_score": 60
+        },
+        "window_scoring": {
+            "trend_score": 0.35,
+            "probability_score": 0.25,
+            "phase_strength": 0.20,
+            "risk_penalty": -0.15,
+            "volatility_penalty": -0.05
+        },
+        "outputs": [
+            "best_entry_start",
+            "best_entry_end",
+            "entry_score",
+            "entry_confidence"
+        ]
+    },
+    "white_gui_final_conclusion_engine": {
+        "enabled": true,
+        "style": "white_gui",
+        "inputs": [
+            "planet_state",
+            "market_phase",
+            "hexagram_state",
+            "element_trend",
+            "nakshatra_market_state",
+            "trend_score",
+            "risk_score",
+            "confidence_score"
+        ],
+        "phase_templates": {
+            "accumulation": [
+                "月近土而勢未失，其鋒暫藏而待時。",
+                "木退金升，市不在攻而在蓄。",
+                "勢未成而資金已聚，宜守不宜躁。"
+            ],
+            "expansion": [
+                "木火相生，其勢漸成。",
+                "眾流歸一，其勢可觀。",
+                "主升將啟，宜順勢而行。"
+            ],
+            "second_rally": [
+                "蓄勢既久，其鋒將出。",
+                "龍蛇起陸，第二主升已現。",
+                "勢成於靜，發於一瞬。"
+            ],
+            "distribution": [
+                "勢仍在而氣已衰。",
+                "高處不勝寒，宜慎守其利。",
+                "眾人皆樂之時，當思退路。"
+            ],
+            "defensive": [
+                "氣弱而守強，宜藏鋒。",
+                "不求有功，但求無過。",
+                "靜待天時，再尋良機。"
+            ]
+        },
+        "score_interpretation": {
+            "90": "極強",
+            "80": "強勢",
+            "70": "中性偏強",
+            "60": "震盪",
+            "50": "偏弱",
+            "40": "弱勢"
+        },
+        "outputs": [
             "white_gui_summary",
-            "market_commentary"
+            "final_commentary",
+            "market_outlook",
+            "investor_guidance"
         ]
     },
     "scan_enhancer": {
