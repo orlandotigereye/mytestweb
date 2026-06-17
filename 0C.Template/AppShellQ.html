@@ -1,0 +1,344 @@
+<!--
+{
+    "AppID": "AppShellQ",
+    "Version": "1.0.0",
+    "LastModified": "2026-06-17",
+    "Dependencies": ["font-awesome", "d3.js", "astronomy-engine", "firebase-compat"]
+}
+-->
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Royal Gold App Shell Template Q</title>
+    
+    <!-- External CSS for Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- External JS Libraries (Add as needed by specific apps) -->
+    <!-- <script src="https://d3js.org/d3.v7.min.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@latest/astronomy.browser.min.js"></script> -->
+    
+    <!-- Firebase SDKs - Compat versions (Add as needed by specific apps) -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script> -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script> -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script> -->
+
+    <style>
+        /* Inlined global.css content */
+        /*
+   Global Theme: Royal Gold Universal v2
+   Path: /public/00css/global.css
+*/
+
+:root {
+    /* Colors */
+    --primary-color: #2c3e50;
+    --accent-color: #FFD700;
+    --accent-dark: #B8860B;
+    --accent-light: #FFFACD;
+    --bg-gradient: radial-gradient(circle, #fdf5e6 0%, #ffd700 100%);        
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --text-color: #5d4037;
+    --muted-color: #7f8c8d;
+    --success-color: #27ae60;
+
+    /* Design Tokens (Spacing & Radius) */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 20px;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+
+    /* Fonts */
+    --base-font-size: 13px;
+    --main-font: 'Segoe UI', 'Noto Sans TC', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }      
+
+body {
+    font-family: var(--main-font);
+    font-size: var(--base-font-size);
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    color: var(--text-color);
+    margin: 0; padding: 0;
+    overflow-x: hidden;
+    line-height: 1.5;
+}
+
+/* App Shell Components */
+.tabs-container {
+    display: flex; background: var(--accent-dark);
+    position: sticky; top: 0; z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.tab-btn {
+    flex: 1; padding: var(--space-md); border: none; background: transparent;
+    color: rgba(255,255,255,0.8); font-size: 10px; font-weight: bold;        
+    cursor: pointer; transition: 0.3s; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;    
+}
+
+.tab-btn.active {
+    color: #fff; background: rgba(255,255,255,0.15);
+    border-bottom: 3px solid #fff;
+}
+
+.content-section { display: none; padding: var(--space-md); animation: fadeIn 0.4s ease; }
+.content-section.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Shared Layouts */
+.card {
+    background: var(--card-bg);
+    border: 2px solid var(--accent-dark);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    box-shadow: 0 4px 15px rgba(184, 134, 11, 0.2);
+    margin-bottom: var(--space-md);
+}
+
+.card h2 {
+    margin-top: 0; font-size: 15px; color: var(--accent-dark);
+    border-bottom: 1px solid var(--accent-dark);
+    padding-bottom: var(--space-xs); margin-bottom: var(--space-md);
+}
+
+/* UI Elements */
+.btn-gold {
+    background: linear-gradient(to bottom, var(--accent-light), var(--accent-color));
+    color: var(--primary-color); 
+    border: none;
+    padding: var(--space-md); 
+    border-radius: var(--radius-lg); 
+    font-size: 11px; font-weight: bold; cursor: pointer;
+    text-shadow: none; 
+    display: inline-flex; align-items: center; justify: center; gap: 6px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+    transition: all 0.2s ease;
+}
+.btn-gold:active { 
+    transform: translateY(2px); 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+    opacity: 0.9;
+}
+
+textarea, input {
+    width: 100%; padding: var(--space-sm); border: 1px solid #ddd;
+    border-radius: var(--radius-sm); font-size: 14px; background: #fffdf0;   
+}
+
+/* Standard Helpers */
+.toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);   
+    background: rgba(44, 62, 80, 0.95); color: white; padding: 10px 20px;    
+    border-radius: 25px; z-index: 3000; font-size: 12px; display: none;      
+    transition: all 0.3s ease-in-out;
+}
+.toast.toast-success { background: var(--success-color); }
+.toast.toast-error { background: #e74c3c; }
+.toast.toast-info { background: #3498db; }
+
+.spinner-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255,255,255,0.7); display: none;
+    flex-direction: column; align-items: center; justify-content: center; z-index: 4000;
+}
+
+.loader {
+    border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-dark);     
+    border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Specific styles from RichLiveN.html for global UI elements */
+        h1 { text-align: center; text-shadow: 1px 1px 0px rgba(255,255,255,0.8); margin: 5px 0; }
+        
+        .btn-celebrate { background: #ff6f00; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+
+        .log-entry {
+            border-left: 4px solid var(--accent-dark); padding: var(--space-sm);
+            margin-bottom: var(--space-sm); background: rgba(255, 255, 255, 0.9);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        }
+        .identity-badge { 
+            display: inline-block; padding: 2px 6px; 
+            background: var(--accent-color); border-radius: 10px; 
+            font-weight: bold; margin-bottom: 5px;
+        }
+
+        .astro-badge {
+            font-size: 0.45rem; background: var(--text-color); color: var(--accent-color);
+            padding: 2px 5px; border-radius: 4px; margin-bottom: 5px; display: inline-block;
+        }
+
+        #msg-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(255, 255, 255, 0.95); padding: var(--space-sm);
+            text-align: center; border-top: 1px solid var(--accent-dark);
+            font-weight: bold; z-index: 10001;
+        }
+        #cool-down-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 20000;
+            flex-direction: column; justify-content: center; align-items: center; color: var(--accent-color);
+        }
+        .timer-circle {
+            width: 80px; height: 80px; border: 4px solid var(--accent-color); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
+        }
+
+        .check-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-sm); }
+        label { display: flex; align-items: center; background: rgba(255,255,255,0.5); padding: var(--space-sm); border-radius: 4px; }
+        input[type="checkbox"] { margin-right: var(--space-sm); }
+
+        /* Compound Graph Container */
+        #compound-viz { width: 100%; height: 100px; background: white; border-radius: 4px; margin-top: var(--space-md); }
+
+        /* Styles for Idea Jail Input */
+        #ideaJailInput {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid var(--accent-dark);
+            border-radius: var(--radius-md);
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            z-index: 20002;
+            width: 90%;
+            max-width: 300px;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #ideaJailInput input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: var(--base-font-size); /* Use global font size */
+        }
+        #ideaJailInput .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        #ideaJailInput .btn-group button {
+            flex: 1;
+        }
+
+        /* Styles for logList (page-specific display) */
+        #log-container {
+            margin-top: var(--space-md);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        #serverLogList { /* New style for server log list */
+            margin-top: var(--space-md);
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            background: #f9f9f9;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: #555;
+        }
+        #serverLogList p {
+            margin: 3px 0;
+            padding-bottom: 3px;
+            border-bottom: 1px dotted #ddd;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); display: none;
+            align-items: center; justify-content: center; z-index: 5000;
+        }
+        .modal-content {
+            background: var(--card-bg); border: 2px solid var(--accent-dark);
+            border-radius: var(--radius-md); padding: var(--space-lg);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3); max-width: 80%;
+            text-align: center;
+        }
+        .modal-content h2 {
+            font-size: 1.2rem; color: var(--accent-dark); margin-top: 0;
+            margin-bottom: var(--space-md); border-bottom: 1px solid var(--accent-dark);
+            padding-bottom: var(--space-xs);
+        }
+        .modal-content p { margin-bottom: var(--space-lg); }
+        .modal-buttons { display: flex; justify-content: center; gap: var(--space-md); }
+        .modal-buttons button { min-width: 80px; }
+
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div id="app-header-title" style="font-size: 0.8em; margin: 5px; color: var(--muted-color); text-align: left;">SNS街拍提示詞產生器 Pro</div>
+
+        <div class="tabs-container">
+            <button id="btn-mainTab" class="tab-btn active" onclick="APP_CORE.switchTab('mainTab')">
+                <i class="fas fa-home"></i> 首頁
+            </button>
+            <button id="btn-settingTab" class="tab-btn" onclick="APP_CORE.switchTab('settingTab')">
+                <i class="fas fa-cog"></i> 設定
+            </button>
+        </div>
+
+        <!-- Main Tab -->
+        <div id="mainTab" class="content-section active"></div>
+
+        <!-- 頁面: 設定 -->
+        <div id="settingTab" class="content-section"></div>
+    </div>
+
+    <div id="msg-bar">系統待命：等待您的微小行動累積。</div>
+
+    <!-- 5秒法則遮罩 -->
+    <div id="cool-down-overlay">
+        <div class="timer-circle" id="timer-val">5</div>
+        <div style="margin-top:var(--space-lg); text-align:center; padding: 20px;">
+            <h2 style="color:var(--accent-color);">🧘‍♂️ 理智重新連線中...</h2>
+            <p>深呼吸... 暫停所有的自動反應。<br>讓衝動消散，讓智慧回歸。</p>
+        </div>
+    </div>
+
+    <!-- Idea Jail Input UI -->
+    <div id="ideaJailInput">
+        <h2>🔒 新想法關牢籠</h2>
+        <input type="text" id="ideaJailText" placeholder="輸入新的衝動想法..." style="width:100%;">
+        <div class="btn-group">
+            <button class="btn-gold" onclick="confirmIdeaJail()">確定</button>
+            <button class="btn-gold" onclick="cancelIdeaJail()" style="background:#666;">取消</button>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <!-- Generic Modal Structure -->
+    <div id="appModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="modalTitle"></h2>
+            <p id="modalMessage"></p>
+            <div id="modalInputContainer"></div>
+            <div class="modal-buttons">
+                <button id="modalConfirmBtn" class="btn-gold"></button>
+                <button id="modalCancelBtn" class="btn-gold">取消</button>
+            </div>
+        </div>
+    </div>
+
+<script src="../01JS/core_updated.js"></script>
+
+</body>
+</html>
