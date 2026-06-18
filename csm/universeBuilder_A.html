@@ -1,0 +1,266 @@
+({
+  id: "universeBuilder",
+  name: "Universe Builder",
+  icon: "🌌",
+  version: "3.0.0",
+
+  /* =========================================================
+   🧠 ① DATA LAYER（資料結構）
+  ========================================================= */
+  data: {
+    createUniverse() {
+      return {
+        id: "",
+        name: "",
+        worlds: [],
+        characters: [],
+        stories: [],
+        events: [],
+        timelines: [],
+        prompts: [],
+        images: [],
+        relations: [],
+        tags: [],
+        notes: "",
+        createdAt: "",
+        updatedAt: ""
+      };
+    }
+  },
+
+  /* =========================================================
+   🧰 ② UTILS LAYER（工具函數）
+  ========================================================= */
+  utils: {
+    // array → 字串
+    arrToCSV(arr) {
+      return Array.isArray(arr) ? arr.join(", ") : "";
+    },
+
+    // 字串 → array
+    csvToArr(str = "") {
+      return str.split(",").map(s => s.trim()).filter(Boolean);
+    },
+
+    // relations → 多行字串
+    relationsToText(arr = []) {
+      return arr.map(r =>
+        `${r.type},${r.targetId},${r.description}`
+      ).join("\n");
+    },
+
+    // 多行字串 → relations
+    textToRelations(str = "") {
+      return str.split("\n").map(line => {
+        const [type, targetId, description] = line.split(",");
+        return { type, targetId, description };
+      }).filter(r => r.type || r.targetId);
+    },
+
+    // ID 生成
+    id() {
+      return "universe_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+    }
+  },
+
+  /* =========================================================
+   💾 ③ STORE LAYER（資料存取）
+  ========================================================= */
+  store: {
+    get(core) {
+      return core.storage.get("universes", []);
+    },
+
+    save(core, data) {
+      core.storage.set("universes", data);
+    },
+
+    getCurrent(core) {
+      return core.storage.get("currentUniverseId", null);
+    },
+
+    setCurrent(core, id) {
+      core.storage.set("currentUniverseId", id);
+    }
+  },
+
+  /* =========================================================
+   🧠 ④ CONTROLLER LAYER（邏輯層）
+  ========================================================= */
+  controller: {
+    create(plugin, core) {
+      const u = plugin.data.createUniverse();
+      const list = plugin.store.get(core);
+
+      u.id = plugin.utils.id();
+      u.createdAt = new Date().toISOString();
+      u.updatedAt = new Date().toISOString();
+
+      list.push(u);
+
+      plugin.store.save(core, list);
+      plugin.store.setCurrent(core, u.id);
+
+      core.toast("✨ 已建立新宇宙");
+      core.open(plugin.id);
+    },
+
+    delete(plugin, core, id) {
+      let list = plugin.store.get(core);
+      list = list.filter(u => u.id !== id);
+
+      plugin.store.save(core, list);
+
+      const current = plugin.store.getCurrent(core);
+      if (current === id) {
+        plugin.store.setCurrent(core, list[0]?.id || null);
+      }
+
+      core.toast("🗑️ 已刪除宇宙");
+      core.open(plugin.id);
+    },
+
+    update(plugin, core, id, field, value) {
+      const list = plugin.store.get(core);
+      const u = list.find(x => x.id === id);
+      if (!u) return;
+
+      u[field] = value;
+      u.updatedAt = new Date().toISOString();
+
+      plugin.store.save(core, list);
+    },
+
+    loadSample(plugin, core, sample) {
+      const list = plugin.store.get(core);
+
+      if (list.some(u => u.id === sample.id)) {
+        plugin.store.setCurrent(core, sample.id);
+        core.toast("⚠️ 已存在，已切換");
+        core.open(plugin.id);
+        return;
+      }
+
+      const copy = JSON.parse(JSON.stringify(sample));
+      copy.createdAt = new Date().toISOString();
+      copy.updatedAt = new Date().toISOString();
+
+      list.push(copy);
+
+      plugin.store.save(core, list);
+      plugin.store.setCurrent(core, copy.id);
+
+      core.toast("✅ 範例宇宙已載入");
+      core.open(plugin.id);
+    }
+  },
+
+  /* =========================================================
+   🖼️ ⑤ RENDERER LAYER（UI 層）
+  ========================================================= */
+  render(core) {
+    const u = this.store.get(core);
+    const current = this.store.getCurrent(core);
+    const active = u.find(x => x.id === current);
+
+    const utils = this.utils;
+
+    return `
+      <style>
+        .card{padding:12px;border:1px solid #ddd;margin:10px 0;border-radius:6px}
+        input,textarea,select{width:100%;padding:6px;margin:4px 0}
+        button{margin:4px;padding:6px 10px}
+      </style>
+
+      <h2>🌌 Universe Builder</h2>
+
+      <!-- 管理區 -->
+      <div class="card">
+        <select id="u_select">
+          <option value="">-- 選擇宇宙 --</option>
+          ${u.map(x => `
+            <option value="${x.id}" ${x.id===current?'selected':''}>
+              ${x.name || x.id}
+            </option>
+          `).join("")}
+        </select>
+
+        <button id="btn_new">➕ 新宇宙</button>
+      </div>
+
+      ${
+        active ? `
+        <div class="card">
+
+          <input id="name" value="${active.name}" placeholder="名稱">
+
+          <textarea id="worlds">${utils.arrToCSV(active.worlds)}</textarea>
+          <textarea id="characters">${utils.arrToCSV(active.characters)}</textarea>
+          <textarea id="stories">${utils.arrToCSV(active.stories)}</textarea>
+
+          <textarea id="relations">${utils.relationsToText(active.relations)}</textarea>
+
+          <textarea id="notes">${active.notes || ""}</textarea>
+
+          <button id="btn_del">🗑️ 刪除宇宙</button>
+        </div>
+        ` : `<p>尚未選擇宇宙</p>`
+      }
+    `;
+  },
+
+  /* =========================================================
+   ⚙️ ⑥ PLUGIN ENTRY（入口 + 事件綁定）
+  ========================================================= */
+  onOpen(core) {
+    const plugin = this;
+    const current = plugin.store.getCurrent(core);
+
+    // 選擇宇宙
+    document.getElementById("u_select")?.addEventListener("change", e => {
+      plugin.store.setCurrent(core, e.target.value);
+      core.open(plugin.id);
+    });
+
+    // 新宇宙
+    document.getElementById("btn_new")?.addEventListener("click", () => {
+      plugin.controller.create(plugin, core);
+    });
+
+    if (!current) return;
+
+    // 綁定更新函數
+    const bind = (id, field, parser) => {
+      document.getElementById(id)?.addEventListener("input", e => {
+        plugin.controller.update(
+          plugin,
+          core,
+          current,
+          field,
+          parser ? parser(e.target.value) : e.target.value
+        );
+      });
+    };
+
+    bind("name", "name");
+    bind("worlds", "worlds", plugin.utils.csvToArr);
+    bind("characters", "characters", plugin.utils.csvToArr);
+    bind("stories", "stories", plugin.utils.csvToArr);
+    bind("relations", "relations", plugin.utils.textToRelations);
+    bind("notes", "notes");
+
+    // 刪除
+    document.getElementById("btn_del")?.addEventListener("click", () => {
+      plugin.controller.delete(plugin, core, current);
+    });
+  },
+
+  /* =========================================================
+   🚀 INIT（初始化）
+  ========================================================= */
+  init(core) {
+    if (!core.storage.get("universes")) {
+      core.storage.set("universes", []);
+    }
+  }
+})
