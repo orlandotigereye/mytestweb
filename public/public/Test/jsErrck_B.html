@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CSM Dev Tool Pro v3 + Examples</title>
+
+<style>
+:root{
+  --bg:#f5f7fb;
+  --card:#fff;
+  --text:#111;
+  --accent:#2563eb;
+}
+
+body.dark{
+  --bg:#0f172a;
+  --card:#1e293b;
+  --text:#f1f5f9;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial;
+}
+
+header{
+  background:var(--accent);
+  color:white;
+  padding:14px;
+}
+
+.container{padding:16px;}
+
+.card{
+  background:var(--card);
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:12px;
+}
+
+textarea{
+  width:100%;
+  min-height:220px;
+}
+
+button{
+  margin:4px;
+  padding:8px 12px;
+  cursor:pointer;
+}
+
+#diff{
+  display:flex;
+  gap:10px;
+}
+
+.diffBox{
+  flex:1;
+  white-space:pre-wrap;
+  font-family:monospace;
+  border:1px solid #ccc;
+  padding:10px;
+  overflow:auto;
+  max-height:300px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>CSM Dev Tool Pro v3 + Examples</h2>
+</header>
+
+<div class="container">
+
+<div class="card">
+
+<button onclick="analyze()">🔍 Analyze</button>
+<button onclick="autoFix()">🛠 Auto Fix</button>
+<button onclick="validateJSON()">📦 JSON</button>
+<button onclick="validateCSM()">📁 CSM Plugin</button>
+<button onclick="toggleTheme()">🌙 Theme</button>
+
+<!-- ✅ Examples -->
+<button onclick="loadExample('js')">📘 JS 範例</button>
+<button onclick="loadExample('json')">📦 JSON 範例</button>
+<button onclick="loadExample('csm')">📁 CSM 範例</button>
+<button onclick="loadExample('error')">💥 錯誤範例</button>
+
+</div>
+
+<div class="card">
+<h3>Input</h3>
+<textarea id="input"></textarea>
+</div>
+
+<div class="card">
+<h3>Report</h3>
+<pre id="report"></pre>
+</div>
+
+<div class="card">
+<h3>Diff View</h3>
+<div id="diff">
+  <div class="diffBox" id="diffA"></div>
+  <div class="diffBox" id="diffB"></div>
+</div>
+</div>
+
+</div>
+
+<script>
+
+let fixedCode="";
+
+function toggleTheme(){
+ document.body.classList.toggle("dark");
+}
+
+function getCode(){
+ return document.getElementById("input").value;
+}
+
+function count(str,char){
+ return (str.split(char).length-1);
+}
+
+/* =========================
+   ANALYZE
+========================= */
+function analyze(){
+
+ const code=getCode();
+ let report=[];
+
+ const l1=count(code,"{");
+ const l2=count(code,"}");
+
+ const p1=count(code,"(");
+ const p2=count(code,")");
+
+ report.push(
+  l1!==l2 ? `❌ {} mismatch ${l1}/${l2}` : "✅ {} OK"
+ );
+
+ report.push(
+  p1!==p2 ? "❌ () mismatch" : "✅ () OK"
+ );
+
+ try{
+  new Function(code);
+  report.push("✅ JS OK");
+ }catch(e){
+  report.push("❌ JS ERROR: "+e.message);
+ }
+
+ const lines=code.split("\n");
+ report.push("📄 lines: "+lines.length);
+
+ document.getElementById("report").textContent=
+ report.join("\n");
+}
+
+/* =========================
+   AUTO FIX
+========================= */
+function autoFix(){
+
+ let code=getCode();
+
+ code=code.replace(/\r\n/g,"\n");
+
+ if((code.match(/\{/g)||[]).length >
+    (code.match(/\}/g)||[]).length){
+  code+="\n}";
+ }
+
+ if((code.match(/\(/g)||[]).length >
+    (code.match(/\)/g)||[]).length){
+  code+=")";
+ }
+
+ fixedCode=code;
+
+ showDiff(getCode(),fixedCode);
+
+ document.getElementById("report").textContent
+ += "\n🛠 Auto Fix Done";
+}
+
+/* =========================
+   JSON VALIDATOR
+========================= */
+function validateJSON(){
+
+ const code=getCode();
+
+ try{
+  JSON.parse(code);
+  document.getElementById("report").textContent=
+   "✅ JSON valid";
+ }catch(e){
+  document.getElementById("report").textContent=
+   "❌ JSON ERROR: "+e.message;
+ }
+}
+
+/* =========================
+   CSM VALIDATOR
+========================= */
+function validateCSM(){
+
+ const code=getCode();
+
+ const required=[
+  "manifestVersion",
+  "id",
+  "name",
+  "version"
+ ];
+
+ let report=[];
+
+ required.forEach(k=>{
+  if(!code.includes(k)){
+   report.push("❌ missing "+k);
+  }
+ });
+
+ if(report.length===0){
+  report.push("✅ CSM OK");
+ }
+
+ document.getElementById("report").textContent=
+ report.join("\n");
+}
+
+/* =========================
+   DIFF
+========================= */
+function showDiff(a,b){
+
+ const A=a.split("\n");
+ const B=b.split("\n");
+
+ let outA="",outB="";
+
+ const max=Math.max(A.length,B.length);
+
+ for(let i=0;i<max;i++){
+
+  const l1=A[i]||"";
+  const l2=B[i]||"";
+
+  if(l1!==l2){
+   outA+=`❌ ${l1}\n`;
+   outB+=`✔ ${l2}\n`;
+  }else{
+   outA+=l1+"\n";
+   outB+=l2+"\n";
+  }
+ }
+
+ document.getElementById("diffA").textContent=outA;
+ document.getElementById("diffB").textContent=outB;
+}
+
+/* =========================
+   EXAMPLES SYSTEM
+========================= */
+function loadExample(type){
+
+ let code="";
+
+ if(type==="js"){
+  code=`
+function init(){
+ console.log("hello world");
+}
+
+function render(){
+ const a=1;
+ console.log(a);
+}
+`;
+ }
+
+ if(type==="json"){
+  code=`
+{
+ "id":"test",
+ "name":"demo",
+ "version":"1.0.0",
+ "manifestVersion":3
+}
+`;
+ }
+
+ if(type==="csm"){
+  code=`
+{
+ "manifestVersion":3,
+ "id":"character",
+ "name":"人物管理",
+ "version":"1.0.0",
+ "permissions":["storage"]
+}
+`;
+ }
+
+ if(type==="error"){
+  code=`
+function broken(){
+ const a=1
+ const b=2
+
+ if(a > b {
+  console.log("error")
+ }
+
+ console.log("test"
+}
+`;
+ }
+
+ document.getElementById("input").value=code;
+ document.getElementById("report").textContent=
+ "📘 Loaded: "+type;
+}
+
+</script>
+
+</body>
+</html>
