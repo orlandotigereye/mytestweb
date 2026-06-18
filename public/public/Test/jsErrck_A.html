@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CSM Dev Tool Pro v2</title>
+
+<style>
+:root{
+  --bg:#f5f7fb;
+  --card:#fff;
+  --text:#111;
+  --accent:#2563eb;
+}
+
+body.dark{
+  --bg:#111827;
+  --card:#1f2937;
+  --text:#f3f4f6;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial;
+}
+
+header{
+  background:var(--accent);
+  color:white;
+  padding:15px;
+}
+
+.container{
+  padding:20px;
+}
+
+.card{
+  background:var(--card);
+  padding:15px;
+  border-radius:10px;
+  margin-bottom:15px;
+}
+
+textarea{
+  width:100%;
+  min-height:280px;
+  resize:vertical;
+}
+
+button{
+  padding:10px 14px;
+  margin:4px;
+  cursor:pointer;
+}
+
+pre{
+  white-space:pre-wrap;
+  overflow:auto;
+}
+</style>
+</head>
+<body>
+
+<header>
+<h2>CSM Dev Tool Pro v2</h2>
+</header>
+
+<div class="container">
+
+<div class="card">
+
+<button onclick="toggleTheme()">
+🌙 Dark Mode
+</button>
+
+<input type="file" id="fileInput">
+
+<button onclick="analyzeCode()">
+🔍 分析
+</button>
+
+<button onclick="autoFix()">
+🛠 自動修復
+</button>
+
+<button onclick="exportJS()">
+💾 匯出JS
+</button>
+
+<button onclick="exportHTML()">
+💾 匯出HTML
+</button>
+
+</div>
+
+<div class="card">
+<h3>原始碼</h3>
+<textarea id="input"></textarea>
+</div>
+
+<div class="card">
+<h3>分析結果</h3>
+<pre id="report"></pre>
+</div>
+
+<div class="card">
+<h3>修正版</h3>
+<textarea id="output"></textarea>
+</div>
+
+</div>
+
+<script>
+
+const fileInput=document.getElementById("fileInput");
+
+fileInput.addEventListener("change",e=>{
+ const file=e.target.files[0];
+ if(!file) return;
+
+ const reader=new FileReader();
+
+ reader.onload=()=>{
+   document.getElementById("input").value=reader.result;
+ };
+
+ reader.readAsText(file);
+});
+
+function toggleTheme(){
+ document.body.classList.toggle("dark");
+}
+
+function count(str,char){
+ return (str.match(
+   new RegExp("\\"+char,"g")
+ )||[]).length;
+}
+
+function analyzeCode(){
+
+ const code=
+ document.getElementById("input").value;
+
+ let report=[];
+
+ const braceOpen=count(code,"{");
+ const braceClose=count(code,"}");
+
+ if(braceOpen!==braceClose){
+   report.push(
+    `❌ 大括號不平衡 {=${braceOpen} }=${braceClose}`
+   );
+ }else{
+   report.push("✅ 大括號正常");
+ }
+
+ const parenOpen=count(code,"(");
+ const parenClose=count(code,")");
+
+ if(parenOpen!==parenClose){
+   report.push("❌ 小括號不平衡");
+ }else{
+   report.push("✅ 小括號正常");
+ }
+
+ const backticks=
+ (code.match(/`/g)||[]).length;
+
+ if(backticks%2!==0){
+   report.push("❌ Template String 不成對");
+ }else{
+   report.push("✅ Template String 正常");
+ }
+
+ if(code.includes(".join('\n')")){
+   report.push("⚠ 可能有 join() 換行問題");
+ }
+
+ if(code.includes(".split('\n')")){
+   report.push("⚠ 可能有 split() 換行問題");
+ }
+
+ if(!/init\s*\(/.test(code)){
+   report.push("⚠ 找不到 init()");
+ }
+
+ if(!/render\s*\(/.test(code)){
+   report.push("⚠ 找不到 render()");
+ }
+
+ if(!/onOpen\s*\(/.test(code)){
+   report.push("⚠ 找不到 onOpen()");
+ }
+
+ const ids=[
+  ...code.matchAll(
+   /id:\s*["']([^"']+)["']/g
+  )
+ ].map(x=>x[1]);
+
+ const dup=ids.filter(
+  (v,i,a)=>a.indexOf(v)!==i
+ );
+
+ if(dup.length){
+   report.push(
+     "⚠ 重複ID："+[...new Set(dup)].join(",")
+   );
+ }
+
+ try{
+   new Function(code);
+   report.push("✅ JS Syntax 通過");
+ }
+ catch(err){
+   report.push(
+    "❌ Syntax Error: "+err.message
+   );
+ }
+
+ document.getElementById("report").textContent=
+ report.join("\n");
+}
+
+function autoFix(){
+
+ let code=
+ document.getElementById("input").value;
+
+ code=fixJoinSplit(code);
+
+ code=code.replace(
+  /\r\n/g,
+  "\n"
+ );
+
+ document.getElementById("output").value=
+ code;
+
+ document.getElementById("report").textContent
+ += "\n🛠 自動修復完成";
+}
+
+function fixJoinSplit(code){
+
+ code=code.replace(
+  /\.join\('\s*\n\s*'\)/g,
+  ".join('\\\\n')"
+ );
+
+ code=code.replace(
+  /\.split\('\s*\n\s*'\)/g,
+  ".split('\\\\n')"
+ );
+
+ return code;
+}
+
+function exportJS(){
+
+ const code=
+ document.getElementById("output").value ||
+ document.getElementById("input").value;
+
+ download(
+  "fixed_plugin.js",
+  code
+ );
+}
+
+function exportHTML(){
+
+ const code=
+ document.getElementById("output").value ||
+ document.getElementById("input").value;
+
+ download(
+  "fixed_plugin.html",
+  code
+ );
+}
+
+function download(name,text){
+
+ const blob=
+ new Blob([text],{
+  type:"text/plain"
+ });
+
+ const a=
+ document.createElement("a");
+
+ a.href=
+ URL.createObjectURL(blob);
+
+ a.download=name;
+
+ a.click();
+
+ URL.revokeObjectURL(a.href);
+}
+
+</script>
+
+</body>
+</html>
