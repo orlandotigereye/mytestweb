@@ -1,7 +1,7 @@
 {
     "system": {
         "name": "SchemaI_Market_Engine",
-        "version": "V9",
+        "version": "260629_V10",
         "type": "single_source_truth_engine",
         "consistency_level": "strict_deterministic_cross_ai",
         "checksum_method": "sha256"
@@ -3332,6 +3332,137 @@
             "final_score"
         ],
         "persistence": "store_daily_snapshots"
+    },
+    "gua_engine": {
+        "method": "luoshu_8_mod_v2",
+        "mapping": {
+            "1": "坎",
+            "2": "艮",
+            "3": "震",
+            "4": "巽",
+            "5": "中宮_歸2艮",
+            "6": "乾",
+            "7": "兌",
+            "8": "坤",
+            "9": "離"
+        },
+        "heaven_rule": "年 + 月 + 日",
+        "earth_rule": "月 + 日 + 時",
+        "mod_base": 8,
+        "dynamic_note": "所有結果必須保留完整加總與餘數計算過程"
+    },
+    "stock_archetype_map": {
+        "震": {
+            "core": [
+                "3443"
+            ],
+            "extended": [
+                
+            ],
+            "rotation": [
+                
+            ]
+        },
+        "乾": {
+            "core": [
+                "2454"
+            ],
+            "extended": [
+                
+            ],
+            "rotation": [
+                
+            ]
+        },
+        "兌": {
+            "core": [
+                "6488"
+            ],
+            "extended": [
+                
+            ],
+            "rotation": [
+                
+            ]
+        },
+        "艮": {
+            "core": [
+                "2308"
+            ],
+            "extended": [
+                
+            ],
+            "rotation": [
+                
+            ]
+        }
+    },
+    "stock_roles": {
+        "leader": "3443",
+        "trend_core": "2454",
+        "mid_lag": "6488",
+        "defensive": "2308"
+    },
+    "market_cycle_engine": {
+        "cycle_length_days": 40,
+        "stages": [
+            {
+                "range": "D0-D5",
+                "phase": "累積期",
+                "logic": "解卦 → 壓力釋放 → 試單與建倉"
+            },
+            {
+                "range": "D6-D12",
+                "phase": "趨勢啟動期",
+                "logic": "大壯卦 → 主升啟動 → 資金確認"
+            },
+            {
+                "range": "D13-D18",
+                "phase": "加速期",
+                "logic": "動爻後段 → 上漲加速 → 分歧開始"
+            },
+            {
+                "range": "D19-D24",
+                "phase": "分歧期",
+                "logic": "高位換手 → 資金輪動 → 出貨前段"
+            },
+            {
+                "range": "D25-D30",
+                "phase": "出貨期",
+                "logic": "坤土階段 → 出貨完成"
+            },
+            {
+                "range": "D31-D40",
+                "phase": "冷卻期",
+                "logic": "市場冷卻 → 新週期準備"
+            }
+        ]
+    },
+    "time_projection_engine": {
+        "start_date_rule": "輸入時間作為D0",
+        "step": "每日遞增",
+        "projection_length": 40,
+        "output_format": "D0_to_D40_表格",
+        "must_include": [
+            "日期",
+            "股票代號",
+            "階段",
+            "卦狀態"
+        ]
+    },
+    "output_rules": {
+        "must_show_calculation": true,
+        "no_black_box": true,
+        "required_steps": [
+            "洛書轉換",
+            "卦計算過程",
+            "模數計算",
+            "餘數對應",
+            "股票映射",
+            "週期階段對應"
+        ],
+        "format": "手機友好逐行輸出",
+        "stock_output": "一行一檔股票"
     },
     "market_drift": {
         "phases": [
