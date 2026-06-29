@@ -1,0 +1,11 @@
+安裝 Node.js
+	node -v
+安裝 Ollama
+	ollama run qwen2.5:3b
+	ollama run qwen2.5:7b
+解壓 TE OS
+	cd TE-OS
+安裝依賴（如果有）
+	npm install
+啟動
+	node teN.js
