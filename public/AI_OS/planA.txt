@@ -1,0 +1,13 @@
+User Input
+   ↓
+Planner (mandatory)
+   ↓
+Executor (mandatory)
+   ↓
+Critic (mandatory)
+   ↓
+Refiner (mandatory loop)
+   ↓
+Validator (must pass threshold)
+   ↓
+Output
