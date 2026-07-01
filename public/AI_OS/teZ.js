@@ -530,8 +530,47 @@ async function executeGraph(input, graph) {
 // 🧠 MAIN PIPELINE
 // ======================================================
 // ======================================================
-// 🧠 HELPER FUNCTIONS FOR planA PIPELINE
-// ======================================================
+function parseQuotedArgs(str) {
+    str = (str || "").trim();
+    if (!str) return { path: "", rest: "" };
+    let path = "";
+    let rest = "";
+    if (str.startsWith('"')) {
+        const nextQuote = str.indexOf('"', 1);
+        if (nextQuote !== -1) {
+            path = str.substring(1, nextQuote);
+            rest = str.substring(nextQuote + 1).trim();
+        } else {
+            path = str.substring(1);
+        }
+    } else if (str.startsWith("'")) {
+        const nextQuote = str.indexOf("'", 1);
+        if (nextQuote !== -1) {
+            path = str.substring(1, nextQuote);
+            rest = str.substring(nextQuote + 1).trim();
+        } else {
+            path = str.substring(1);
+        }
+    } else {
+        const firstSpace = str.indexOf(" ");
+        if (firstSpace !== -1) {
+            path = str.substring(0, firstSpace);
+            rest = str.substring(firstSpace + 1).trim();
+        } else {
+            path = str;
+        }
+    }
+    return { path, rest };
+}
+
+function stripQuotes(str) {
+    str = (str || "").trim();
+    if ((str.startsWith('"') && str.endsWith('"')) || (str.startsWith("'") && str.endsWith("'"))) {
+        return str.substring(1, str.length - 1).trim();
+    }
+    return str;
+}
+
 function isCodeRequest(input) {
     const t = input.toLowerCase();
     return (
@@ -1002,10 +1041,103 @@ function applyEdits(blocks) {
 // ======================================================
 // 🧠 CLI ENGINE (CHATGPT STYLING + ASYNC QUEUE)
 // ======================================================
+const historyFile = path.join(memoryDir, "cli_history.txt");
+
 const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
+    completer: function(line) {
+        const completions = [
+            "/check",
+            "/runtime",
+            "/test",
+            "/model",
+            "/file",
+            "/folder",
+            "/rollback",
+            "/version",
+            "/bump",
+            "/clear",
+            "/help",
+            "exit"
+        ];
+        const trimmed = line.trim();
+        
+        if (line.startsWith("/file ") || line.startsWith("/folder ") || line.startsWith("/rollback ")) {
+            let prefix = "";
+            let searchPart = "";
+            if (line.startsWith("/file ")) {
+                prefix = "/file ";
+                searchPart = line.substring(6);
+            } else if (line.startsWith("/folder ")) {
+                prefix = "/folder ";
+                searchPart = line.substring(8);
+            } else if (line.startsWith("/rollback ")) {
+                prefix = "/rollback ";
+                searchPart = line.substring(10);
+            }
+            
+            let isQuoted = false;
+            let quoteChar = "";
+            if (searchPart.startsWith('"') || searchPart.startsWith("'")) {
+                quoteChar = searchPart[0];
+                searchPart = searchPart.substring(1);
+                isQuoted = true;
+            }
+            
+            let dirToSearch = process.cwd();
+            let filePrefix = searchPart;
+            
+            const lastSep = Math.max(searchPart.lastIndexOf("/"), searchPart.lastIndexOf("\\"));
+            if (lastSep !== -1) {
+                const dirPart = searchPart.substring(0, lastSep + 1);
+                filePrefix = searchPart.substring(lastSep + 1);
+                const absDir = path.isAbsolute(dirPart) ? dirPart : path.join(process.cwd(), dirPart);
+                if (fs.existsSync(absDir) && fs.statSync(absDir).isDirectory()) {
+                    dirToSearch = absDir;
+                }
+            }
+            
+            try {
+                if (fs.existsSync(dirToSearch)) {
+                    let files = fs.readdirSync(dirToSearch);
+                    let matches = files.filter(f => f.toLowerCase().startsWith(filePrefix.toLowerCase()));
+                    let recommendations = matches.map(f => {
+                        let completedPart = searchPart.substring(0, lastSep + 1) + f;
+                        const fullP = path.join(dirToSearch, f);
+                        try {
+                            if (fs.statSync(fullP).isDirectory()) {
+                                completedPart += path.sep;
+                            }
+                        } catch(e){}
+                        
+                        if (isQuoted) {
+                            return prefix + quoteChar + completedPart;
+                        } else if (completedPart.includes(" ")) {
+                            return prefix + '"' + completedPart + '"';
+                        }
+                        return prefix + completedPart;
+                    });
+                    return [recommendations, line];
+                }
+            } catch (e) {}
+        }
+        
+        const hits = completions.filter((c) => c.startsWith(trimmed));
+        return [hits.length ? hits : completions, line];
+    }
 });
+
+// Load readline history
+if (fs.existsSync(historyFile)) {
+    try {
+        const lines = fs.readFileSync(historyFile, "utf8")
+            .split("\n")
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+        rl.history = lines.reverse();
+    } catch (err) {}
+}
 
 const promptUser = () => {
     setTerminalTitle("Idle");
@@ -1041,9 +1173,11 @@ async function processQueue() {
                 console.log(`📦 VERSION BUMPED TO: ${colors.green}${colors.bold}${nextVer}${colors.reset}`);
                 setTerminalTitle("Idle");
             } else if (input.startsWith("/file ")) {
-                const parts = input.substring(6).trim().split(" ");
-                const filePath = parts[0];
-                const promptMsg = parts.slice(1).join(" ");
+                const { path: filePath, rest: promptMsg } = parseQuotedArgs(input.substring(6));
+                if (!filePath) {
+                    console.log(`${colors.red}❌ Please specify a file path. Usage: /file <path> [prompt]${colors.reset}`);
+                    continue;
+                }
 
                 const absPath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
                 if (fs.existsSync(absPath)) {
@@ -1061,7 +1195,11 @@ async function processQueue() {
                     console.log(`${colors.red}❌ File not found: ${filePath}${colors.reset}`);
                 }
             } else if (input.startsWith("/folder ")) {
-                const folderPath = input.substring(8).trim();
+                const folderPath = stripQuotes(input.substring(8));
+                if (!folderPath) {
+                    console.log(`${colors.red}❌ Please specify a folder path. Usage: /folder <path>${colors.reset}`);
+                    continue;
+                }
                 const absPath = path.isAbsolute(folderPath) ? folderPath : path.join(process.cwd(), folderPath);
                 if (fs.existsSync(absPath)) {
                     try {
@@ -1189,6 +1327,11 @@ async function processQueue() {
 rl.on("line", (input) => {
     input = (input || "").trim();
     if (!input) return;
+
+    // Append to CLI history file
+    try {
+        fs.appendFileSync(historyFile, input + "\n", "utf8");
+    } catch (e) {}
 
     runtime.cliQueue++;
     queue.push(input);
