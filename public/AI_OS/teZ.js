@@ -509,7 +509,7 @@ function formatMarkdown(text) {
 async function executeGraph(input, graph) {
     runtime.requests++;
 
-    const messages = Memory.retrieveSemanticCombined(input);
+    const messages = await Memory.retrieveSemanticCombined(input);
     messages.push({ role: "user", content: input });
     messages.push({ role: "system", content: JSON.stringify(graph) });
 
@@ -829,7 +829,7 @@ IMPORTANT: Output the entire complete program or valid search-and-replace blocks
         while ((match = codeBlockRegex.exec(code)) !== null) {
             const fileContent = match[1];
             let filename = "";
-            const fileMatches = input.match(/(?:file|filename|檔案|檔名)[:\s]*([a-zA-Z0-9_\-\.]+)/i);
+            const fileMatches = input.match(/(?:file|filename|檔案|檔名)[:\s]*([a-zA-Z0-9_\-\.\/\\:]+)/i);
             if (fileMatches && fileMatches[1]) {
                 filename = fileMatches[1];
                 if (fileWrittenCount > 0) {
@@ -986,7 +986,7 @@ function applyEdits(blocks) {
             
             if (normalizedContent.includes(normalizedSearch)) {
                 const updated = normalizedContent.replace(normalizedSearch, block.replaceContent.replace(/\r\n/g, "\n"));
-                writeSmartFile(updated, baseName);
+                writeSmartFile(updated, absPath);
                 console.log(`${colors.green}✅ Applied search-replace edit block to: ${baseName}${colors.reset}`);
                 editCount++;
             } else {
@@ -1086,22 +1086,52 @@ async function processQueue() {
                 const filename = input.substring(10).trim();
                 const backupDir = path.join(process.cwd(), "backup");
                 if (fs.existsSync(backupDir)) {
-                    const files = fs.readdirSync(backupDir).filter(f => f.startsWith(filename) && f.endsWith(".bak"));
+                    const baseName = path.basename(filename);
+                    const files = fs.readdirSync(backupDir).filter(f => f.startsWith(baseName) && f.endsWith(".bak"));
                     if (files.length > 0) {
                         files.sort((a, b) => b.localeCompare(a));
                         const latestBackup = files[0];
                         const backupPath = path.join(backupDir, latestBackup);
-                        const targetPath = path.join(process.cwd(), "Proj", filename);
+                        
+                        let targetPath = path.isAbsolute(filename) ? filename : path.join(process.cwd(), "Proj", filename);
+                        if (!fs.existsSync(targetPath)) {
+                            const directPath = path.resolve(process.cwd(), filename);
+                            if (fs.existsSync(directPath)) {
+                                targetPath = directPath;
+                            } else {
+                                const findFile = (dir, name) => {
+                                    const items = fs.readdirSync(dir);
+                                    for (const item of items) {
+                                        if (["node_modules", ".git", "backup", "memory"].includes(item)) continue;
+                                        const full = path.join(dir, item);
+                                        try {
+                                            const stat = fs.statSync(full);
+                                            if (stat.isDirectory()) {
+                                                const res = findFile(full, name);
+                                                if (res) return res;
+                                            } else if (item === name) {
+                                                return full;
+                                            }
+                                        } catch (e) {}
+                                    }
+                                    return null;
+                                };
+                                const found = findFile(process.cwd(), baseName);
+                                if (found) {
+                                    targetPath = found;
+                                }
+                            }
+                        }
                         
                         try {
                             const content = fs.readFileSync(backupPath, "utf8");
-                            if (fs.existsSync(targetPath)) {
+                            if (fs.existsSync(targetPath) && config.AUTO_BACKUP) {
                                 const currentContent = fs.readFileSync(targetPath, "utf8");
-                                const rollBackupFile = path.join(backupDir, `${filename}.pre_rollback.${Date.now()}.bak`);
+                                const rollBackupFile = path.join(backupDir, `${baseName}.pre_rollback.${Date.now()}.bak`);
                                 fs.writeFileSync(rollBackupFile, currentContent, "utf8");
                             }
                             fs.writeFileSync(targetPath, content, "utf8");
-                            console.log(`${colors.green}✅ ROLLBACK SUCCESSFUL:${colors.reset} Restored ${filename} from backup ${latestBackup}`);
+                            console.log(`${colors.green}✅ ROLLBACK SUCCESSFUL:${colors.reset} Restored ${baseName} to ${targetPath} from backup ${latestBackup}`);
                         } catch (err) {
                             console.log(`${colors.red}❌ Rollback failed: ${err.message}${colors.reset}`);
                         }
@@ -1271,22 +1301,23 @@ function generateSimpleDiff(oldContent, newContent) {
 function writeSmartFile(content, filename = "") {
     const dir = path.join(process.cwd(), "Proj");
 
-    if (!fs.existsSync(dir))
-        fs.mkdirSync(dir, { recursive: true });
-
-    let ext = detectFileType(content);
-
+    let full;
     if (filename) {
-        const e = path.extname(filename);
-        if (e)
-            ext = e.substring(1);
+        if (path.isAbsolute(filename)) {
+            full = filename;
+        } else {
+            if (filename.includes("/") || filename.includes("\\")) {
+                full = path.resolve(process.cwd(), filename);
+            } else {
+                full = path.join(dir, filename);
+            }
+        }
+    } else {
+        const ext = detectFileType(content);
+        full = path.join(dir, `Proj_${version.current()}_${Date.now()}.${ext}`);
     }
 
-    const name = filename
-        ? filename
-        : `Proj_${version.current()}_${Date.now()}.${ext}`;
-
-    const full = path.join(dir, name);
+    const name = path.basename(full);
     const parentDir = path.dirname(full);
 
     if (!fs.existsSync(parentDir)) {
@@ -1294,7 +1325,7 @@ function writeSmartFile(content, filename = "") {
     }
 
     // Git-like backup and diff check
-    if (fs.existsSync(full)) {
+    if (fs.existsSync(full) && config.AUTO_BACKUP) {
         const oldContent = fs.readFileSync(full, "utf8");
         if (oldContent !== content) {
             const backupDir = path.join(process.cwd(), "backup");
@@ -1302,7 +1333,7 @@ function writeSmartFile(content, filename = "") {
                 fs.mkdirSync(backupDir, { recursive: true });
             }
             const timeStr = new Date().toISOString().replace(/[:.]/g, "-");
-            const backupFile = path.join(backupDir, `${path.basename(name)}.${timeStr}.bak`);
+            const backupFile = path.join(backupDir, `${name}.${timeStr}.bak`);
             
             fs.writeFileSync(backupFile, oldContent, "utf8");
             console.log(`${colors.yellow}📦 BACKUP CREATED:${colors.reset} ${backupFile}`);
