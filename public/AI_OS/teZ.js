@@ -159,6 +159,26 @@ const Memory = {
             time: Date.now(),
             embedding
         });
+
+        // Pruning logic to limit memory nodes size (keep last 200 nodes)
+        const MAX_NODES = 200;
+        if (this.nodes.size > MAX_NODES) {
+            const sortedNodes = [...this.nodes.values()].sort((a, b) => a.time - b.time);
+            const toDeleteCount = this.nodes.size - MAX_NODES;
+            const deletedIds = new Set();
+            for (let i = 0; i < toDeleteCount; i++) {
+                const nodeToDelete = sortedNodes[i];
+                this.nodes.delete(nodeToDelete.id);
+                deletedIds.add(nodeToDelete.id);
+            }
+            
+            // Clean up links referencing deleted nodes
+            for (const node of this.nodes.values()) {
+                node.links = node.links.filter(linkId => !deletedIds.has(linkId));
+            }
+            console.log(`\n${colors.gray}🧹 Memory limit exceeded. Pruned ${toDeleteCount} oldest memory nodes.${colors.reset}`);
+        }
+
         this.save();
         return id;
     },
@@ -355,10 +375,11 @@ const Tools = {
 };
 
 // ======================================================
-// 🌐 SAFE FETCH
-// ======================================================
+let activeAbortController = null;
+
 async function safeFetch(model, messages) {
     const controller = new AbortController();
+    activeAbortController = controller;
     const timer = setTimeout(() => controller.abort(), 20000);
 
     try {
@@ -381,6 +402,10 @@ async function safeFetch(model, messages) {
     } catch (e) {
         clearTimeout(timer);
         throw e;
+    } finally {
+        if (activeAbortController === controller) {
+            activeAbortController = null;
+        }
     }
 }
 
@@ -422,6 +447,10 @@ async function streamRead(res) {
     let isFirstToken = true;
 
     while (true) {
+        if (activeAbortController && activeAbortController.signal.aborted) {
+            reader.cancel();
+            throw new Error("aborted");
+        }
         const { value, done } = await reader.read();
         if (done) break;
 
@@ -1340,6 +1369,23 @@ rl.on("line", (input) => {
 });
 
 rl.on("close", () => process.exit(0));
+
+rl.on("SIGINT", () => {
+    if (running) {
+        console.log(`\n${colors.yellow}⚠️ Process aborted by user.${colors.reset}`);
+        if (activeAbortController) {
+            activeAbortController.abort();
+            activeAbortController = null;
+        }
+        running = false;
+        queue = [];
+        stopSpinner();
+        promptUser();
+    } else {
+        console.log("\nExiting...");
+        process.exit(0);
+    }
+});
 
 // Initial prompt
 promptUser();
