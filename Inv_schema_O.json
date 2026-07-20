@@ -1,7 +1,7 @@
 {
   "system": {
     "name": "SchemaI_Market_Engine",
-    "version": "260703_V11",
+    "version": "260721_V12",
     "type": "single_source_truth_engine",
     "consistency_level": "strict_deterministic_cross_ai",
     "checksum_method": "sha256"
