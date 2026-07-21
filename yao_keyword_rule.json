@@ -11556,91 +11556,163 @@
       "trade_action":"Release v1",
       "risk":"低"
     },
-
-    {
-      "id":846,
-      "keyword":"BUY_TRIGGER",
-      "source":"TigerEye Trigger",
-      "signal":"BUY_TRIGGER",
-      "score":10
-    },
-    {
-      "id":847,
-      "keyword":"SELL_TRIGGER",
-      "source":"TigerEye Trigger",
-      "signal":"SELL_TRIGGER",
-      "score":-10
-    },
-    {
-      "id":848,
-      "keyword":"HOLD_TRIGGER",
-      "source":"TigerEye Trigger",
-      "signal":"HOLD_TRIGGER",
-      "score":5
-    },
-    {
-      "id":849,
-      "keyword":"EXIT_TRIGGER",
-      "source":"TigerEye Trigger",
-      "signal":"EXIT_TRIGGER",
-      "score":-10
-    },
-    {
-      "id":850,
-      "keyword":"FINAL_SCORE_ENGINE",
-      "source":"TigerEye Core",
-      "signal":"FINAL_SCORE",
-      "score":10
-    },
-    {
-      "id":851,
-      "keyword":"MARKET_STATE_ENGINE",
-      "source":"TigerEye Core",
-      "signal":"MARKET_STATE",
-      "score":10
-    },
-    {
-      "id":852,
-      "keyword":"RISK_ENGINE",
-      "source":"TigerEye Core",
-      "signal":"RISK_CONTROL",
-      "score":10
-    },
-    {
-      "id":853,
-      "keyword":"ASTRO_ENGINE",
-      "source":"TigerEye Core",
-      "signal":"ASTRO_SCORE",
-      "score":10
-    },
-    {
-      "id":854,
-      "keyword":"HEXAGRAM_ENGINE",
-      "source":"TigerEye Core",
-      "signal":"HEXAGRAM_SCORE",
-      "score":10
-    },
-    {
-      "id":855,
-      "keyword":"TECH_ENGINE",
-      "source":"TigerEye Core",
-      "signal":"TECH_SCORE",
-      "score":10
-    },
-    {
-      "id":856,
-      "keyword":"FUSION_ENGINE",
-      "source":"TigerEye Core",
-      "signal":"FINAL_FUSION",
-      "score":10
-    },
-    {
-      "id":857,
-      "keyword":"TigerEye_YaoKeywordRule_v1.0_FINAL",
-      "source":"TigerEye System",
-      "signal":"RELEASE_COMPLETE",
-      "score":100
-    }
+{
+"id":846,
+"keyword":"BUY_TRIGGER",
+"source":"TigerEye Trigger",
+"yao":"交易觸發",
+"market_meaning":"買入條件成立",
+"signal":"BUY_TRIGGER",
+"score":10,
+"five_element":"木火",
+"cycle_stage":"ENTRY",
+"trade_action":"建立部位",
+"risk":"中"
+},
+{
+"id":847,
+"keyword":"SELL_TRIGGER",
+"source":"TigerEye Trigger",
+"yao":"交易觸發",
+"market_meaning":"賣出條件成立",
+"signal":"SELL_TRIGGER",
+"score":-10,
+"five_element":"水金",
+"cycle_stage":"EXIT",
+"trade_action":"退出持股",
+"risk":"高"
+},
+{
+"id":848,
+"keyword":"HOLD_TRIGGER",
+"source":"TigerEye Trigger",
+"yao":"交易觸發",
+"market_meaning":"持有條件成立",
+"signal":"HOLD_TRIGGER",
+"score":5,
+"five_element":"土",
+"cycle_stage":"HOLD",
+"trade_action":"維持部位",
+"risk":"低"
+},
+{
+"id":849,
+"keyword":"EXIT_TRIGGER",
+"source":"TigerEye Trigger",
+"yao":"風控觸發",
+"market_meaning":"風險超標",
+"signal":"EXIT_TRIGGER",
+"score":-10,
+"five_element":"水",
+"cycle_stage":"CRISIS",
+"trade_action":"清除部位",
+"risk":"極高"
+},
+{
+"id":850,
+"keyword":"FINAL_SCORE_ENGINE",
+"source":"TigerEye Core",
+"yao":"核心計算",
+"market_meaning":"最終分數計算",
+"signal":"FINAL_SCORE",
+"score":10,
+"five_element":"五行融合",
+"cycle_stage":"FINAL",
+"trade_action":"輸出分數",
+"risk":"低"
+},
+{
+"id":851,
+"keyword":"MARKET_STATE_ENGINE",
+"source":"TigerEye Core",
+"yao":"市場狀態",
+"market_meaning":"判斷牛熊循環",
+"signal":"MARKET_STATE",
+"score":10,
+"five_element":"五行融合",
+"cycle_stage":"STATE",
+"trade_action":"判斷方向",
+"risk":"低"
+},
+{
+"id":852,
+"keyword":"RISK_ENGINE",
+"source":"TigerEye Core",
+"yao":"風控",
+"market_meaning":"風險管理模組",
+"signal":"RISK_CONTROL",
+"score":10,
+"five_element":"土水",
+"cycle_stage":"RISK",
+"trade_action":"限制交易",
+"risk":"低"
+},
+{
+"id":853,
+"keyword":"ASTRO_ENGINE",
+"source":"TigerEye Core",
+"yao":"天象",
+"market_meaning":"行星周期計算",
+"signal":"ASTRO_SCORE",
+"score":10,
+"five_element":"木火",
+"cycle_stage":"ASTRO",
+"trade_action":"提供方向",
+"risk":"中"
+},
+{
+"id":854,
+"keyword":"HEXAGRAM_ENGINE",
+"source":"TigerEye Core",
+"yao":"卦象",
+"market_meaning":"64卦市場語意",
+"signal":"HEXAGRAM_SCORE",
+"score":10,
+"five_element":"陰陽",
+"cycle_stage":"HEXAGRAM",
+"trade_action":"提供趨勢",
+"risk":"中"
+},
+{
+"id":855,
+"keyword":"TECH_ENGINE",
+"source":"TigerEye Core",
+"yao":"技術",
+"market_meaning":"價格量能分析",
+"signal":"TECH_SCORE",
+"score":10,
+"five_element":"金火",
+"cycle_stage":"TECH",
+"trade_action":"確認買賣",
+"risk":"中"
+},
+{
+"id":856,
+"keyword":"FUSION_ENGINE",
+"source":"TigerEye Core",
+"yao":"融合",
+"market_meaning":"所有模型融合",
+"signal":"FINAL_FUSION",
+"score":10,
+"five_element":"全元素",
+"cycle_stage":"FINAL",
+"trade_action":"產生決策",
+"risk":"低"
+},
+{
+"id":857,
+"keyword":"TigerEye_YaoKeywordRule_v1.0_FINAL",
+"source":"TigerEye System",
+"yao":"版本",
+"market_meaning":"857爻市場語意庫完成",
+"signal":"RELEASE_COMPLETE",
+"score":100,
+"five_element":"全元素",
+"cycle_stage":"RELEASE",
+"trade_action":"啟動Kernel",
+"risk":"低"
+}
+   
   ]
 }
 
