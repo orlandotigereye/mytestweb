@@ -11546,17 +11546,17 @@
       "risk":"高"
     },
     {
-      "id":845,
-      "keyword":"系統完成857爻",
-      "source":"TigerEye System",
-      "yao":"Final",
-      "market_meaning":"完整市場語意庫",
-      "signal":"857_RULE_COMPLETE",
-      "score":10,
-      "five_element":"全元素",
-      "cycle_stage":"FINAL",
-      "trade_action":"Release v1",
-      "risk":"低"
+  "id":845,
+  "keyword":"市場規則成熟",
+  "source":"TigerEye System",
+  "yao":"成",
+  "market_meaning":"交易模型完成驗證，市場判讀穩定",
+  "signal":"MODEL_STABLE",
+  "score":0,
+  "five_element":"土",
+  "cycle_stage":"STABLE",
+  "trade_action":"維持觀察",
+  "risk":"低"
     },
 {
 "id":846,
@@ -11637,13 +11637,14 @@
 "risk":"低"
 },
 {
+
 "id":852,
 "keyword":"RISK_ENGINE",
 "source":"TigerEye Core",
 "yao":"風控",
 "market_meaning":"風險管理模組",
 "signal":"RISK_CONTROL",
-"score":10,
+"score":0,
 "five_element":"土水",
 "cycle_stage":"RISK",
 "trade_action":"限制交易",
@@ -11708,7 +11709,7 @@
 "yao":"版本",
 "market_meaning":"857爻市場語意庫完成",
 "signal":"RELEASE_COMPLETE",
-"score":100,
+"score":0,
 "five_element":"全元素",
 "cycle_stage":"RELEASE",
 "trade_action":"啟動Kernel",
