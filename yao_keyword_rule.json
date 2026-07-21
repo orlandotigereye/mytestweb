@@ -1,7 +1,9 @@
 {
-  "version": "TigerEye_YaoKeywordRule_v1.0",
-  "part": "001",
-  "range": "1-100",
+ "engine":"TigerEye Yao Keyword Rule",
+  "version":"1.0",
+  "total_rules":857,
+  "created":"2026-07-21",
+  "schema":"TigerEye Market Semantic Schema v1",
   "rules": [
     {
       "id":1,
