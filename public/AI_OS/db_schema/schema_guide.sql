@@ -1,0 +1,975 @@
+-- ============================================
+-- CFOCN 資料庫結構說明 (自動產生)
+-- 產生日期: 2026-07-21
+-- ============================================
+
+-- 【客戶主檔 - 儲存所有客戶基本資料】
+-- 表格名稱: COPMA
+-- 欄位:
+--   COMPANY nvarchar(20) NULL -- 公司別
+--   CREATOR nvarchar(10) NULL -- 建立者
+--   USR_GROUP nvarchar(10) NULL -- 使用者群組
+--   CREATE_DATE nvarchar(8) NULL -- 建立日期
+--   MODIFIER nvarchar(10) NULL -- 修改者
+--   MODI_DATE nvarchar(8) NULL -- 修改日期
+--   FLAG numeric NULL -- 旗標
+--   CREATE_TIME nvarchar(20) NULL -- 建立時間
+--   CREATE_AP nvarchar(50) NULL -- 建立程式
+--   CREATE_PRID nvarchar(50) NULL -- 建立流程代號
+--   MODI_TIME nvarchar(20) NULL -- 修改時間
+--   MODI_AP nvarchar(50) NULL -- 修改程式
+--   MODI_PRID nvarchar(50) NULL -- 修改流程代號
+--   MA001 nchar(10) NOT NULL -- 客戶代號(PK)
+--   MA002 nvarchar(30) NULL -- 客戶名稱
+--   MA003 nvarchar(80) NULL -- 客戶簡稱
+--   MA004 nvarchar(30) NULL -- 統一編號
+--   MA005 nvarchar(30) NULL -- 負責人
+--   MA006 nvarchar(20) NULL -- 聯絡人
+--   MA007 nvarchar(20) NULL -- 電話
+--   MA008 nvarchar(20) NULL -- 傳真
+--   MA009 nvarchar(60) NULL -- 地址
+--   MA010 nvarchar(20) NULL -- 行動電話
+--   MA011 numeric NULL
+--   MA012 numeric NULL
+--   MA013 numeric NULL
+--   MA014 nvarchar(4) NULL
+--   MA015 nvarchar(10) NULL
+--   MA016 nvarchar(10) NULL
+--   MA017 nvarchar(6) NULL
+--   MA018 nvarchar(6) NULL
+--   MA019 nvarchar(6) NULL
+--   MA020 nvarchar(8) NULL
+--   MA021 nvarchar(8) NULL
+--   MA022 nvarchar(8) NULL
+--   MA023 nvarchar(255) NULL
+--   MA024 nvarchar(255) NULL
+--   MA025 nvarchar(255) NULL
+--   MA026 nvarchar(255) NULL
+--   MA027 nvarchar(255) NULL
+--   MA028 nvarchar(1) NULL
+--   MA029 nvarchar(1) NULL
+--   MA030 nvarchar(40) NULL
+--   MA031 nvarchar(16) NULL
+--   MA032 nvarchar(1) NULL
+--   MA033 numeric NULL
+--   MA034 numeric NULL
+--   MA035 nvarchar(1) NULL
+--   MA036 numeric NULL
+--   MA037 nvarchar(1) NULL
+--   MA038 nvarchar(1) NULL
+--   MA039 nvarchar(1) NULL
+--   MA040 nvarchar(6) NULL
+--   MA041 nvarchar(1) NULL
+--   MA042 nvarchar(1) NULL
+--   MA043 nvarchar(2) NULL
+--   MA044 numeric NULL
+--   MA045 numeric NULL
+--   MA046 nvarchar(20) NULL
+--   MA047 nvarchar(20) NULL
+--   MA048 nvarchar(1) NULL
+--   MA049 nvarchar(255) NULL
+--   MA050 nvarchar(40) NULL
+--   MA051 nvarchar(40) NULL
+--   MA052 nvarchar(40) NULL
+--   MA053 nvarchar(40) NULL
+--   MA054 nvarchar(10) NULL
+--   MA055 nvarchar(10) NULL
+--   MA056 nvarchar(10) NULL
+--   MA057 nvarchar(10) NULL
+--   MA058 nvarchar(10) NULL
+--   MA059 numeric NULL
+--   MA060 numeric NULL
+--   MA061 numeric NULL
+--   MA062 nvarchar(255) NULL
+--   MA063 nvarchar(255) NULL
+--   MA064 nvarchar(255) NULL
+--   MA065 nvarchar(10) NULL
+--   MA066 nvarchar(1) NULL
+--   MA067 numeric NULL
+--   MA068 nvarchar(8) NULL
+--   MA069 nvarchar(20) NULL
+--   MA070 nvarchar(20) NULL
+--   MA071 nvarchar(30) NULL
+--   MA072 nvarchar(30) NULL
+--   MA073 nvarchar(30) NULL
+--   MA074 nvarchar(20) NULL
+--   MA075 nvarchar(10) NULL
+--   MA076 nvarchar(6) NULL
+--   MA077 nvarchar(6) NULL
+--   MA078 nvarchar(6) NULL
+--   MA079 nvarchar(6) NULL
+--   MA080 nvarchar(6) NULL
+--   MA081 nvarchar(6) NULL
+--   MA082 nvarchar(1) NULL
+--   MA083 nvarchar(6) NULL
+--   MA084 nvarchar(1) NULL
+--   MA085 nvarchar(10) NULL
+--   MA086 nvarchar(1) NULL
+--   MA087 nvarchar(1) NULL
+--   MA088 nvarchar(1) NULL
+--   MA089 nvarchar(1) NULL
+--   MA090 numeric NULL
+--   MA091 numeric NULL
+--   MA092 numeric NULL
+--   MA093 numeric NULL
+--   MA094 numeric NULL
+--   MA095 numeric NULL
+--   MA096 nvarchar(1) NULL
+--   MA097 nvarchar(1) NULL
+--   MA098 nvarchar(6) NULL
+--   MA099 nvarchar(255) NULL
+--   MA100 nvarchar(255) NULL
+--   MA101 nvarchar(30) NULL
+--   MA102 numeric NULL
+--   MA103 nvarchar(1) NULL
+--   MA104 nvarchar(1) NULL
+--   MA105 nvarchar(1) NULL
+--   MA106 nvarchar(10) NULL
+--   MA107 nvarchar(4) NULL
+--   MA108 nvarchar(6) NULL
+--   MA109 nvarchar(1) NULL
+--   MA110 nvarchar(80) NULL
+--   MA111 nvarchar(8) NULL
+--   MA112 nvarchar(4) NULL
+--   MA113 numeric NULL
+--   MA114 numeric NULL
+--   MA115 nvarchar(1) NULL
+--   MA116 nvarchar(30) NULL
+--   MA117 nvarchar(60) NULL
+--   MA118 nvarchar(3) NULL
+--   MA119 nvarchar(1) NULL
+--   MA120 nvarchar(1) NULL
+--   MA121 nvarchar(20) NULL
+--   MA122 nvarchar(20) NULL
+--   MA123 nvarchar(1) NULL
+--   MA124 nvarchar(20) NULL
+--   MA125 numeric NULL
+--   MA126 numeric NULL
+--   MA127 numeric NULL
+--   MA132 nvarchar(1) NULL
+--   MA133 nvarchar(1) NULL
+--   MA134 nvarchar(20) NULL
+--   MA135 nvarchar(1) NULL
+--   MA136 nvarchar(255) NULL
+--   MA137 nvarchar(1) NULL
+--   MA139 nvarchar(20) NULL
+--   MA140 nvarchar(255) NULL
+--   MA141 nvarchar(1) NULL
+--   MA142 nvarchar(1) NULL
+--   MA143 nvarchar(1) NULL
+--   MA144 nvarchar(1) NULL
+--   MA145 nvarchar(1) NULL
+--   MA146 nvarchar(15) NULL
+--   MA147 nvarchar(15) NULL
+--   MA148 nvarchar(15) NULL
+--   MA149 nvarchar(15) NULL
+--   MA150 nvarchar(1) NULL
+--   MA151 nvarchar(15) NULL
+--   MA152 nvarchar(5) NULL
+--   MA153 nvarchar(1) NULL
+--   MA154 nvarchar(40) NULL
+--   MA155 nvarchar(80) NULL
+--   MA156 nvarchar(20) NULL
+--   MA157 nvarchar(80) NULL
+--   MA158 nvarchar(1) NULL
+--   MA159 nvarchar(1) NULL
+--   MA160 nvarchar(30) NULL
+--   MA161 nvarchar(80) NULL
+--   UDF01 nvarchar(255) NULL -- 自定義欄位01
+--   UDF02 nvarchar(255) NULL -- 自定義欄位02
+--   UDF03 nvarchar(255) NULL -- 自定義欄位03
+--   UDF04 nvarchar(255) NULL -- 自定義欄位04
+--   UDF05 nvarchar(255) NULL -- 自定義欄位05
+--   UDF06 numeric NULL -- 自定義欄位06
+--   UDF07 numeric NULL -- 自定義欄位07
+--   UDF08 numeric NULL -- 自定義欄位08
+--   UDF09 numeric NULL -- 自定義欄位09
+--   UDF10 numeric NULL -- 自定義欄位10
+
+-- 【訂單主檔 - 儲存客戶訂單資料】
+-- 表格名稱: COPTC
+-- 欄位:
+--   COMPANY nvarchar(20) NULL -- 公司別
+--   CREATOR nvarchar(10) NULL -- 建立者
+--   USR_GROUP nvarchar(10) NULL -- 使用者群組
+--   CREATE_DATE nvarchar(8) NULL -- 建立日期
+--   MODIFIER nvarchar(10) NULL -- 修改者
+--   MODI_DATE nvarchar(8) NULL -- 修改日期
+--   FLAG numeric NULL -- 旗標
+--   CREATE_TIME nvarchar(20) NULL -- 建立時間
+--   CREATE_AP nvarchar(50) NULL -- 建立程式
+--   CREATE_PRID nvarchar(50) NULL -- 建立流程代號
+--   MODI_TIME nvarchar(20) NULL -- 修改時間
+--   MODI_AP nvarchar(50) NULL -- 修改程式
+--   MODI_PRID nvarchar(50) NULL -- 修改流程代號
+--   TC001 nchar(4) NOT NULL -- 單別(PK)
+--   TC002 nchar(11) NOT NULL -- 單號(PK)
+--   TC003 nvarchar(8) NULL -- 客戶代號(FK->COPMA)
+--   TC004 nvarchar(10) NULL -- 訂單日期
+--   TC005 nvarchar(10) NULL -- 部門代號
+--   TC006 nvarchar(10) NULL -- 業務員代號
+--   TC007 nvarchar(6) NULL
+--   TC008 nvarchar(4) NULL
+--   TC009 numeric NULL
+--   TC010 nvarchar(255) NULL
+--   TC011 nvarchar(255) NULL
+--   TC012 nvarchar(20) NULL
+--   TC013 nvarchar(40) NULL
+--   TC014 nvarchar(16) NULL
+--   TC015 nvarchar(255) NULL
+--   TC016 nvarchar(1) NULL
+--   TC017 nvarchar(20) NULL
+--   TC018 nvarchar(30) NULL
+--   TC019 nvarchar(1) NULL
+--   TC020 nvarchar(40) NULL
+--   TC021 nvarchar(40) NULL
+--   TC022 nvarchar(10) NULL
+--   TC023 nvarchar(10) NULL
+--   TC024 nvarchar(10) NULL
+--   TC025 nvarchar(10) NULL
+--   TC026 numeric NULL
+--   TC027 nvarchar(1) NULL
+--   TC028 numeric NULL
+--   TC029 numeric NULL
+--   TC030 numeric NULL
+--   TC031 numeric NULL
+--   TC032 nvarchar(10) NULL
+--   TC033 nvarchar(10) NULL
+--   TC034 nvarchar(6) NULL
+--   TC035 nvarchar(40) NULL
+--   TC036 nvarchar(20) NULL
+--   TC037 nvarchar(255) NULL
+--   TC038 nvarchar(255) NULL
+--   TC039 nvarchar(8) NULL
+--   TC040 nvarchar(10) NULL
+--   TC041 numeric NULL
+--   TC042 nvarchar(6) NULL
+--   TC043 numeric NULL
+--   TC044 numeric NULL
+--   TC045 numeric NULL
+--   TC046 numeric NULL
+--   TC047 nvarchar(20) NULL
+--   TC048 nvarchar(1) NULL
+--   TC049 nvarchar(2) NULL
+--   TC050 nvarchar(1) NULL
+--   TC051 nvarchar(10) NULL
+--   TC052 numeric NULL
+--   TC053 nvarchar(80) NULL
+--   TC054 nvarchar(255) NULL
+--   TC055 nvarchar(255) NULL
+--   TC056 nvarchar(1) NULL
+--   TC057 nvarchar(1) NULL
+--   TC058 nvarchar(25) NULL
+--   TC059 nvarchar(4) NULL
+--   TC060 nvarchar(1) NULL
+--   TC061 nvarchar(10) NULL
+--   TC062 nvarchar(10) NULL
+--   TC063 nvarchar(255) NULL
+--   TC064 nvarchar(255) NULL
+--   TC065 nvarchar(80) NULL
+--   TC066 nvarchar(20) NULL
+--   TC067 nvarchar(20) NULL
+--   TC068 nvarchar(1) NULL
+--   TC069 nvarchar(4) NULL
+--   TC070 nvarchar(1) NULL
+--   TC071 nvarchar(80) NULL
+--   TC072 numeric NULL
+--   TC073 numeric NULL
+--   TC074 nvarchar(1) NULL
+--   TC075 nvarchar(30) NULL
+--   TC076 nvarchar(60) NULL
+--   TC077 nvarchar(1) NULL
+--   TC078 nvarchar(3) NULL
+--   TC079 nvarchar(6) NULL
+--   TC080 nvarchar(6) NULL
+--   TC081 nvarchar(6) NULL
+--   TC082 nvarchar(6) NULL
+--   TC083 nvarchar(6) NULL
+--   TC084 nvarchar(6) NULL
+--   TC085 nvarchar(6) NULL
+--   TC086 nvarchar(6) NULL
+--   TC087 nvarchar(6) NULL
+--   TC088 nvarchar(10) NULL
+--   TC089 nvarchar(4) NULL
+--   TC090 nvarchar(3) NULL
+--   TC091 nvarchar(1) NULL
+--   TC092 nvarchar(1) NULL
+--   TC093 nvarchar(255) NULL
+--   UDF01 nvarchar(255) NULL -- 自定義欄位01
+--   UDF02 nvarchar(255) NULL -- 自定義欄位02
+--   UDF03 nvarchar(255) NULL -- 自定義欄位03
+--   UDF04 nvarchar(255) NULL -- 自定義欄位04
+--   UDF05 nvarchar(255) NULL -- 自定義欄位05
+--   UDF06 numeric NULL -- 自定義欄位06
+--   UDF07 numeric NULL -- 自定義欄位07
+--   UDF08 numeric NULL -- 自定義欄位08
+--   UDF09 numeric NULL -- 自定義欄位09
+--   UDF10 numeric NULL -- 自定義欄位10
+
+-- 【庫存異動明細 - 記錄所有庫存異動】
+-- 表格名稱: INVLA
+-- 欄位:
+--   COMPANY nvarchar(20) NULL -- 公司別
+--   CREATOR nvarchar(10) NULL -- 建立者
+--   USR_GROUP nvarchar(10) NULL -- 使用者群組
+--   CREATE_DATE nvarchar(8) NULL -- 建立日期
+--   MODIFIER nvarchar(10) NULL -- 修改者
+--   MODI_DATE nvarchar(8) NULL -- 修改日期
+--   FLAG numeric NULL -- 旗標
+--   CREATE_TIME nvarchar(20) NULL -- 建立時間
+--   CREATE_AP nvarchar(50) NULL -- 建立程式
+--   CREATE_PRID nvarchar(50) NULL -- 建立流程代號
+--   MODI_TIME nvarchar(20) NULL -- 修改時間
+--   MODI_AP nvarchar(50) NULL -- 修改程式
+--   MODI_PRID nvarchar(50) NULL -- 修改流程代號
+--   LA001 nvarchar(40) NULL -- 品號(FK->INVMB)
+--   LA004 nvarchar(8) NULL -- 儲位代號
+--   LA005 numeric NOT NULL -- 數量
+--   LA006 nchar(4) NOT NULL -- 異動日期
+--   LA007 nchar(11) NOT NULL -- 異動單別
+--   LA008 nchar(4) NOT NULL -- 異動單號
+--   LA009 nvarchar(10) NULL
+--   LA010 nvarchar(255) NULL
+--   LA011 numeric NULL
+--   LA012 numeric NULL
+--   LA013 numeric NULL
+--   LA014 nvarchar(1) NULL
+--   LA015 nvarchar(1) NULL
+--   LA016 nvarchar(20) NULL
+--   LA017 numeric NULL
+--   LA018 numeric NULL
+--   LA019 numeric NULL
+--   LA020 numeric NULL
+--   LA021 numeric NULL
+--   LA022 nvarchar(10) NULL
+--   LA023 numeric NULL
+--   LA024 numeric NULL
+--   LA025 nvarchar(1) NULL
+--   LA026 nvarchar(30) NULL
+--   LA027 nvarchar(60) NULL
+--   LA028 nvarchar(20) NULL
+--   LA029 nvarchar(20) NULL
+--   LA030 nvarchar(20) NULL
+--   LA031 nvarchar(255) NULL
+--   LA032 nvarchar(255) NULL
+--   LA033 nvarchar(255) NULL
+--   LA034 nvarchar(255) NULL
+--   UDF01 nvarchar(255) NULL -- 自定義欄位01
+--   UDF02 nvarchar(255) NULL -- 自定義欄位02
+--   UDF03 nvarchar(255) NULL -- 自定義欄位03
+--   UDF04 nvarchar(255) NULL -- 自定義欄位04
+--   UDF05 nvarchar(255) NULL -- 自定義欄位05
+--   UDF06 numeric NULL -- 自定義欄位06
+--   UDF07 numeric NULL -- 自定義欄位07
+--   UDF08 numeric NULL -- 自定義欄位08
+--   UDF09 numeric NULL -- 自定義欄位09
+--   UDF10 numeric NULL -- 自定義欄位10
+
+-- 【品號主檔 - 儲存所有產品/料號資料】
+-- 表格名稱: INVMB
+-- 欄位:
+--   COMPANY nvarchar(20) NULL -- 公司別
+--   CREATOR nvarchar(10) NULL -- 建立者
+--   USR_GROUP nvarchar(10) NULL -- 使用者群組
+--   CREATE_DATE nvarchar(8) NULL -- 建立日期
+--   MODIFIER nvarchar(10) NULL -- 修改者
+--   MODI_DATE nvarchar(8) NULL -- 修改日期
+--   FLAG numeric NULL -- 旗標
+--   CREATE_TIME nvarchar(20) NULL -- 建立時間
+--   CREATE_AP nvarchar(50) NULL -- 建立程式
+--   CREATE_PRID nvarchar(50) NULL -- 建立流程代號
+--   MODI_TIME nvarchar(20) NULL -- 修改時間
+--   MODI_AP nvarchar(50) NULL -- 修改程式
+--   MODI_PRID nvarchar(50) NULL -- 修改流程代號
+--   MB001 nchar(40) NOT NULL -- 品號(PK)
+--   MB002 nvarchar(120) NULL -- 品名
+--   MB003 nvarchar(120) NULL -- 規格
+--   MB004 nvarchar(6) NULL -- 庫存單位
+--   MB005 nvarchar(6) NULL
+--   MB006 nvarchar(6) NULL
+--   MB007 nvarchar(6) NULL
+--   MB008 nvarchar(6) NULL
+--   MB009 nvarchar(255) NULL
+--   MB010 nvarchar(40) NULL
+--   MB011 nvarchar(4) NULL -- 主要供應商
+--   MB012 nvarchar(10) NULL -- 標準進價
+--   MB013 nvarchar(20) NULL -- 標準售價
+--   MB014 numeric NULL
+--   MB015 nvarchar(4) NULL
+--   MB016 nvarchar(6) NULL
+--   MB017 nvarchar(10) NULL
+--   MB018 nvarchar(10) NULL
+--   MB019 nvarchar(1) NULL -- 安全庫存量
+--   MB020 nvarchar(1) NULL -- 最高庫存量
+--   MB021 nvarchar(4) NULL -- 最低庫存量
+--   MB022 nvarchar(1) NULL -- 補貨點
+--   MB023 numeric NULL
+--   MB024 numeric NULL
+--   MB025 nvarchar(1) NULL
+--   MB026 nvarchar(2) NULL
+--   MB027 nvarchar(1) NULL
+--   MB028 nvarchar(255) NULL
+--   MB029 nvarchar(40) NULL
+--   MB030 nvarchar(8) NULL
+--   MB031 nvarchar(8) NULL
+--   MB032 nvarchar(10) NULL
+--   MB033 nvarchar(1) NULL
+--   MB034 nvarchar(1) NULL
+--   MB035 nvarchar(1) NULL
+--   MB036 numeric NULL
+--   MB037 numeric NULL
+--   MB038 numeric NULL
+--   MB039 numeric NULL
+--   MB040 numeric NULL
+--   MB041 numeric NULL
+--   MB042 nvarchar(1) NULL
+--   MB043 nvarchar(1) NULL
+--   MB044 nvarchar(1) NULL
+--   MB045 numeric NULL
+--   MB046 numeric NULL
+--   MB047 numeric NULL
+--   MB048 nvarchar(4) NULL
+--   MB049 numeric NULL
+--   MB050 numeric NULL
+--   MB051 numeric NULL
+--   MB052 nvarchar(1) NULL
+--   MB053 numeric NULL
+--   MB054 numeric NULL
+--   MB055 numeric NULL
+--   MB056 numeric NULL
+--   MB057 numeric NULL
+--   MB058 numeric NULL
+--   MB059 numeric NULL
+--   MB060 numeric NULL
+--   MB061 numeric NULL
+--   MB062 numeric NULL
+--   MB063 numeric NULL
+--   MB064 numeric NULL
+--   MB065 numeric NULL
+--   MB066 nvarchar(1) NULL
+--   MB067 nvarchar(10) NULL
+--   MB068 nvarchar(10) NULL
+--   MB069 numeric NULL
+--   MB070 numeric NULL
+--   MB071 numeric NULL
+--   MB072 nvarchar(6) NULL
+--   MB073 numeric NULL
+--   MB074 numeric NULL
+--   MB075 numeric NULL
+--   MB076 numeric NULL
+--   MB077 nvarchar(6) NULL
+--   MB078 numeric NULL
+--   MB079 numeric NULL
+--   MB080 nvarchar(40) NULL
+--   MB081 nvarchar(4) NULL
+--   MB082 numeric NULL
+--   MB083 nvarchar(1) NULL
+--   MB084 numeric NULL
+--   MB085 nvarchar(1) NULL
+--   MB086 numeric NULL
+--   MB087 nvarchar(1) NULL
+--   MB088 numeric NULL
+--   MB089 numeric NULL
+--   MB090 nvarchar(6) NULL
+--   MB091 nvarchar(1) NULL
+--   MB092 nvarchar(1) NULL
+--   MB093 numeric NULL
+--   MB094 numeric NULL
+--   MB095 numeric NULL
+--   MB096 numeric NULL
+--   MB097 numeric NULL
+--   MB098 nvarchar(1) NULL
+--   MB099 numeric NULL
+--   MB100 nvarchar(1) NULL
+--   MB101 nvarchar(1) NULL
+--   MB102 nvarchar(1) NULL
+--   MB103 nvarchar(1) NULL
+--   MB104 nvarchar(1) NULL
+--   MB105 nvarchar(1) NULL
+--   MB106 nvarchar(1) NULL
+--   MB107 nvarchar(1) NULL
+--   MB108 nvarchar(1) NULL
+--   MB109 nvarchar(1) NULL
+--   MB110 nvarchar(1) NULL
+--   MB111 numeric NULL
+--   MB112 nvarchar(1) NULL
+--   MB113 nvarchar(1) NULL
+--   MB114 nvarchar(1) NULL
+--   MB115 nvarchar(1) NULL
+--   MB116 nvarchar(1) NULL
+--   MB117 nvarchar(1) NULL
+--   MB118 nvarchar(1) NULL
+--   MB119 numeric NULL
+--   MB120 numeric NULL
+--   MB121 nvarchar(1) NULL
+--   MB122 nvarchar(30) NULL
+--   MB123 nvarchar(2) NULL
+--   MB124 nvarchar(30) NULL
+--   MB125 nvarchar(30) NULL
+--   MB126 nvarchar(30) NULL
+--   MB127 nvarchar(1) NULL
+--   MB128 nvarchar(1) NULL
+--   MB129 nvarchar(1) NULL
+--   MB130 nvarchar(1) NULL
+--   MB131 nvarchar(1) NULL
+--   MB132 nvarchar(6) NULL
+--   MB133 nvarchar(6) NULL
+--   MB134 nvarchar(6) NULL
+--   MB135 nvarchar(6) NULL
+--   MB136 nvarchar(6) NULL
+--   MB137 nvarchar(6) NULL
+--   MB138 nvarchar(6) NULL
+--   MB139 nvarchar(6) NULL
+--   MB140 nvarchar(6) NULL
+--   MB141 nvarchar(6) NULL
+--   MB142 nvarchar(10) NULL
+--   MB143 nvarchar(10) NULL
+--   MB144 nvarchar(10) NULL
+--   MB145 nvarchar(10) NULL
+--   MB146 nvarchar(10) NULL
+--   MB147 nvarchar(10) NULL
+--   MB148 nvarchar(10) NULL
+--   MB149 nvarchar(10) NULL
+--   MB150 nvarchar(10) NULL
+--   MB151 nvarchar(10) NULL
+--   MB152 nvarchar(6) NULL
+--   MB153 nvarchar(10) NULL
+--   MB154 nvarchar(4) NULL
+--   MB155 nvarchar(6) NULL
+--   MB156 nvarchar(6) NULL
+--   MB157 nvarchar(10) NULL
+--   MB158 nvarchar(8) NULL
+--   MB159 numeric NULL
+--   MB160 numeric NULL
+--   MB161 numeric NULL
+--   MB162 nvarchar(1) NULL
+--   MB163 nvarchar(30) NULL
+--   MB164 nvarchar(60) NULL
+--   MB165 nvarchar(4) NULL
+--   MB166 numeric NULL
+--   MB167 numeric NULL
+--   MB168 nvarchar(1) NULL
+--   MB169 nvarchar(1) NULL
+--   MB170 nvarchar(1) NULL
+--   MB171 numeric NULL
+--   MB172 numeric NULL
+--   MB173 numeric NULL
+--   MB174 nvarchar(32) NULL
+--   MB175 nvarchar(32) NULL
+--   MB176 nvarchar(32) NULL
+--   MB177 nvarchar(32) NULL
+--   MB178 nvarchar(32) NULL
+--   MB179 nvarchar(1) NULL
+--   MB180 numeric NULL
+--   MB181 numeric NULL
+--   MB182 numeric NULL
+--   MB183 nvarchar(1) NULL
+--   MB184 numeric NULL
+--   MB185 nvarchar(10) NULL
+--   MB186 nvarchar(20) NULL
+--   MB187 nvarchar(15) NULL
+--   MB188 nvarchar(40) NULL
+--   MB189 nvarchar(1) NULL
+--   MB190 nvarchar(1) NULL
+--   MB191 numeric NULL
+--   MB192 numeric NULL
+--   MB193 numeric NULL
+--   MB194 nvarchar(1) NULL
+--   MB195 nvarchar(8) NULL
+--   MB196 nvarchar(10) NULL
+--   MB197 nvarchar(6) NULL
+--   MB198 nvarchar(1) NULL
+--   MB199 nvarchar(20) NULL
+--   MB500 nvarchar(40) NULL
+--   MB501 numeric NULL
+--   MB502 nvarchar(255) NULL
+--   MB503 nvarchar(255) NULL
+--   MB504 nvarchar(255) NULL
+--   MB505 nvarchar(3) NULL
+--   MB506 nvarchar(3) NULL
+--   MB507 numeric NULL
+--   MB508 numeric NULL
+--   MB509 numeric NULL
+--   MB510 nvarchar(1) NULL
+--   MB511 nvarchar(1) NULL
+--   MB512 nvarchar(1) NULL
+--   MB513 nvarchar(1) NULL
+--   MB514 nvarchar(1) NULL
+--   MB515 nvarchar(20) NULL
+--   MB516 nvarchar(8) NULL
+--   MB517 nvarchar(15) NULL
+--   MB518 nvarchar(15) NULL
+--   MB519 nvarchar(15) NULL
+--   MB520 nvarchar(1) NULL
+--   MB521 nvarchar(1) NULL
+--   MB522 nvarchar(1) NULL
+--   MB545 numeric NULL
+--   MB550 nvarchar(1) NULL
+--   MB551 nvarchar(20) NULL
+--   MB552 nvarchar(1) NULL
+--   MB553 nvarchar(4) NULL
+--   MB554 nvarchar(4) NULL
+--   UDF01 nvarchar(255) NULL -- 自定義欄位01
+--   UDF02 nvarchar(255) NULL -- 自定義欄位02
+--   UDF03 nvarchar(255) NULL -- 自定義欄位03
+--   UDF04 nvarchar(255) NULL -- 自定義欄位04
+--   UDF05 nvarchar(255) NULL -- 自定義欄位05
+--   UDF06 numeric NULL -- 自定義欄位06
+--   UDF07 numeric NULL -- 自定義欄位07
+--   UDF08 numeric NULL -- 自定義欄位08
+--   UDF09 numeric NULL -- 自定義欄位09
+--   UDF10 numeric NULL -- 自定義欄位10
+
+-- 【倉庫主檔 - 儲存倉庫資料】
+-- 表格名稱: INVMC
+-- 欄位:
+--   COMPANY nvarchar(20) NULL -- 公司別
+--   CREATOR nvarchar(10) NULL -- 建立者
+--   USR_GROUP nvarchar(10) NULL -- 使用者群組
+--   CREATE_DATE nvarchar(8) NULL -- 建立日期
+--   MODIFIER nvarchar(10) NULL -- 修改者
+--   MODI_DATE nvarchar(8) NULL -- 修改日期
+--   FLAG numeric NULL -- 旗標
+--   CREATE_TIME nvarchar(20) NULL -- 建立時間
+--   CREATE_AP nvarchar(50) NULL -- 建立程式
+--   CREATE_PRID nvarchar(50) NULL -- 建立流程代號
+--   MODI_TIME nvarchar(20) NULL -- 修改時間
+--   MODI_AP nvarchar(50) NULL -- 修改程式
+--   MODI_PRID nvarchar(50) NULL -- 修改流程代號
+--   MC001 nchar(40) NOT NULL -- 倉庫代號(PK)
+--   MC002 nchar(10) NOT NULL -- 倉庫名稱
+--   MC003 nvarchar(20) NULL
+--   MC004 numeric NULL
+--   MC005 numeric NULL
+--   MC006 numeric NULL
+--   MC007 numeric NULL
+--   MC008 numeric NULL
+--   MC009 numeric NULL
+--   MC010 numeric NULL
+--   MC011 nvarchar(8) NULL
+--   MC012 nvarchar(8) NULL
+--   MC013 nvarchar(8) NULL
+--   MC014 numeric NULL
+--   MC015 nvarchar(10) NULL
+--   MC016 numeric NULL
+--   MC017 numeric NULL
+--   MC018 nvarchar(1) NULL
+--   MC019 nvarchar(30) NULL
+--   MC020 nvarchar(60) NULL
+--   UDF01 nvarchar(255) NULL -- 自定義欄位01
+--   UDF02 nvarchar(255) NULL -- 自定義欄位02
+--   UDF03 nvarchar(255) NULL -- 自定義欄位03
+--   UDF04 nvarchar(255) NULL -- 自定義欄位04
+--   UDF05 nvarchar(255) NULL -- 自定義欄位05
+--   UDF06 numeric NULL -- 自定義欄位06
+--   UDF07 numeric NULL -- 自定義欄位07
+--   UDF08 numeric NULL -- 自定義欄位08
+--   UDF09 numeric NULL -- 自定義欄位09
+--   UDF10 numeric NULL -- 自定義欄位10
+
+-- 【供應商主檔 - 儲存所有供應商基本資料】
+-- 表格名稱: PURMA
+-- 欄位:
+--   COMPANY nvarchar(20) NULL -- 公司別
+--   CREATOR nvarchar(10) NULL -- 建立者
+--   USR_GROUP nvarchar(10) NULL -- 使用者群組
+--   CREATE_DATE nvarchar(8) NULL -- 建立日期
+--   MODIFIER nvarchar(10) NULL -- 修改者
+--   MODI_DATE nvarchar(8) NULL -- 修改日期
+--   FLAG numeric NULL -- 旗標
+--   CREATE_TIME nvarchar(20) NULL -- 建立時間
+--   CREATE_AP nvarchar(50) NULL -- 建立程式
+--   CREATE_PRID nvarchar(50) NULL -- 建立流程代號
+--   MODI_TIME nvarchar(20) NULL -- 修改時間
+--   MODI_AP nvarchar(50) NULL -- 修改程式
+--   MODI_PRID nvarchar(50) NULL -- 修改流程代號
+--   MA001 nchar(10) NOT NULL -- 供應商代號(PK)
+--   MA002 nvarchar(30) NULL -- 供應商名稱
+--   MA003 nvarchar(80) NULL -- 供應商簡稱
+--   MA004 nvarchar(6) NULL -- 統一編號
+--   MA005 nvarchar(20) NULL -- 負責人
+--   MA006 nvarchar(6) NULL -- 聯絡人
+--   MA007 nvarchar(6) NULL -- 電話
+--   MA008 nvarchar(20) NULL -- 傳真
+--   MA009 nvarchar(20) NULL -- 地址
+--   MA010 nvarchar(20) NULL -- 行動電話
+--   MA011 nvarchar(60) NULL
+--   MA012 nvarchar(30) NULL
+--   MA013 nvarchar(30) NULL
+--   MA014 nvarchar(255) NULL
+--   MA015 nvarchar(255) NULL
+--   MA016 nvarchar(1) NULL
+--   MA017 nvarchar(8) NULL
+--   MA018 numeric NULL
+--   MA019 numeric NULL
+--   MA020 nvarchar(1) NULL
+--   MA021 nvarchar(4) NULL
+--   MA022 nvarchar(8) NULL
+--   MA023 nvarchar(8) NULL
+--   MA024 nvarchar(1) NULL
+--   MA025 nvarchar(16) NULL
+--   MA026 nvarchar(40) NULL
+--   MA027 nvarchar(20) NULL
+--   MA028 nvarchar(30) NULL
+--   MA029 nvarchar(1) NULL
+--   MA030 nvarchar(1) NULL
+--   MA031 nvarchar(1) NULL
+--   MA032 nvarchar(1) NULL
+--   MA033 nvarchar(1) NULL
+--   MA034 nvarchar(1) NULL
+--   MA035 nvarchar(2) NULL
+--   MA036 nvarchar(1) NULL
+--   MA037 nvarchar(2) NULL
+--   MA038 nvarchar(1) NULL
+--   MA039 nvarchar(2) NULL
+--   MA040 nvarchar(255) NULL
+--   MA041 nvarchar(20) NULL
+--   MA042 nvarchar(20) NULL
+--   MA043 nvarchar(20) NULL
+--   MA044 nvarchar(1) NULL
+--   MA045 nvarchar(1) NULL
+--   MA046 nvarchar(6) NULL
+--   MA047 nvarchar(10) NULL
+--   MA048 nvarchar(30) NULL
+--   MA049 nvarchar(30) NULL
+--   MA050 nvarchar(6) NULL
+--   MA051 nvarchar(255) NULL
+--   MA052 nvarchar(255) NULL
+--   MA053 nvarchar(1) NULL
+--   MA054 numeric NULL
+--   MA055 nvarchar(6) NULL
+--   MA056 nvarchar(1) NULL
+--   MA057 nvarchar(1) NULL
+--   MA058 numeric NULL
+--   MA059 nvarchar(20) NULL
+--   MA060 nvarchar(1) NULL
+--   MA061 nvarchar(1) NULL
+--   MA062 nvarchar(1) NULL
+--   MA063 nvarchar(10) NULL
+--   MA064 nvarchar(4) NULL
+--   MA065 nvarchar(6) NULL
+--   MA066 nvarchar(255) NULL
+--   MA067 nvarchar(10) NULL
+--   MA068 nvarchar(1) NULL
+--   MA069 nvarchar(4) NULL
+--   MA070 nvarchar(8) NULL
+--   MA071 numeric NULL
+--   MA072 numeric NULL
+--   MA073 nvarchar(1) NULL
+--   MA074 nvarchar(30) NULL
+--   MA075 nvarchar(60) NULL
+--   MA076 nvarchar(3) NULL
+--   MA077 nvarchar(1) NULL
+--   MA078 nvarchar(1) NULL
+--   MA079 nvarchar(255) NULL
+--   MA080 nvarchar(10) NULL
+--   MA081 nvarchar(10) NULL
+--   MA082 nvarchar(1) NULL
+--   MA083 numeric NULL
+--   MA084 nvarchar(1) NULL
+--   MA085 nvarchar(20) NULL
+--   MA086 numeric NULL
+--   MA087 numeric NULL
+--   MA088 nvarchar(255) NULL
+--   MA089 nvarchar(20) NULL
+--   MA090 nvarchar(8) NULL
+--   MA091 nvarchar(8) NULL
+--   MA092 nvarchar(8) NULL
+--   MA093 numeric NULL
+--   MA094 nvarchar(1) NULL
+--   MA095 numeric NULL
+--   MA096 nvarchar(1) NULL
+--   MA097 nvarchar(255) NULL
+--   MA098 nvarchar(1) NULL
+--   MA099 nvarchar(255) NULL
+--   MA100 nvarchar(30) NULL
+--   MA101 nvarchar(1) NULL
+--   MA102 nvarchar(1) NULL
+--   MA103 nvarchar(10) NULL
+--   MA104 nvarchar(30) NULL
+--   MA105 nvarchar(30) NULL
+--   MA106 nvarchar(60) NULL
+--   MA107 nvarchar(255) NULL
+--   MA108 nvarchar(5) NULL
+--   MA109 nvarchar(10) NULL
+--   MA110 nvarchar(255) NULL
+--   MA111 nvarchar(4) NULL
+--   MA112 nvarchar(1) NULL
+--   UDF01 nvarchar(255) NULL -- 自定義欄位01
+--   UDF02 nvarchar(255) NULL -- 自定義欄位02
+--   UDF03 nvarchar(255) NULL -- 自定義欄位03
+--   UDF04 nvarchar(255) NULL -- 自定義欄位04
+--   UDF05 nvarchar(255) NULL -- 自定義欄位05
+--   UDF06 numeric NULL -- 自定義欄位06
+--   UDF07 numeric NULL -- 自定義欄位07
+--   UDF08 numeric NULL -- 自定義欄位08
+--   UDF09 numeric NULL -- 自定義欄位09
+--   UDF10 numeric NULL -- 自定義欄位10
+
+-- 【採購單主檔 - 儲存採購單資料】
+-- 表格名稱: PURTG
+-- 欄位:
+--   COMPANY nvarchar(20) NULL -- 公司別
+--   CREATOR nvarchar(10) NULL -- 建立者
+--   USR_GROUP nvarchar(10) NULL -- 使用者群組
+--   CREATE_DATE nvarchar(8) NULL -- 建立日期
+--   MODIFIER nvarchar(10) NULL -- 修改者
+--   MODI_DATE nvarchar(8) NULL -- 修改日期
+--   FLAG numeric NULL -- 旗標
+--   CREATE_TIME nvarchar(20) NULL -- 建立時間
+--   CREATE_AP nvarchar(50) NULL -- 建立程式
+--   CREATE_PRID nvarchar(50) NULL -- 建立流程代號
+--   MODI_TIME nvarchar(20) NULL -- 修改時間
+--   MODI_AP nvarchar(50) NULL -- 修改程式
+--   MODI_PRID nvarchar(50) NULL -- 修改流程代號
+--   TG001 nchar(4) NOT NULL -- 單別(PK)
+--   TG002 nchar(11) NOT NULL -- 單號(PK)
+--   TG003 nvarchar(8) NULL -- 供應商代號(FK->PURMA)
+--   TG004 nvarchar(6) NULL -- 採購日期
+--   TG005 nvarchar(10) NULL -- 部門代號
+--   TG006 nvarchar(20) NULL -- 採購員代號
+--   TG007 nvarchar(4) NULL
+--   TG008 numeric NULL
+--   TG009 nvarchar(1) NULL
+--   TG010 nvarchar(1) NULL
+--   TG011 nvarchar(50) NULL
+--   TG012 numeric NULL
+--   TG013 nvarchar(1) NULL
+--   TG014 nvarchar(8) NULL
+--   TG015 nvarchar(1) NULL
+--   TG016 nvarchar(255) NULL
+--   TG017 numeric NULL
+--   TG018 numeric NULL
+--   TG019 numeric NULL
+--   TG020 numeric NULL
+--   TG021 nvarchar(80) NULL
+--   TG022 nvarchar(20) NULL
+--   TG023 nvarchar(1) NULL
+--   TG024 nvarchar(1) NULL
+--   TG025 numeric NULL
+--   TG026 numeric NULL
+--   TG027 nvarchar(8) NULL
+--   TG028 numeric NULL
+--   TG029 nvarchar(6) NULL
+--   TG030 numeric NULL
+--   TG031 numeric NULL
+--   TG032 numeric NULL
+--   TG033 nvarchar(6) NULL
+--   TG034 nvarchar(4) NULL
+--   TG035 nvarchar(11) NULL
+--   TG036 nvarchar(4) NULL
+--   TG037 nvarchar(11) NULL
+--   TG038 numeric NULL
+--   TG039 numeric NULL
+--   TG040 numeric NULL
+--   TG041 numeric NULL
+--   TG042 nvarchar(1) NULL
+--   TG043 nvarchar(1) NULL
+--   TG044 nvarchar(1) NULL
+--   TG045 numeric NULL
+--   TG046 numeric NULL
+--   TG047 nvarchar(25) NULL
+--   TG048 nvarchar(4) NULL
+--   TG049 nvarchar(1) NULL
+--   TG050 nvarchar(1) NULL
+--   TG051 nvarchar(4) NULL
+--   TG052 nvarchar(11) NULL
+--   TG053 numeric NULL
+--   TG054 numeric NULL
+--   TG055 nvarchar(1) NULL
+--   TG056 nvarchar(30) NULL
+--   TG057 nvarchar(60) NULL
+--   TG058 nvarchar(3) NULL
+--   TG059 nvarchar(1) NULL
+--   TG060 nvarchar(15) NULL
+--   TG061 nvarchar(10) NULL
+--   TG062 nvarchar(20) NULL
+--   TG063 nvarchar(1) NULL
+--   TG064 numeric NULL
+--   TG065 numeric NULL
+--   TG066 numeric NULL
+--   TG067 nvarchar(30) NULL
+--   TG068 nvarchar(50) NULL
+--   TG069 nvarchar(20) NULL
+--   TG070 nvarchar(30) NULL
+--   TG071 nvarchar(255) NULL
+--   TG072 nvarchar(255) NULL
+--   TG073 nvarchar(255) NULL
+--   TG074 nvarchar(255) NULL
+--   TG075 nvarchar(1) NULL
+--   TG076 nvarchar(50) NULL
+--   TG077 nvarchar(1) NULL
+--   TG500 nvarchar(255) NULL
+--   TG550 nvarchar(1) NULL
+--   TG800 nvarchar(1) NULL
+--   UDF01 nvarchar(255) NULL -- 自定義欄位01
+--   UDF02 nvarchar(255) NULL -- 自定義欄位02
+--   UDF03 nvarchar(255) NULL -- 自定義欄位03
+--   UDF04 nvarchar(255) NULL -- 自定義欄位04
+--   UDF05 nvarchar(255) NULL -- 自定義欄位05
+--   UDF06 numeric NULL -- 自定義欄位06
+--   UDF07 numeric NULL -- 自定義欄位07
+--   UDF08 numeric NULL -- 自定義欄位08
+--   UDF09 numeric NULL -- 自定義欄位09
+--   UDF10 numeric NULL -- 自定義欄位10
+
+-- ============================================
+-- 常用查詢範例
+-- ============================================
+
+-- 範例1: 查供應商代碼（用名稱模糊查詢）
+-- 問題: 宏明供應商的代碼是什麼
+SELECT MA001 AS '供應商代號', MA002 AS '供應商名稱'
+FROM PURMA
+WHERE MA002 LIKE '%宏明%'
+
+-- 範例2: 查客戶代碼
+-- 問題: 台積電的客戶代號
+SELECT MA001 AS '客戶代號', MA002 AS '客戶名稱'
+FROM COPMA
+WHERE MA002 LIKE '%台積電%'
+
+-- 範例3: 查品號
+-- 問題: 找電阻相關的品號
+SELECT MB001 AS '品號', MB002 AS '品名', MB003 AS '規格'
+FROM INVMB
+WHERE MB002 LIKE '%電阻%'
+
+-- 範例4: 查某供應商的採購單
+-- 問題: 宏明最近有什麼採購單
+SELECT TG001, TG002, TG004, TG003,
+       (SELECT MA002 FROM PURMA WHERE MA001 = TG003) AS '供應商名稱'
+FROM PURTG
+WHERE TG003 IN (SELECT MA001 FROM PURMA WHERE MA002 LIKE '%宏明%')
+ORDER BY TG004 DESC
+
+-- 範例5: 查某品號庫存
+-- 問題: 品號ABC123在A01倉庫有多少庫存
+SELECT LA001 AS '品號', LA002 AS '倉庫', SUM(LA005) AS '庫存數量'
+FROM INVLA
+WHERE LA001 = 'ABC123' AND LA002 = 'A01'
+GROUP BY LA001, LA002
+
+-- 範例6: 查某倉庫所有品號
+-- 問題: A01倉庫有什麼料
+SELECT DISTINCT LA001 AS '品號', MB002 AS '品名'
+FROM INVLA
+LEFT JOIN INVMB ON LA001 = MB001
+WHERE LA002 = 'A01'
+
+-- 範例7: 查訂單資料
+-- 問題: 客戶C001最近有什麼訂單
+SELECT TC001, TC002, TC004, TC003,
+       (SELECT MA002 FROM COPMA WHERE MA001 = TC003) AS '客戶名稱'
+FROM COPTC
+WHERE TC003 = 'C001'
+ORDER BY TC004 DESC
+
+-- ============================================
+-- 表格關聯說明
+-- ============================================
+-- PURTG.TG003 -> PURMA.MA001 (採購單的供應商)
+-- COPTC.TC003 -> COPMA.MA001 (訂單的客戶)
+-- INVLA.LA001 -> INVMB.MB001 (庫存異動的品號)
+-- INVLA.LA002 -> INVMC.MC001 (庫存異動的倉庫)
+-- INVMB.MB011 -> PURMA.MA001 (品號的主要供應商)
