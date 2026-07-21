@@ -341,6 +341,19 @@
 --   UDF09 numeric -- 自定義欄位09
 --   UDF10 numeric -- 自定義欄位10
 
+-- 【請購單主檔】表格: PURTA
+-- 欄位:
+--   TA001 nchar(4) -- 單別(PK)
+--   TA002 nchar(11) -- 單號(PK)
+--   TA003 nchar(8) -- 請購日期
+--   TA004 nvarchar(10) -- 請購人員代號
+--   TA014 nvarchar(10) -- 建立者
+--   TA015 nvarchar(8) -- 審核日期
+--   TA016 nvarchar(1) -- 簽核狀態碼 (0=待處理,1=簽核中,2=退件,3=已核准,4=取消確認中,5=作廢中,6=取消作廢中,N=不執行電子簽核)
+--   TA018 nvarchar(1) -- 確認碼
+--   MODI_DATE nchar(8) -- 最後修改日期
+--   MODIFIER nvarchar(10) -- 最後修改者
+
 -- 【採購單明細 - 儲存採購單明細資料】
 -- 表格名稱: PURTD
 -- 欄位:
