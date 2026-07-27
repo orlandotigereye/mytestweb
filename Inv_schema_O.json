@@ -82,7 +82,326 @@
           "mars_angle_change": 0.35
         }
       ]
-    },
+    },    
+  "engine": {
+    "name": "TigerEye Current Cycle Detector",
+    "version": "3.0",
+
+    "current_cycle": {
+
+      "max_day": 30,
+
+      "weights": {
+        "planet": 25,
+        "ganzhi": 5,
+        "solar_term": 5,
+        "xiu": 15,
+        "wuxing": 15,
+        "gua64": 15,
+        "yao384": 10,
+        "keyword857": 5,
+        "weather": 5
+      },
+
+      "planet_rule": {
+
+        "Sun":{
+          "score":20,
+          "cycle":6,
+          "stage":"TREND"
+        },
+
+        "Mercury":{
+          "score":18,
+          "cycle":5,
+          "stage":"ROTATION"
+        },
+
+        "Venus":{
+          "score":25,
+          "cycle":10,
+          "stage":"MAIN_UP"
+        },
+
+        "Mars":{
+          "score":15,
+          "cycle":18,
+          "stage":"BREAKOUT"
+        },
+
+        "Jupiter":{
+          "score":23,
+          "cycle":8,
+          "stage":"EARLY_UP"
+        },
+
+        "Saturn":{
+          "score":10,
+          "cycle":24,
+          "stage":"CORRECTION"
+        }
+      },
+
+      "moon_phase_rule":{
+
+        "新月":{
+          "cycle":0,
+          "score":3,
+          "stage":"START"
+        },
+
+        "上弦":{
+          "cycle":8,
+          "score":8,
+          "stage":"EARLY_UP"
+        },
+
+        "滿月":{
+          "cycle":15,
+          "score":10,
+          "stage":"TOP"
+        },
+
+        "下弦":{
+          "cycle":22,
+          "score":5,
+          "stage":"DISTRIBUTION"
+        }
+
+      },
+
+      "solar_term_rule":{
+
+        "0-3":5,
+        "4-7":3,
+        "8-15":1,
+        "16-30":0
+
+      },
+
+      "xiu_rule":{
+
+        "守":10,
+        "犯":-8,
+        "合":5
+
+      },
+
+      "wuxing_rule":{
+
+        "木":{
+          "trend":4,
+          "cycle":2
+        },
+
+        "火":{
+          "trend":6,
+          "cycle":4
+        },
+
+        "土":{
+          "trend":1,
+          "cycle":0
+        },
+
+        "金":{
+          "trend":-3,
+          "cycle":-2
+        },
+
+        "水":{
+          "trend":3,
+          "cycle":1
+        }
+
+      },
+
+      "weather_rule":{
+
+        "晴朗":2,
+        "多雲":1,
+        "陰天":0,
+        "毛毛雨":-1,
+        "雷雨":-3,
+        "颱風":-5
+
+      },
+
+      "cycle_stage":{
+
+        "0":"ACCUMULATION",
+        "1":"ACCUMULATION",
+        "2":"TEST",
+
+        "3":"BUY",
+
+        "4":"BUY",
+
+        "5":"EARLY_UP",
+
+        "6":"EARLY_UP",
+
+        "7":"MAIN_UP",
+
+        "8":"MAIN_UP",
+
+        "9":"MAIN_UP",
+
+        "10":"MAIN_UP",
+
+        "11":"STRONG_UP",
+
+        "12":"STRONG_UP",
+
+        "13":"ACCELERATION",
+
+        "14":"ACCELERATION",
+
+        "15":"TOP",
+
+        "16":"REDUCE",
+
+        "17":"REDUCE",
+
+        "18":"REDUCE",
+
+        "19":"SELL",
+
+        "20":"SELL",
+
+        "21":"EXIT",
+
+        "22":"EXIT",
+
+        "23":"WAIT",
+
+        "24":"WAIT",
+
+        "25":"WAIT",
+
+        "26":"WAIT",
+
+        "27":"RESET",
+
+        "28":"RESET",
+
+        "29":"RESET",
+
+        "30":"NEW_CYCLE"
+
+      },
+
+      "trade_action":{
+
+        "ACCUMULATION":"觀察",
+
+        "TEST":"試單",
+
+        "BUY":"建立部位",
+
+        "EARLY_UP":"分批加碼",
+
+        "MAIN_UP":"持股",
+
+        "STRONG_UP":"續抱",
+
+        "ACCELERATION":"留意爆量",
+
+        "TOP":"第一次減碼",
+
+        "REDUCE":"分批停利",
+
+        "SELL":"主要停利",
+
+        "EXIT":"空手",
+
+        "WAIT":"等待",
+
+        "RESET":"重新尋找",
+
+        "NEW_CYCLE":"開始下一輪"
+
+      },
+      "score_to_cycle":[
+
+        {"min":0,"max":20,"day":0},
+
+        {"min":21,"max":30,"day":1},
+
+        {"min":31,"max":40,"day":2},
+
+        {"min":41,"max":50,"day":3},
+
+        {"min":51,"max":60,"day":4},
+
+        {"min":61,"max":70,"day":5},
+
+        {"min":71,"max":80,"day":6},
+
+        {"min":81,"max":90,"day":7},
+
+        {"min":91,"max":100,"day":8},
+
+        {"min":101,"max":110,"day":9},
+
+        {"min":111,"max":120,"day":10},
+
+        {"min":121,"max":130,"day":11},
+
+        {"min":131,"max":140,"day":12},
+
+        {"min":141,"max":150,"day":13},
+
+        {"min":151,"max":160,"day":14},
+
+        {"min":161,"max":170,"day":15},
+
+        {"min":171,"max":180,"day":16},
+
+        {"min":181,"max":190,"day":17},
+
+        {"min":191,"max":200,"day":18},
+
+        {"min":201,"max":210,"day":19},
+
+        {"min":211,"max":220,"day":20},
+
+        {"min":221,"max":230,"day":21},
+
+        {"min":231,"max":240,"day":22},
+
+        {"min":241,"max":250,"day":23},
+
+        {"min":251,"max":260,"day":24},
+
+        {"min":261,"max":270,"day":25},
+
+        {"min":271,"max":280,"day":26},
+
+        {"min":281,"max":290,"day":27},
+
+        {"min":291,"max":300,"day":28},
+
+        {"min":301,"max":310,"day":29},
+
+        {"min":311,"max":999,"day":30}
+
+      ]
+    }
+  }
+} ,
+  "calculation_order":[
+    "planet",
+    "moon_phase",
+    "ganzhi",
+    "solar_term",
+    "xiu",
+    "wuxing",
+    "gua64",
+    "yao384",
+    "keyword857",
+    "weather"
+]  ,
     "epoch": {
       "base_date": "2026-05-30",
       "base_date_format": "YYYY-MM-DD",
@@ -761,7 +1080,6 @@
           "description": "High risk zone"
         }
       }
-    }
   },
   "market_model": {
     "behavior_layer": {
