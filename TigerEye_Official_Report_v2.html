@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TigerEye Official Report v2 自動運算器</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; background: #0f172a; color: #e2e8f0; }
+  .panel { background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+  .input-field { background: #0f172a; border: 1px solid #475569; color: #e2e8f0; border-radius: 8px; padding: 10px 14px; width: 100%; font-size: 14px; }
+  .input-field:focus { outline: none; border-color: #38bdf8; }
+  .btn-primary { background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; border: none; border-radius: 10px; padding: 12px 28px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(14,165,233,0.3); }
+  .btn-secondary { background: #334155; color: #e2e8f0; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; }
+  .btn-secondary:hover { background: #475569; }
+  .section-title { color: #38bdf8; font-weight: 700; font-size: 18px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .report-box { background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 20px; white-space: pre-wrap; font-family: "Consolas", "Courier New", monospace; font-size: 13px; line-height: 1.7; overflow-x: auto; }
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .tag-blue { background: rgba(56,189,248,0.15); color: #38bdf8; }
+  .tag-green { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .tag-red { background: rgba(248,113,113,0.15); color: #f87171; }
+  .tag-yellow { background: rgba(250,204,21,0.15); color: #facc15; }
+  .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+  .collapsible-content.open { max-height: 3000px; }
+  .table-report { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table-report th { background: #1e293b; color: #94a3b8; padding: 10px 8px; text-align: center; border-bottom: 1px solid #334155; font-weight: 600; }
+  .table-report td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #1e293b; }
+  .table-report tr:hover td { background: rgba(56,189,248,0.05); }
+  .rank-1 { color: #facc15; font-weight: 700; }
+  .rank-2 { color: #e2e8f0; font-weight: 600; }
+  .rank-3 { color: #cd7f32; font-weight: 600; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #0f172a; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+</style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+<div class="max-w-6xl mx-auto">
+  <!-- Header -->
+  <div class="text-center mb-8">
+    <h1 class="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-400 mb-2">🐯 TigerEye Official Report v2</h1>
+    <p class="text-slate-400 text-sm">自動運算器 · 天象 × 卦象 × 股票分析</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Left Panel: Inputs -->
+    <div class="space-y-6">
+      <!-- 天象輸入 -->
+      <div class="panel p-5">
+        <div class="section-title">🌙 ① 今日天象資料</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-400 mb-1 block">干支（年/月/日/時）</label>
+            <input type="text" id="ganzhi" class="input-field" placeholder="丙午 乙未月 丁未日 戊申時" value="丙午 乙未月 丁未日 戊申時">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 mb-1 block">月相</label>
+            <input type="text" id="moonPhase" class="input-field" placeholder="滿月" value="滿月">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 mb-1 block">宿曜</label>
+            <input type="text" id="xiuyao" class="input-field" placeholder="翼火蛇 (火)" value="翼火蛇 (火)">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 mb-1 block">節氣</label>
+            <input type="text" id="jieqi" class="input-field" placeholder="立秋（距離 6 天）" value="立秋（距離 6 天）">
+          </div>
+          <div class="md:col-span-2">
+            <label class="text-xs text-slate-400 mb-1 block">最近行星角度</label>
+            <input type="text" id="planets" class="input-field" placeholder="太陽:209.1° | 水星:229.6° | 金星:165.8° | 火星:258.0° | 木星:211.1° | 土星:326.1°" value="太陽:209.1° | 水星:229.6° | 金星:165.8° | 火星:258.0° | 木星:211.1° | 土星:326.1°">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 mb-1 block">五行合成能量</label>
+            <input type="text" id="wuxing" class="input-field" placeholder="木:25 火:38 土:25 金:20 水:35" value="木:25 火:38 土:25 金:20 水:35">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 mb-1 block">社會氣運（0–100）</label>
+            <input type="number" id="societyLuck" class="input-field" placeholder="64" value="64" min="0" max="100">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 mb-1 block">雲層覆蓋 %</label>
+            <input type="number" id="cloudCover" class="input-field" placeholder="41" value="41" min="0" max="100">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 mb-1 block">風速/風向</label>
+            <input type="text" id="wind" class="input-field" placeholder="3.6 km/h 東南風" value="3.6 km/h 東南風">
+          </div>
+        </div>
+      </div>
+
+      <!-- 股票輸入 -->
+      <div class="panel p-5">
+        <div class="section-title">📈 ② 股票代號</div>
+        <textarea id="stockInput" class="input-field" rows="4" placeholder="輸入股票代號，多檔用逗號或換行分隔&#10;例如：3443, 2330, 2454, 2308">3443
+2330
+2454
+2308
+3017
+2382
+2408</textarea>
+        <p class="text-xs text-slate-500 mt-2">本命卦規則：代號四碼相加 → 個位數 → 八卦映射</p>
+      </div>
+
+      <!-- 進階設定 -->
+      <div class="panel p-5">
+        <button onclick="toggleAdvanced()" class="flex items-center gap-2 text-sky-400 font-semibold text-sm hover:text-sky-300 transition">
+          <span id="advIcon">▶</span> 展開進階規則設定
+        </button>
+        <div id="advancedPanel" class="collapsible-content mt-4 space-y-4">
+          <div>
+            <label class="text-xs text-slate-400 mb-2 block">本命卦 1–9 八卦映射（修改後自動儲存於瀏覽器）</label>
+            <div class="grid grid-cols-3 gap-2" id="guaMappingInputs"></div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 mb-1 block">zhouyi_64gua_384yao_scores.json（貼上覆蓋預設）</label>
+            <textarea id="jsonScores" class="input-field" rows="3" placeholder='{"64gua":{"乾為天":850},"384yao":{"乾為天_初九":760}}'></textarea>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 mb-1 block">Inv_schema_T.json Entry 規則（貼上覆蓋預設）</label>
+            <textarea id="jsonEntry" class="input-field" rows="2" placeholder='{"entryEngine":"default"}'></textarea>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="resetDefaults()" class="btn-secondary text-xs">還原預設映射</button>
+            <button onclick="clearJson()" class="btn-secondary text-xs">清除 JSON 覆蓋</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generate Button -->
+      <button onclick="generateReport()" class="btn-primary w-full text-lg">🎯 產生 TigerEye 報告</button>
+    </div>
+
+    <!-- Right Panel: Output -->
+    <div class="space-y-6">
+      <!-- 報告輸出 -->
+      <div class="panel p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div class="section-title mb-0">📋 TigerEye Official Report v2</div>
+          <div class="flex gap-2">
+            <button onclick="copyReport()" class="btn-secondary text-xs">📋 複製報告</button>
+            <button onclick="downloadReport()" class="btn-secondary text-xs">💾 下載 TXT</button>
+          </div>
+        </div>
+        <div id="reportOutput" class="report-box text-slate-300">
+          點擊「產生 TigerEye 報告」開始運算...
+        </div>
+      </div>
+
+      <!-- 股票總表 -->
+      <div class="panel p-5">
+        <div class="section-title">④ 股票總表</div>
+        <div class="overflow-x-auto">
+          <table class="table-report" id="stockTable">
+            <thead>
+              <tr>
+                <th>股票</th><th>本命卦</th><th>今日卦</th><th>動爻</th><th>變卦</th>
+                <th>64卦分</th><th>384爻分</th><th>Trend</th><th>Risk</th><th>Final</th><th>Entry</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 今日排行 -->
+      <div class="panel p-5">
+        <div class="section-title">⑤ Final Score 排名</div>
+        <div id="rankingOutput" class="space-y-2"></div>
+      </div>
+
+      <!-- 卦象總結 -->
+      <div class="panel p-5">
+        <div class="section-title">⑥ 卦象總結</div>
+        <div id="summaryOutput" class="text-sm text-slate-300 space-y-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== 核心資料庫 =====================
+
+// 八卦基本資料
+const GUA_DATA = {
+  "坎": { name: "坎", element: "水", symbol: "☵", num: 1, nature: "水" },
+  "艮": { name: "艮", element: "土", symbol: "☶", num: 2, nature: "山" },
+  "震": { name: "震", element: "木", symbol: "☳", num: 3, nature: "雷" },
+  "巽": { name: "巽", element: "木", symbol: "☴", num: 4, nature: "風" },
+  "乾": { name: "乾", element: "金", symbol: "☰", num: 6, nature: "天" },
+  "兌": { name: "兌", element: "金", symbol: "☱", num: 7, nature: "澤" },
+  "坤": { name: "坤", element: "土", symbol: "☷", num: 8, nature: "地" },
+  "離": { name: "離", element: "火", symbol: "☲", num: 9, nature: "火" }
+};
+
+// 64卦名稱（上卦+下卦）
+const GUA64_NAMES = {
+  "乾乾": "乾為天", "乾兌": "天澤履", "乾離": "天火同人", "乾震": "天雷无妄",
+  "乾巽": "天風姤", "乾坎": "天水訟", "乾艮": "天山遁", "乾坤": "天地否",
+  "兌乾": "澤天夬", "兌兌": "兌為澤", "兌離": "澤火革", "兌震": "澤雷隨",
+  "兌巽": "澤風大過", "兌坎": "澤水困", "兌艮": "澤山咸", "兌坤": "澤地萃",
+  "離乾": "火天大有", "離兌": "火澤睽", "離離": "離為火", "離震": "火雷噬嗑",
+  "離巽": "火風鼎", "離坎": "火水未濟", "離艮": "火山旅", "離坤": "火地晉",
+  "震乾": "雷天大壯", "震兌": "雷澤歸妹", "震離": "雷火豐", "震震": "震為雷",
+  "震巽": "雷風恒", "震坎": "雷水解", "震艮": "雷山小過", "震坤": "雷地豫",
+  "巽乾": "風天小畜", "巽兌": "風澤中孚", "巽離": "風火家人", "巽震": "風雷益",
+  "巽巽": "巽為風", "巽坎": "風水渙", "巽艮": "風山漸", "巽坤": "風地觀",
+  "坎乾": "水天需", "坎兌": "水澤節", "坎離": "水火既濟", "坎震": "水雷屯",
+  "坎巽": "水風井", "坎坎": "坎為水", "坎艮": "水山蹇", "坎坤": "水地比",
+  "艮乾": "山天大畜", "艮兌": "山澤損", "艮離": "山火賁", "艮震": "山雷頤",
+  "艮巽": "山風蠱", "艮坎": "山水蒙", "艮艮": "艮為山", "艮坤": "山地剝",
+  "坤乾": "地天泰", "坤兌": "地澤臨", "坤離": "地火明夷", "坤震": "地雷復",
+  "坤巽": "地風升", "坤坎": "地水師", "坤艮": "地山謙", "坤坤": "坤為地"
+};
+
+// 動爻名稱
+const YAO_NAMES = ["初九", "九二", "九三", "九四", "九五", "上九", "初六", "六二", "六三", "六四", "六五", "上六"];
+
+// 地支對應數字
+const BRANCH_MAP = {
+  "子": 1, "丑": 2, "寅": 3, "卯": 4, "辰": 5, "巳": 6,
+  "午": 7, "未": 8, "申": 9, "酉": 1, "戌": 2, "亥": 3
+};
+
+// 預設 64 卦分數（基於卦象能量，範圍 400-900）
+const DEFAULT_64GUA_SCORES = {
+  "乾為天": 900, "坤為地": 850, "水雷屯": 520, "山水蒙": 480,
+  "水天需": 620, "天水訟": 450, "地水師": 690, "水地比": 720,
+  "風天小畜": 680, "天澤履": 650, "地天泰": 880, "天地否": 420,
+  "天火同人": 750, "火天大有": 850, "地山謙": 620, "雷地豫": 580,
+  "澤雷隨": 600, "山風蠱": 400, "地澤臨": 700, "風地觀": 650,
+  "火雷噬嗑": 550, "山火賁": 600, "山地剝": 450, "地雷復": 700,
+  "天雷无妄": 720, "山天大畜": 780, "山雷頤": 550, "澤風大過": 480,
+  "坎為水": 500, "離為火": 820, "澤山咸": 640, "雷風恒": 700,
+  "天山遁": 480, "雷天大壯": 760, "火地晉": 680, "地火明夷": 500,
+  "風火家人": 720, "火澤睽": 520, "水山蹇": 460, "雷水解": 650,
+  "山澤損": 500, "風雷益": 740, "澤天夬": 800, "天風姤": 550,
+  "澤地萃": 620, "地風升": 680, "澤水困": 480, "水風井": 600,
+  "澤火革": 720, "火風鼎": 750, "震為雷": 780, "艮為山": 700,
+  "風山漸": 650, "雷澤歸妹": 580, "雷火豐": 780, "火山旅": 600,
+  "巽為風": 760, "兌為澤": 720, "風水渙": 580, "水澤節": 550,
+  "風澤中孚": 700, "雷山小過": 620, "水火既濟": 720, "火水未濟": 500
+};
+
+// 預設 384 爻分數（基於 64 卦 × 6 爻，簡化為卦分 ± 爻位調整）
+function generateDefault384Yao() {
+  const scores = {};
+  const yaoAdjust = [0, 30, 60, 60, 80, 50, 20]; // 初九~上九 調整值
+  for (let gua in DEFAULT_64GUA_SCORES) {
+    const base = DEFAULT_64GUA_SCORES[gua];
+    for (let i = 1; i <= 6; i++) {
+      const yang = `${gua}_九${["初","二","三","四","五","上"][i-1]}`;
+      const yin = `${gua}_六${["初","二","三","四","五","上"][i-1]}`;
+      const val = Math.min(950, Math.max(300, base + yaoAdjust[i] + Math.floor(Math.random()*40-20)));
+      scores[yang] = val;
+      scores[yin] = val - 10;
+    }
+  }
+  return scores;
+}
+
+// 市場階段判定
+function getMarketPhase(trend, risk, final) {
+  if (final >= 75 && trend > risk * 1.5) return "主升";
+  if (final >= 60 && trend > risk) return "盤整偏多";
+  if (final < 50 && risk > trend * 0.8) return "修正";
+  if (risk > 70 && final < 55) return "洗盤";
+  if (trend < 40 && risk > 50) return "出貨";
+  if (final >= 65) return "盤堅";
+  return "觀望";
+}
+
+// ===================== 狀態管理 =====================
+
+let guaMapping = { 1: "坎", 2: "艮", 3: "震", 4: "巽", 5: "艮", 6: "乾", 7: "兌", 8: "坤", 9: "離" };
+let custom64Scores = null;
+let custom384Scores = null;
+let customEntryRules = null;
+let default384Scores = generateDefault384Yao();
+
+function loadSaved() {
+  try {
+    const saved = localStorage.getItem('tigereye_v2_mapping');
+    if (saved) guaMapping = JSON.parse(saved);
+    const s64 = localStorage.getItem('tigereye_v2_64scores');
+    if (s64) custom64Scores = JSON.parse(s64);
+    const s384 = localStorage.getItem('tigereye_v2_384scores');
+    if (s384) custom384Scores = JSON.parse(s384);
+    const ent = localStorage.getItem('tigereye_v2_entry');
+    if (ent) customEntryRules = JSON.parse(ent);
+  } catch(e) {}
+}
+
+function saveMapping() {
+  localStorage.setItem('tigereye_v2_mapping', JSON.stringify(guaMapping));
+}
+
+function initAdvancedInputs() {
+  const container = document.getElementById('guaMappingInputs');
+  container.innerHTML = '';
+  const elements = { "坎": "水", "艮": "山", "震": "雷", "巽": "風", "乾": "天", "兌": "澤", "坤": "地", "離": "火" };
+  for (let i = 1; i <= 9; i++) {
+    const div = document.createElement('div');
+    div.className = 'flex items-center gap-2';
+    const gua = guaMapping[i];
+    div.innerHTML = `<span class="text-slate-400 w-6 text-right">${i}</span>
+      <select class="input-field py-1 text-sm" onchange="updateMapping(${i},this.value)">
+        ${Object.keys(elements).map(g => `<option value="${g}" ${g===gua?'selected':''}>${g}（${elements[g]}）</option>`).join('')}
+      </select>`;
+    container.appendChild(div);
+  }
+}
+
+function updateMapping(num, val) {
+  guaMapping[num] = val;
+  saveMapping();
+}
+
+function resetDefaults() {
+  guaMapping = { 1: "坎", 2: "艮", 3: "震", 4: "巽", 5: "艮", 6: "乾", 7: "兌", 8: "坤", 9: "離" };
+  saveMapping();
+  initAdvancedInputs();
+}
+
+function clearJson() {
+  custom64Scores = null;
+  custom384Scores = null;
+  customEntryRules = null;
+  localStorage.removeItem('tigereye_v2_64scores');
+  localStorage.removeItem('tigereye_v2_384scores');
+  localStorage.removeItem('tigereye_v2_entry');
+  document.getElementById('jsonScores').value = '';
+  document.getElementById('jsonEntry').value = '';
+}
+
+function toggleAdvanced() {
+  const panel = document.getElementById('advancedPanel');
+  const icon = document.getElementById('advIcon');
+  panel.classList.toggle('open');
+  icon.textContent = panel.classList.contains('open') ? '▼' : '▶';
+}
+
+// ===================== 核心運算 =====================
+
+function numToGua(n) {
+  n = ((n - 1) % 9) + 1;
+  if (n === 5) n = 2; // 5=土=艮=2
+  return guaMapping[n] || guaMapping[2];
+}
+
+function getBaseGua(stockCode) {
+  const digits = stockCode.toString().replace(/\D/g, '');
+  let sum = 0;
+  for (let d of digits) sum += parseInt(d);
+  while (sum > 9) {
+    let s = 0;
+    for (let d of sum.toString()) s += parseInt(d);
+    sum = s;
+  }
+  if (sum === 0) sum = 8;
+  return numToGua(sum);
+}
+
+function getDayBranch(ganzhi) {
+  const m = ganzhi.match(/(子|丑|寅|卯|辰|巳|午|未|申|酉|戌|亥)日/);
+  return m ? m[1] : "子";
+}
+
+function getUpperGua(dayBranch) {
+  const num = BRANCH_MAP[dayBranch] || 1;
+  return numToGua(num);
+}
+
+function getTodayGua(baseGua, upperGua) {
+  return GUA64_NAMES[upperGua + baseGua] || "未知";
+}
+
+function getMovingYao(stockCode, dayBranch, ganzhi) {
+  const digits = stockCode.toString().replace(/\D/g, '');
+  let sum = 0;
+  for (let d of digits) sum += parseInt(d);
+  const branchNum = BRANCH_MAP[dayBranch] || 1;
+  // 動爻 = (股票數字和 + 日支數 + 日干數) % 6，0則為6
+  const dayStemMatch = ganzhi.match(/(甲|乙|丙|丁|戊|己|庚|辛|壬|癸)日/);
+  const stemNum = dayStemMatch ? "甲乙丙丁戊己庚辛壬癸".indexOf(dayStemMatch[1]) + 1 : 1;
+  let yao = ((sum + branchNum + stemNum) % 6);
+  if (yao === 0) yao = 6;
+  return yao;
+}
+
+function getYaoName(guaName, yaoNum) {
+  // 簡化：陽爻用九，陰爻用六（實際應依卦象，這裡用預設邏輯）
+  const yangPositions = {
+    "乾為天": [1,2,3,4,5,6], "坤為地": [], "坎為水": [2,4,5], "離為火": [1,3,5],
+    "震為雷": [1,2,4,5,6], "艮為山": [1,3,4,5,6], "巽為風": [1,2,4,5], "兌為澤": [1,2,3,4,6]
+  };
+  // 先取得卦的陰陽結構（簡化處理）
+  const isYang = (guaName, pos) => {
+    const known = yangPositions[guaName];
+    if (known) return known.includes(pos);
+    // 未知卦：用分數推測
+    return (DEFAULT_64GUA_SCORES[guaName] || 600) > 600;
+  };
+  const prefix = isYang(guaName, yaoNum) ? "九" : "六";
+  const names = ["初", "二", "三", "四", "五", "上"];
+  return prefix + names[yaoNum - 1];
+}
+
+function getChangedGua(guaName, yaoNum) {
+  // 變卦邏輯：動爻陰陽互換，上卦下卦可能變化
+  // 簡化：根據動爻位置決定變卦（使用預設映射表）
+  const changeMap = {
+    "乾為天": ["天澤履","天火同人","天雷无妄","天風姤","天水訟","天山遁"],
+    "坤為地": ["地雷復","地澤臨","地天泰","雷地大壯","水地比","山地剝"],
+    "坎為水": ["水澤節","水雷屯","水火既濟","澤水困","雷水解","風水渙"],
+    "離為火": ["火山旅","火風鼎","火水未濟","山水蒙","風火家人","天火同人"],
+    "震為雷": ["雷地豫","雷澤歸妹","雷水解","雷風恒","雷天大壯","火雷噬嗑"],
+    "艮為山": ["山火賁","山天大畜","山澤損","山風蠱","山水蒙","地山謙"],
+    "巽為風": ["風天小畜","風火家人","風雷益","風澤中孚","風水渙","風地觀"],
+    "兌為澤": ["澤水困","澤雷隨","澤天夬","澤火革","澤山咸","澤地萃"],
+    "地山謙": ["地火明夷","地風升","坤為地","雷山小過","澤山咸","艮為山"],
+    "雷山小過": ["雷火豐","雷澤歸妹","雷地豫","澤山咸","火山旅","純艮"],
+    "火天大有": ["火澤睽","離為火","火雷噬嗑","火風鼎","火水未濟","乾為天"],
+    "雷火豐": ["雷天大壯","雷風恒","震為雷","離為火","澤火革","火山旅"],
+    "火地晉": ["火雷噬嗑","火水未濟","火澤睽","山地剝","水地比","坤為地"],
+    "地水師": ["地澤臨","坤為地","地雷復","風水渙","山水蒙","坎為水"],
+    "水地比": ["水澤節","水雷屯","坎為水","風地觀","山地剝","坤為地"],
+    "山地剝": ["山火賁","山風蠱","山雷頤","坤為地","火地晉","艮為山"]
+  };
+  const list = changeMap[guaName];
+  if (list && list[yaoNum - 1]) return list[yaoNum - 1];
+  // 通用 fallback
+  const allGuas = Object.values(GUA64_NAMES);
+  let hash = 0;
+  for (let c of guaName + yaoNum) hash = ((hash << 5) - hash) + c.charCodeAt(0);
+  return allGuas[Math.abs(hash) % allGuas.length];
+}
+
+function getScore64(guaName) {
+  if (custom64Scores && custom64Scores[guaName] !== undefined) return custom64Scores[guaName];
+  if (custom64Scores && custom64Scores['64gua'] && custom64Scores['64gua'][guaName] !== undefined) return custom64Scores['64gua'][guaName];
+  return DEFAULT_64GUA_SCORES[guaName] || 600;
+}
+
+function getScore384(guaName, yaoName) {
+  const key1 = `${guaName}_${yaoName}`;
+  if (custom384Scores && custom384Scores[key1] !== undefined) return custom384Scores[key1];
+  if (custom384Scores && custom384Scores['384yao'] && custom384Scores['384yao'][key1] !== undefined) return custom384Scores['384yao'][key1];
+  if (default384Scores[key1] !== undefined) return default384Scores[key1];
+  // fallback
+  return getScore64(guaName) + Math.floor(Math.random() * 60 - 30);
+}
+
+function parsePlanets(text) {
+  const result = { 土星: 326.1, 火星: 258.0, 木星: 211.1, 金星: 165.8, 水星: 229.6, 太陽: 209.1 };
+  const patterns = [
+    /土星[^(]*\(鎮星\)?[:：]\s*([0-9.]+)/,
+    /火星[^(]*\(熒惑\)?[:：]\s*([0-9.]+)/,
+    /木星[^(]*\(歲星\)?[:：]\s*([0-9.]+)/,
+    /金星[^(]*\(太白\)?[:：]\s*([0-9.]+)/,
+    /水星[^(]*\(辰星\)?[:：]\s*([0-9.]+)/,
+    /太陽[:：]\s*([0-9.]+)/
+  ];
+  const keys = ['土星', '火星', '木星', '金星', '水星', '太陽'];
+  for (let i = 0; i < patterns.length; i++) {
+    const m = text.match(patterns[i]);
+    if (m) result[keys[i]] = parseFloat(m[1]);
+  }
+  return result;
+}
+
+function parseWuxing(text) {
+  const result = { 木: 25, 火: 38, 土: 25, 金: 20, 水: 35 };
+  const m = text.match(/木[:：]?\s*(\d+)/); if (m) result.木 = parseInt(m[1]);
+  const m2 = text.match(/火[:：]?\s*(\d+)/); if (m2) result.火 = parseInt(m2[1]);
+  const m3 = text.match(/土[:：]?\s*(\d+)/); if (m3) result.土 = parseInt(m3[1]);
+  const m4 = text.match(/金[:：]?\s*(\d+)/); if (m4) result.金 = parseInt(m4[1]);
+  const m5 = text.match(/水[:：]?\s*(\d+)/); if (m5) result.水 = parseInt(m5[1]);
+  return result;
+}
+
+function calcHeavenScore(wuxing, moonPhase, societyLuck, cloudCover, jieqi, xiuyao) {
+  // 天象分數計算
+  let score = 50;
+  // 五行平衡度
+  const vals = Object.values(wuxing);
+  const avg = vals.reduce((a,b)=>a+b,0)/5;
+  const variance = vals.reduce((a,b)=>a+Math.abs(b-avg),0)/5;
+  score += (30 - variance) * 0.5;
+  // 月相
+  if (moonPhase.includes("滿月") || moonPhase.includes("新月")) score += 10;
+  else if (moonPhase.includes("上弦") || moonPhase.includes("下弦")) score += 5;
+  // 社會氣運
+  score += (societyLuck - 50) * 0.3;
+  // 雲層（越少越好）
+  score += (50 - cloudCover) * 0.15;
+  // 節氣
+  if (jieqi.includes("立春") || jieqi.includes("立夏") || jieqi.includes("立秋") || jieqi.includes("立冬")) score += 5;
+  // 宿曜
+  if (xiuyao.includes("守")) score += 3;
+  return Math.min(100, Math.max(0, Math.round(score)));
+}
+
+function calcRiskScore(planets) {
+  // Risk = 60% 土星 + 40% 火星（角度越大風險越高，簡化為角度/3.6）
+  const saturnRisk = Math.min(100, planets.土星 / 3.6);
+  const marsRisk = Math.min(100, planets.火星 / 3.6);
+  let risk = Math.round(saturnRisk * 0.6 + marsRisk * 0.4);
+  // 加入木星緩衝（角度接近太陽時降低風險）
+  const jupiterBuffer = Math.abs(planets.木星 - planets.太陽) < 30 ? -5 : 0;
+  risk = Math.min(100, Math.max(0, risk + jupiterBuffer));
+  return risk;
+}
+
+function calcTrendScore(heavenScore, score64, score384) {
+  // Trend = 40% 天象 + 35% 64卦 + 25% 384爻
+  const s64n = Math.min(100, score64 / 10);
+  const s384n = Math.min(100, score384 / 10);
+  return Math.round(heavenScore * 0.40 + s64n * 0.35 + s384n * 0.25);
+}
+
+function calcFinalScore(trend, risk) {
+  return Math.round(trend - risk * 0.30);
+}
+
+function calcEntryScore(final, risk, trend, stockCode) {
+  // Entry Score：基於 Final 微調
+  let entry = final + Math.round((100 - risk) * 0.15);
+  entry += Math.floor(parseInt(stockCode.toString().slice(-1)) * 1.5);
+  return Math.min(100, Math.max(0, entry));
+}
+
+function addDays(dateStr, days) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+function get857Keyword(guaName, changedGua, yaoName) {
+  const keywords = {
+    "乾為天": "天行健，自強不息。龍騰九天，勢不可擋。",
+    "坤為地": "地勢坤，厚德載物。順勢而為，穩中求勝。",
+    "水雷屯": "雲雷屯，君子以經綸。初創艱難，宜守不宜攻。",
+    "山水蒙": "山下出泉，蒙。啟蒙發智，循序漸進。",
+    "水天需": "雲上於天，需。等待時機，蓄勢待發。",
+    "天水訟": "天與水違行，訟。慎防口舌，避免爭端。",
+    "地水師": "地中有水，師。眾志成城，紀律為先。",
+    "水地比": "地上有水，比。親比和諧，合作共贏。",
+    "天火同人": "天與火同人。類族辨物，同心協力。",
+    "火天大有": "火在天上，大有。順天休命，大有收穫。",
+    "地山謙": "地中有山，謙。裒多益寡，謙受益。",
+    "雷山小過": "山上有雷，小過。小事可過，大事不宜。",
+    "雷火豐": "雷電皆至，豐。明以動，盛大豐富。",
+    "火地晉": "明出地上，晉。自昭明德，步步高昇。",
+    "山地剝": "山附於地，剝。厚下安宅，順而止之。"
+  };
+  return keywords[guaName] || "觀象玩辭，觀變玩占。順勢而為，見機而作。";
+}
+
+// ===================== 報告生成 =====================
+
+function generateReport() {
+  // 讀取輸入
+  const ganzhi = document.getElementById('ganzhi').value;
+  const moonPhase = document.getElementById('moonPhase').value;
+  const xiuyao = document.getElementById('xiuyao').value;
+  const jieqi = document.getElementById('jieqi').value;
+  const planetsText = document.getElementById('planets').value;
+  const wuxingText = document.getElementById('wuxing').value;
+  const societyLuck = parseInt(document.getElementById('societyLuck').value) || 50;
+  const cloudCover = parseInt(document.getElementById('cloudCover').value) || 0;
+  const wind = document.getElementById('wind').value;
+  const stockInput = document.getElementById('stockInput').value;
+
+  // 解析 JSON 覆蓋
+  try {
+    const j64 = document.getElementById('jsonScores').value.trim();
+    if (j64) {
+      const parsed = JSON.parse(j64);
+      custom64Scores = parsed['64gua'] || parsed;
+      custom384Scores = parsed['384yao'] || parsed;
+      localStorage.setItem('tigereye_v2_64scores', JSON.stringify(custom64Scores));
+      localStorage.setItem('tigereye_v2_384scores', JSON.stringify(custom384Scores));
+    }
+    const jent = document.getElementById('jsonEntry').value.trim();
+    if (jent) {
+      customEntryRules = JSON.parse(jent);
+      localStorage.setItem('tigereye_v2_entry', JSON.stringify(customEntryRules));
+    }
+  } catch(e) {}
+
+  // 解析天象
+  const planets = parsePlanets(planetsText);
+  const wuxing = parseWuxing(wuxingText);
+  const dayBranch = getDayBranch(ganzhi);
+  const upperGua = getUpperGua(dayBranch);
+  const heavenScore = calcHeavenScore(wuxing, moonPhase, societyLuck, cloudCover, jieqi, xiuyao);
+  const riskScore = calcRiskScore(planets);
+
+  // 市場總結
+  const marketTrend = Math.round(heavenScore * 0.6 + (100 - riskScore) * 0.4);
+  const marketFinal = calcFinalScore(marketTrend, riskScore);
+  const marketPhase = getMarketPhase(marketTrend, riskScore, marketFinal);
+
+  // 解析股票
+  const stocks = stockInput.split(/[,，\n\r\t]+/).map(s => s.trim()).filter(s => s);
+  const today = new Date().toISOString().split('T')[0];
+
+  // 計算每檔股票
+  const stockResults = stocks.map(code => {
+    const baseGua = getBaseGua(code);
+    const todayGua = getTodayGua(baseGua, upperGua);
+    const movingYao = getMovingYao(code, dayBranch, ganzhi);
+    const yaoName = getYaoName(todayGua, movingYao);
+    const changedGua = getChangedGua(todayGua, movingYao);
+    const score64 = getScore64(todayGua);
+    const score384 = getScore384(todayGua, yaoName);
+    const trend = calcTrendScore(heavenScore, score64, score384);
+    const risk = riskScore; // 個股 Risk 與市場一致，或可微調
+    const final = calcFinalScore(trend, risk);
+    const entry = calcEntryScore(final, risk, trend, code);
+    const bestEntry = addDays(today, Math.max(1, Math.floor((100 - entry) / 15)));
+    const mainStart = addDays(bestEntry, 3);
+    const firstProfit = addDays(mainStart, 8);
+    const keyword857 = get857Keyword(todayGua, changedGua, yaoName);
+
+    return {
+      code, baseGua, todayGua, movingYao, yaoName, changedGua,
+      score64, score384, trend, risk, final, entry,
+      bestEntry, mainStart, firstProfit, keyword857
+    };
+  });
+
+  // 排序
+  stockResults.sort((a, b) => b.final - a.final);
+
+  // 生成報告文字
+  let report = `╔══════════════════════════════════════════════════════════════╗
+║          🐯 TigerEye Official Report v2                      ║
+║          日期：${today}                                      ║
+╚══════════════════════════════════════════════════════════════╝
+
+① 今日天象
+─────────────────────────────────────────────────────────────
+干支　　　　：${ganzhi}
+月相　　　　：${moonPhase}
+宿曜　　　　：${xiuyao}
+節氣　　　　：${jieqi}
+最近行星　　：${planetsText}
+五行能量　　：木:${wuxing.木} 火:${wuxing.火} 土:${wuxing.土} 金:${wuxing.金} 水:${wuxing.水}
+社會氣運　　：${societyLuck}/100
+雲層覆蓋　　：${cloudCover}%
+風速風向　　：${wind}
+
+② 今日市場總結
+─────────────────────────────────────────────────────────────
+Trend Score　：${marketTrend}
+Risk Score　 ：${riskScore}
+Final Score　：${marketFinal}
+市場階段　　 ：${marketPhase}
+
+`;
+
+  // ③ 每檔股票分析
+  stockResults.forEach((s, i) => {
+    report += `③ 股票分析 [${i+1}] ─ ${s.code}
+─────────────────────────────────────────────────────────────
+本命卦　　　：${s.baseGua}
+今日卦　　　：${s.todayGua}
+動爻　　　　：${s.yaoName}
+變卦　　　　：${s.changedGua}
+64卦 Score　：${s.score64}
+384爻 Score ：${s.score384}
+Trend Score ：${s.trend}
+Risk Score　：${s.risk}
+Final Score ：${s.final}
+Entry Score ：${s.entry}
+最佳進場　　：${s.bestEntry}
+主升開始　　：${s.mainStart}
+第一停利　　：${s.firstProfit}
+變卦結論　　：${s.changedGua}，動在${s.yaoName}，宜${s.final > 65 ? '積極布局' : s.final > 50 ? '謹慎觀察' : '保守觀望'}
+857 Keyword ：${s.keyword857}
+
+`;
+  });
+
+  // ④ 股票總表
+  report += `④ 股票總表
+─────────────────────────────────────────────────────────────
+股票　本命卦　今日卦　　動爻　　變卦　　　64卦分　384爻分　Trend　Risk　Final　Entry
+`;
+  stockResults.forEach(s => {
+    report += `${s.code.padEnd(6)}${s.baseGua.padEnd(4)}　${s.todayGua.padEnd(6)}　${s.yaoName.padEnd(4)}　${s.changedGua.padEnd(6)}　${s.score64.toString().padEnd(6)}　${s.score384.toString().padEnd(6)}　${s.trend.toString().padEnd(5)}　${s.risk.toString().padEnd(4)}　${s.final.toString().padEnd(5)}　${s.entry}
+`;
+  });
+
+  // ⑤ 今日排行
+  report += `
+⑤ Final Score 排名
+─────────────────────────────────────────────────────────────
+`;
+  stockResults.forEach((s, i) => {
+    const rank = ["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩"][i] || `${i+1}.`;
+    report += `${rank} ${s.code.padEnd(6)} ${s.final}
+`;
+  });
+
+  // ⑥ 卦象總結
+  const topStock = stockResults[0];
+  report += `
+⑥ 卦象總結
+─────────────────────────────────────────────────────────────
+今日市場　　：${marketPhase}格局，Trend ${marketTrend} / Risk ${riskScore} / Final ${marketFinal}
+今日主力方向：${topStock ? topStock.todayGua + '（' + topStock.baseGua + '）' : '---'}
+今日操作節奏：${marketFinal >= 70 ? '積極進場，把握主升' : marketFinal >= 55 ? '擇優布局，控制倉位' : '觀望為主，等待訊號'}
+857 Keyword ：${topStock ? topStock.keyword857 : '---'}
+`;
+
+  document.getElementById('reportOutput').textContent = report;
+
+  // 更新股票總表
+  const tbody = document.querySelector('#stockTable tbody');
+  tbody.innerHTML = stockResults.map((s, i) => `
+    <tr>
+      <td class="font-mono font-semibold ${i<3?'rank-'+(i+1):'text-slate-300'}">${s.code}</td>
+      <td>${s.baseGua}</td>
+      <td>${s.todayGua}</td>
+      <td>${s.yaoName}</td>
+      <td>${s.changedGua}</td>
+      <td class="text-sky-300">${s.score64}</td>
+      <td class="text-sky-300">${s.score384}</td>
+      <td class="text-green-400 font-semibold">${s.trend}</td>
+      <td class="text-red-400">${s.risk}</td>
+      <td class="text-yellow-400 font-bold">${s.final}</td>
+      <td class="text-indigo-300">${s.entry}</td>
+    </tr>
+  `).join('');
+
+  // 更新排名
+  document.getElementById('rankingOutput').innerHTML = stockResults.map((s, i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+    const barWidth = s.final;
+    const barColor = s.final >= 75 ? 'bg-green-500' : s.final >= 60 ? 'bg-sky-500' : s.final >= 45 ? 'bg-yellow-500' : 'bg-red-500';
+    return `
+      <div class="flex items-center gap-3">
+        <span class="w-8 text-center font-bold ${i<3?'rank-'+(i+1):'text-slate-400'}">${medal}</span>
+        <span class="w-16 font-mono font-semibold text-slate-200">${s.code}</span>
+        <div class="flex-1 bg-slate-700 rounded-full h-3 overflow-hidden">
+          <div class="${barColor} h-full rounded-full transition-all" style="width:${barWidth}%"></div>
+        </div>
+        <span class="w-10 text-right font-bold ${i<3?'rank-'+(i+1):'text-slate-300'}">${s.final}</span>
+      </div>
+    `;
+  }).join('');
+
+  // 更新總結
+  document.getElementById('summaryOutput').innerHTML = `
+    <div class="flex items-center gap-2"><span class="tag tag-blue">市場階段</span><span class="text-slate-200 font-semibold">${marketPhase}</span></div>
+    <div class="flex items-center gap-2"><span class="tag tag-green">主力方向</span><span class="text-slate-200">${topStock ? topStock.todayGua + '（' + topStock.baseGua + '）' : '---'}</span></div>
+    <div class="flex items-center gap-2"><span class="tag tag-yellow">操作節奏</span><span class="text-slate-200">${marketFinal >= 70 ? '積極進場，把握主升' : marketFinal >= 55 ? '擇優布局，控制倉位' : '觀望為主，等待訊號'}</span></div>
+    <div class="mt-3 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+      <div class="text-xs text-slate-500 mb-1">857 Keyword</div>
+      <div class="text-slate-300 italic">${topStock ? topStock.keyword857 : '---'}</div>
+    </div>
+  `;
+}
+
+function copyReport() {
+  const text = document.getElementById('reportOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => alert('報告已複製到剪貼簿'));
+}
+
+function downloadReport() {
+  const text = document.getElementById('reportOutput').textContent;
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `TigerEye_Report_v2_${new Date().toISOString().split('T')[0]}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 初始化
+loadSaved();
+initAdvancedInputs();
+</script>
+
+</body>
+</html>
