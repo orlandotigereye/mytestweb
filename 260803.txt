@@ -1,0 +1,503 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Threading;
+using System.Windows.Forms;
+using log4net;
+
+namespace GlassDetection
+{
+    public partial class frmMain : Form
+    {
+        static readonly ILog s_logger = LogManager.GetLogger(typeof(frmMain));
+        
+        // ========== 新的模組化核心 ==========
+        private RobotModule _robotModule;
+        private RobotStateMachine _stateMachine;
+        
+        // ========== 保留原有的其他欄位 ==========
+        private TINI _configINI;
+        private Language _language = new Language();
+        private DAQIOCtrl _ioCtrl;          // 保留，但 RobotModule 內部也會建一個
+        private ErrMessageForm _errMessageForm = new ErrMessageForm();
+        private AOISettingForm _settingForm = new AOISettingForm();
+        private AccountsForm _accountsForm = new AccountsForm();
+        private ParameterForm _ipAddressForm = null;
+        private RobotForm _robotForm;
+        private LoginTable _loginTable;
+        private ReportDB _reportProduction = new ReportDB();
+        
+        // 統計資料
+        private int _totalInferCount = 0;
+        private int _ngCount = 0;
+        private int _okCount = 0;
+        private double _dYield = 0.0;
+        private double _dNGRate = 0.0;
+        private uint _uiOperLevel = 0;
+        private bool _isConnect = false;
+        private bool _isAlarm = false;
+        private int _saveTimeCount = 0;
+        
+        // 機器人參數（從 config.ini 讀取）
+        private string _robotIP;
+        private int _robotPort;
+        private int _robotSpeed = 40;
+        private int _robotAcc = 20;
+        private int _robotDec = 20;
+
+        delegate void delUpdateInferBox(int ok_cnt, int ng_cnt, int total_cnt);
+
+        public frmMain()
+        {
+            InitializeComponent();
+            
+            // 初始化設定檔
+            _configINI = new TINI(System.IO.Path.Combine(Application.StartupPath, SystemSetting.CONFIG_FILE_NAME));
+            
+            // 初始化語系
+            LanguageFamily _usedLanguage = LanguageFamily.English;
+            if (_configINI.getKeyValue("Language", "used") == "Vietnamese")
+                _usedLanguage = LanguageFamily.Vietnamese;
+            _language.SelectedLanguage(_usedLanguage);
+            
+            // 讀取機器人參數
+            _robotIP = _configINI.getKeyValue("ROBOT", "IP");
+            _robotPort = Int32.Parse(_configINI.getKeyValue("ROBOT", "PORT"));
+            
+            // 讀取統計資料
+            _okCount = int.Parse(_configINI.getKeyValue("AOI_RESULT", "OK"));
+            _ngCount = int.Parse(_configINI.getKeyValue("AOI_RESULT", "NG"));
+            _totalInferCount = int.Parse(_configINI.getKeyValue("AOI_RESULT", "TOTAL"));
+            
+            // 初始化登入視窗
+            _loginTable = new LoginTable(s_logger);
+            _loginTable.LoginEvent += this.UpdateLoginResult;
+            _errMessageForm.ResetAlarm += this.btnAlarmReset_Click;
+            
+            // 初始化功能控制項
+            btnStart.Enabled = false;
+            btnStop.Enabled = false;
+            btnSetting.Enabled = false;
+            btnHome.Enabled = false;
+            btnSave.Enabled = true;
+            
+            timer1.Enabled = true;
+            Control.CheckForIllegalCrossThreadCalls = false;
+        }
+
+        // ========== 登入相關（不變）==========
+        private void frmMain_Load(object sender, EventArgs e) => InitLoginTable();
+        
+        private void InitLoginTable()
+        {
+            this.Enabled = false;
+            _loginTable.ClearPassword();
+            _loginTable.ShowDialog();
+        }
+
+        public void UpdateLoginResult(string id, Login result, Level level)
+        {
+            if (result == Login.SUCCESS)
+            {
+                lblID.Text = id;
+                LevelFunCtrl(level);
+                this.InitializeLanguage();
+                this.UpdateInferMsgBox(_okCount, _ngCount, _totalInferCount);
+                this.Enabled = true;
+            }
+            else if (result == Login.CANCEL)
+            {
+                this.Dispose();
+                this.Close();
+            }
+        }
+
+        private void LevelFunCtrl(Level level)
+        {
+            if (level == Level.MAINTANINER || level == Level.MANAGER)
+            {
+                _uiOperLevel = 0b_0000_1111_0111;
+                lblOperLev.Text = "Maintainer";
+            }
+            else if (level == Level.OPERATOR)
+            {
+                _uiOperLevel = 0b_0000_1101_0111;
+                lblOperLev.Text = "Operator";
+            }
+        }
+
+        private void InitializeLanguage()
+        {
+            this.btnConnect.Text = _language.Connect;
+            this.btnStart.Text = _language.Start;
+            this.btnStop.Text = _language.Stop;
+            this.btnSetting.Text = _language.Setting;
+            this.btnSave.Text = _language.Save;
+            this.btnClose.Text = _language.Close;
+            this.btnHome.Text = _language.Home;
+            this.lblInferOKTag.Text = _language.OKCount;
+            this.lblInferNGTag.Text = _language.NGCount;
+            this.lblYield.Text = _language.Yield;
+            this.lblNGRate.Text = _language.NGRate;
+        }
+
+        // ========== 【核心】Connect 按鈕 ==========
+        private void btnConnect_Click(object sender, EventArgs e)
+        {
+            if (_isConnect)
+            {
+                // 斷線
+                DialogResult res = MessageBox.Show("Are you sure to disconnect ?", 
+                    "Confirmation", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+                if (res != DialogResult.OK) return;
+                
+                s_logger.Info("DisConnect...");
+                Disconnect();
+                UpdateUIForDisconnected();
+                return;
+            }
+
+            // ===== 連線 =====
+            s_logger.Info("Connect...");
+            
+            _robotModule = new RobotModule();
+            
+            // 1. 初始化連線
+            if (!_robotModule.Initialize(_robotIP, _robotPort))
+            {
+                ReportWarnning("Connect robot fail!", 0, ErrCode.ROBOT_OPEN_FAIL);
+                return;
+            }
+            
+            // 2. Login & ServoOn
+            if (!_robotModule.LoginAndServoOn())
+            {
+                ReportWarnning("Robot init fail!", 0, ErrCode.ROBOT_SERVO_ON_FAIL);
+                return;
+            }
+            
+            // 3. 設定速度
+            _robotModule.SetSpeed(_robotSpeed, 1200, _robotAcc, _robotDec);
+            
+            // 4. 載入點位（從 config.ini 讀取檔名，或寫死）
+            string posFile = System.IO.Path.Combine(Application.StartupPath, "Positions.ini");
+            if (System.IO.File.Exists(posFile))
+            {
+                _robotModule.LoadPositions(posFile);
+            }
+            else
+            {
+                // 如果沒有 INI，用程式內建點位（測試用）
+                BuildDefaultPositions();
+            }
+            
+            // 5. 建立狀態機
+            _stateMachine = new RobotStateMachine(_robotModule);
+            _stateMachine.StateChanged += OnStateChanged;
+            _stateMachine.StepChanged += OnStepChanged;
+            _stateMachine.ErrorOccurred += OnErrorOccurred;
+            _stateMachine.SequenceCompleted += OnSequenceCompleted;
+            
+            _isConnect = true;
+            UpdateUIForConnected();
+            lblSysMessage.Text = State.GetDescription(DeviceState.READY);
+            s_logger.Info("Connect success!");
+        }
+
+        // ========== 【核心】Start 按鈕 ==========
+        private void btnStart_Click(object sender, EventArgs e)
+        {
+            if (!_isConnect || _stateMachine == null) return;
+            
+            s_logger.Info("Start...");
+            
+            // 定義生產流程（一般人只要改這裡！）
+            var sequence = BuildProductionSequence();
+            _stateMachine.DefineSequence(sequence);
+            
+            // 啟動
+            _stateMachine.Start();
+            
+            // UI 更新
+            btnStart.Enabled = false && ((_uiOperLevel & State.START_OP) > 0);
+            btnStop.Enabled = true && ((_uiOperLevel & State.STOP_OP) > 0);
+            btnSetting.Enabled = false && ((_uiOperLevel & State.SETTING_OP) > 0);
+            btnHome.Enabled = false && ((_uiOperLevel & State.HOME_OP) > 0);
+            btnSave.Enabled = false && ((_uiOperLevel & State.SAVE_OP) > 0);
+            
+            lblSysMessage.Text = State.GetDescription(DeviceState.ON_GOING);
+        }
+
+        // ========== 【核心】Stop 按鈕 ==========
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            DialogResult res = MessageBox.Show("Are you sure to stop the process ?", 
+                "Confirmation", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+            if (res != DialogResult.OK) return;
+            
+            s_logger.Info("Stop...");
+            _stateMachine?.Stop();
+            
+            if (!_isAlarm)
+            {
+                btnStart.Enabled = true && ((_uiOperLevel & State.START_OP) > 0);
+                btnSetting.Enabled = true && ((_uiOperLevel & State.SETTING_OP) > 0);
+                btnHome.Enabled = true && ((_uiOperLevel & State.HOME_OP) > 0);
+                btnSave.Enabled = true && ((_uiOperLevel & State.SAVE_OP) > 0);
+            }
+            lblSysMessage.Text = State.GetDescription(DeviceState.STOP);
+        }
+
+        // ========== 【核心】Home 按鈕 ==========
+        private void btnHome_Click(object sender, EventArgs e)
+        {
+            if (!_isConnect) return;
+            s_logger.Info("Home...");
+            
+            // 直接用 RobotModule 回 Home（不經狀態機）
+            if (_robotModule.GoSafe("Home"))
+            {
+                lblSysMessage.Text = State.GetDescription(DeviceState.READY);
+                s_logger.Info("Home success!");
+            }
+        }
+
+        // ========== 【核心】定義生產流程 ==========
+        /// <summary>
+        /// 【一般人只要改這裡！】
+        /// 定義生產流程步驟，改點位名稱和順序即可
+        /// </summary>
+        private List<SequenceStep> BuildProductionSequence()
+        {
+            return new List<SequenceStep>
+            {
+                // 範例：基本取放流程
+                // 你可以改成你的實際點位名稱和順序
+                new SequenceStep("回 Home", () => _robotModule.GoSafe("Home")),
+                new SequenceStep("輸送帶等待位", () => _robotModule.GoSafe("InputWaitHold")),
+                new SequenceStep("去取得玻璃", () => _robotModule.GoSafe("ToGetGlass")),
+                new SequenceStep("吸取玻璃", () => _robotModule.PickSafe("ToGetGlass")),
+                new SequenceStep("回輸送帶等待位", () => _robotModule.GoSafe("InputWaitHold")),
+                new SequenceStep("放片區等待位", () => _robotModule.GoSafe("PutWaitHold")),
+                new SequenceStep("去放下玻璃", () => _robotModule.GoSafe("ToPutGlass")),
+                new SequenceStep("放置玻璃", () => _robotModule.PlaceSafe("ToPutGlass")),
+                new SequenceStep("回放片區等待位", () => _robotModule.GoSafe("PutWaitHold")),
+                
+                // 統計更新（非關鍵步驟，失敗不影響流程）
+                new SequenceStep("更新統計", () => { UpdateOKCount(); return true; }, isCritical: false),
+            };
+        }
+
+        // ========== 狀態機事件處理 ==========
+        private void OnStateChanged(object sender, StateChangedEventArgs e)
+        {
+            // 跨執行緒更新 UI
+            this.Invoke(new Action(() =>
+            {
+                s_logger.Info($"[UI] State: {e.OldState} -> {e.NewState}");
+                
+                if (e.NewState == RobotState.Error)
+                {
+                    lblSysMessage.Text = State.GetDescription(DeviceState.WARNNING);
+                    lblSysMessage.BackColor = Color.Red;
+                    lblSysMessage.ForeColor = Color.Yellow;
+                    _isAlarm = true;
+                }
+                else if (e.NewState == RobotState.Idle)
+                {
+                    lblSysMessage.Text = State.GetDescription(DeviceState.READY);
+                    lblSysMessage.BackColor = Color.DarkOrange;
+                    lblSysMessage.ForeColor = SystemColors.Highlight;
+                    _isAlarm = false;
+                }
+            }));
+        }
+
+        private void OnStepChanged(object sender, StepChangedEventArgs e)
+        {
+            this.Invoke(new Action(() =>
+            {
+                s_logger.Info($"[UI] Step {e.StepIndex + 1}/{e.TotalSteps}: {e.StepName}");
+                // 可以在這裡更新狀態列或進度條
+            }));
+        }
+
+        private void OnErrorOccurred(object sender, ErrorEventArgs e)
+        {
+            this.Invoke(new Action(() =>
+            {
+                s_logger.Fatal($"[UI] ERROR: {e.Message}");
+                ReportWarnning(e.Message, 0, ErrCode.CAMERA_POSITIONING_FAIL);
+                
+                // 自動嘗試回 Home
+                ThreadPool.QueueUserWorkItem(_ => 
+                {
+                    Thread.Sleep(1000);
+                    _robotModule?.GoSafe("Home");
+                });
+            }));
+        }
+
+        private void OnSequenceCompleted(object sender, SequenceCompletedEventArgs e)
+        {
+            this.Invoke(new Action(() =>
+            {
+                s_logger.Info("[UI] Sequence completed!");
+                _totalInferCount++;
+                UpdateInferMsgBox(_okCount, _ngCount, _totalInferCount);
+            }));
+        }
+
+        // ========== 內建點位（測試用，無 INI 時使用）==========
+        private void BuildDefaultPositions()
+        {
+            _robotModule.AddPosition("Home", new RobotPosition(0, 0, 700, 0, 0, 0));
+            _robotModule.AddPosition("InputWaitHold", new RobotPosition(300, -400, 700, 0, 0, 0));
+            _robotModule.AddPosition("ToGetGlass", new RobotPosition(500, -400, 700, 0, 0, 0), 305);
+            _robotModule.AddPosition("PutWaitHold", new RobotPosition(300, 400, 700, 0, 0, 0));
+            _robotModule.AddPosition("ToPutGlass", new RobotPosition(500, 400, 700, 0, 0, 0), 310);
+        }
+
+        // ========== 斷線 ==========
+        private void Disconnect()
+        {
+            _stateMachine?.Stop();
+            _robotModule?.Dispose();
+            _robotModule = null;
+            _stateMachine = null;
+            _isConnect = false;
+        }
+
+        private void UpdateUIForConnected()
+        {
+            btnConnect.Image = global::GlassDetection.Properties.Resources.disconnect;
+            btnConnect.Text = "Disconnect";
+            btnStart.Enabled = true && ((_uiOperLevel & State.START_OP) > 0);
+            btnStop.Enabled = true && ((_uiOperLevel & State.STOP_OP) > 0);
+            btnSetting.Enabled = true && ((_uiOperLevel & State.SETTING_OP) > 0);
+            btnHome.Enabled = true && ((_uiOperLevel & State.HOME_OP) > 0);
+            btnSave.Enabled = true && ((_uiOperLevel & State.SAVE_OP) > 0);
+        }
+
+        private void UpdateUIForDisconnected()
+        {
+            btnConnect.Image = global::GlassDetection.Properties.Resources.connect;
+            btnConnect.Text = "Connect";
+            btnStart.Enabled = false;
+            btnStop.Enabled = false;
+            btnSetting.Enabled = false;
+            btnHome.Enabled = false;
+            btnSave.Enabled = true;
+        }
+
+        // ========== 統計更新 ==========
+        private void UpdateOKCount()
+        {
+            _okCount++;
+            UpdateInferMsgBox(_okCount, _ngCount, _totalInferCount);
+        }
+
+        private void UpdateInferMsgBox(int ok_cnt, int ng_cnt, int total_cnt)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new delUpdateInferBox(this.UpdateInferMsgBox), ok_cnt, ng_cnt, total_cnt);
+                return;
+            }
+            
+            int iTemp = ok_cnt + ng_cnt;
+            if (iTemp == 0)
+            {
+                _dYield = 0.0;
+                _dNGRate = 0.0;
+            }
+            else
+            {
+                _dYield = (double)ok_cnt / (double)iTemp;
+                _dNGRate = (double)ng_cnt / (double)iTemp;
+            }
+
+            lblInferOk.Text = ok_cnt.ToString();
+            lblInferNG.Text = ng_cnt.ToString();
+            lblTotalCountVal.Text = _language.CheckedQuantity + "\r\n" + total_cnt.ToString();
+            lblYieldVal.Text = String.Format("{0:P}", _dYield);
+            lblNGRateVal.Text = String.Format("{0:P}", _dNGRate);
+        }
+
+        // ========== 其他原有按鈕（保留）==========
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            s_logger.Info("Save...");
+            SaveUtilizationRate();
+        }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            DialogResult res = MessageBox.Show("Are you sure to close the app ?", 
+                "Confirmation", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+            if (res == DialogResult.OK)
+            {
+                Disconnect();
+                this.Close();
+            }
+        }
+
+        private void btnAlarmReset_Click(object sender, ClearAlramEventArgs e)
+        {
+            s_logger.Info("Alarm reset...");
+            _isAlarm = false;
+            lblSysMessage.Text = State.GetDescription(DeviceState.READY);
+            lblSysMessage.BackColor = Color.DarkOrange;
+            lblSysMessage.ForeColor = SystemColors.Highlight;
+            
+            if (_stateMachine != null && _stateMachine.CurrentState == RobotState.Error)
+            {
+                _stateMachine.ResetToHome();
+            }
+        }
+
+        private void SaveUtilizationRate()
+        {
+            string path = Environment.CurrentDirectory + @"\Utilization\" + DateTime.Now.ToString("MM-dd-yy-HH-mm-ss") + ".txt";
+            try
+            {
+                _configINI.setKeyValue("AOI_RESULT", "OK", _okCount.ToString());
+                _configINI.setKeyValue("AOI_RESULT", "NG", _ngCount.ToString());
+                _configINI.setKeyValue("AOI_RESULT", "TOTAL", _totalInferCount.ToString());
+                using (FileStream fs = File.Create(path))
+                {
+                    byte[] info = new UTF8Encoding(true).GetBytes(
+                        "OK=" + _okCount + "," + "NG=" + _ngCount + "\n" +
+                        "Yield=" + lblYieldVal.Text + "," + "Defective rate=" + lblNGRateVal.Text);
+                    fs.Write(info, 0, info.Length);
+                }
+            }
+            catch (Exception ex)
+            {
+                s_logger.Error("Save fail: " + ex.Message);
+            }
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            lblTime.Text = DateTime.Now.ToString("MM/dd/yy HH:mm:ss");
+            _saveTimeCount++;
+            if (_saveTimeCount > SystemSetting.Save_Times)
+            {
+                SaveUtilizationRate();
+                _saveTimeCount = 0;
+                _reportProduction?.Report(_ngCount, _okCount, _totalInferCount, (float)_dYield, (float)_dNGRate);
+            }
+        }
+
+        private void ReportWarnning(string errMsg, int errCode, ErrCode log)
+        {
+            DateTime dt = DateTime.Now;
+            _isAlarm = true;
+            lblSysMessage.Text = State.GetDescription(DeviceState.WARNNING);
+            lblSysMessage.BackColor = Color.Red;
+            lblSysMessage.ForeColor = Color.Yellow;
+            s_logger.Error(errMsg + errCode.ToString());
+        }
+    }
+}
