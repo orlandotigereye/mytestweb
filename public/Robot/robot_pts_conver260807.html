@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>Robot PTS to Epson Script Converter</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f172a;color:#e2e8f0;font-family:"Segoe UI","Microsoft JhengHei",sans-serif;padding:20px}
+.container{max-width:1400px;margin:0 auto}
+h1{text-align:center;font-size:1.6rem;margin-bottom:6px;background:linear-gradient(90deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:#94a3b8;font-size:.85rem;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px}
+.panel-title{font-size:1rem;font-weight:600;margin-bottom:10px;color:#38bdf8}
+textarea{width:100%;min-height:240px;background:#0b1220;border:1px solid #334155;border-radius:6px;padding:12px;color:#e2e8f0;font-family:Consolas,Courier New,monospace;font-size:.82rem;line-height:1.5;resize:vertical}
+textarea:focus{outline:none;border-color:#38bdf8}
+textarea::placeholder{color:#475569}
+.hint{font-size:.72rem;color:#94a3b8;margin-top:6px}
+.table-wrap{max-height:200px;overflow-y:auto;border-radius:6px;border:1px solid #334155;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th,td{padding:6px 10px;text-align:left;border-bottom:1px solid #334155}
+th{background:rgba(56,189,248,.08);color:#38bdf8;font-weight:600;position:sticky;top:0}
+tr:hover td{background:rgba(255,255,255,.02)}
+.pt-num{color:#fbbf24;font-family:monospace;font-weight:bold;width:50px}
+.pt-label{color:#4ade80;font-family:monospace}
+.pt-empty{color:#f87171;font-style:italic}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:12px 0}
+.setting{display:flex;flex-direction:column;gap:3px}
+.setting label{font-size:.72rem;color:#94a3b8}
+.setting input,.setting select{background:#0b1220;border:1px solid #334155;border-radius:5px;padding:5px 8px;color:#e2e8f0;font-size:.8rem}
+.setting input:focus,.setting select:focus{outline:none;border-color:#38bdf8}
+.seq-box{margin-top:10px;padding:10px;background:#0b1220;border-radius:6px;border:1px dashed #334155}
+.seq-box label{font-size:.75rem;color:#94a3b8;display:block;margin-bottom:4px}
+.seq-box textarea{min-height:50px;font-size:.78rem}
+.code-block{background:#0b1220;border:1px solid #334155;border-radius:6px;padding:14px;font-family:Consolas,Courier New,monospace;font-size:.78rem;line-height:1.6;white-space:pre;overflow-x:auto;color:#cdd6f4;min-height:260px;max-height:450px;overflow-y:auto}
+.btn-bar{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{padding:9px 18px;border:none;border-radius:6px;font-size:.85rem;font-weight:600;cursor:pointer;transition:.2s}
+.btn-pri{background:linear-gradient(135deg,#38bdf8,#818cf8);color:#0f172a}
+.btn-pri:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(56,189,248,.3)}
+.btn-sec{background:#334155;color:#e2e8f0}
+.btn-sec:hover{background:#475569}
+.btn-suc{background:linear-gradient(135deg,#4ade80,#22c55e);color:#064e3b}
+.btn-suc:hover{box-shadow:0 3px 10px rgba(74,222,128,.3)}
+.toast{position:fixed;bottom:20px;right:20px;background:#4ade80;color:#064e3b;padding:10px 18px;border-radius:8px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.3);transform:translateY(100px);opacity:0;transition:.3s;z-index:1000}
+.toast.show{transform:translateY(0);opacity:1}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:.65rem;font-weight:600;margin-left:6px}
+.badge-ok{background:rgba(74,222,128,.15);color:#4ade80}
+.badge-warn{background:rgba(251,191,36,.15);color:#fbbf24}
+.stats{display:flex;gap:12px;margin-top:8px;font-size:.75rem;color:#94a3b8;flex-wrap:wrap}
+.stat-item span{color:#38bdf8;font-weight:700}
+.warn-box{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:5px;padding:6px 10px;font-size:.75rem;color:#fbbf24;margin-top:6px;display:none}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Robot PTS to Epson Script Converter</h1>
+<p class="subtitle">Paste robot.pts content, auto-extract points and generate Epson RC+ script</p>
+<div class="grid">
+<div>
+<div class="panel">
+<div class="panel-title">Paste robot.pts Content</div>
+<textarea id="input" placeholder="Paste robot.pts file content here..."></textarea>
+<div class="hint">Supports: PointX { ... nNumber=NUM ... sLabel=&quot;NAME&quot; ... } format. Auto-parses on paste. Empty labels are skipped.</div>
+<div class="warn-box" id="warnBox"></div>
+<div class="stats" id="stats" style="display:none">
+<div class="stat-item">Total: <span id="ptTotal">0</span></div>
+<div class="stat-item">Valid: <span id="ptValid">0</span></div>
+<div class="stat-item">Empty: <span id="ptEmpty">0</span></div>
+<div class="stat-item">Range: <span id="ptRange">-</span></div>
+</div>
+</div>
+<div class="panel" style="margin-top:14px">
+<div class="panel-title">Extracted Points</div>
+<div class="table-wrap">
+<table id="ptTable">
+<thead><tr><th>#</th><th>Label</th><th>Status</th></tr></thead>
+<tbody id="ptBody"></tbody>
+</table>
+</div>
+</div>
+</div>
+<div>
+<div class="panel">
+<div class="panel-title">Script Settings</div>
+<div class="settings">
+<div class="setting"><label>Loop Count</label><input type="number" id="loopCount" value="50" min="0"></div>
+<div class="setting"><label>Speed (%)</label><input type="number" id="speed" value="100" min="1" max="100"></div>
+<div class="setting"><label>SpeedS (%)</label><input type="number" id="speedS" value="100" min="1" max="100"></div>
+<div class="setting"><label>Wait (sec)</label><input type="number" id="waitSec" value="5" min="0"></div>
+<div class="setting"><label>Power</label><select id="powerMode"><option value="High">High</option><option value="Low">Low</option></select></div>
+<div class="setting"><label>Indent</label><select id="indentStyle"><option value="4">4 Spaces</option><option value="tab">Tab</option></select></div>
+</div>
+<div class="seq-box">
+<label>Movement Sequence (Numbers, space/comma/newline separated. Leave blank for auto-order)</label>
+<textarea id="sequence" placeholder="e.g. 0 1 2 1 30 31 32 31 30 40 50 51 50 40 0"></textarea>
+</div>
+</div>
+<div class="panel" style="margin-top:14px">
+<div class="panel-title">Generated Epson Script <span class="badge badge-warn" id="statusBadge">Waiting</span></div>
+<pre class="code-block" id="output">' Paste robot.pts content on the left to generate script...</pre>
+<div class="btn-bar">
+<button class="btn-pri" onclick="copyScript()">Copy Script</button>
+<button class="btn-suc" onclick="downloadScript()">Download .txt</button>
+<button class="btn-sec" onclick="resetAll()">Clear All</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+var inputEl = document.getElementById("input");
+var outputEl = document.getElementById("output");
+var ptBody = document.getElementById("ptBody");
+var statsEl = document.getElementById("stats");
+var statusBadge = document.getElementById("statusBadge");
+var warnBox = document.getElementById("warnBox");
+var parsedPoints = [];
+
+function parseInput(text) {
+    var points = [];
+    if (!text || !text.trim()) return points;
+    var lines = text.split(/\r?\n/);
+    var currentNum = null;
+    var currentLabel = null;
+    var inBlock = false;
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (line.indexOf("Point") === 0 && line.indexOf("{") >= 0) {
+            inBlock = true;
+            currentNum = null;
+            currentLabel = null;
+            continue;
+        }
+        if (line === "}" && inBlock) {
+            if (currentNum !== null) {
+                var lbl = (currentLabel || "").trim();
+                points.push({ number: currentNum, label: lbl, hasLabel: lbl.length > 0 });
+            }
+            inBlock = false;
+            currentNum = null;
+            currentLabel = null;
+            continue;
+        }
+        if (!inBlock) continue;
+        var nm = line.match(/^nNumber\s*=\s*(\d+)$/);
+        if (nm) { currentNum = parseInt(nm[1], 10); continue; }
+        var lm = line.match(/^sLabel\s*=\s*"([^"]*)"/);
+        if (lm) { currentLabel = lm[1]; continue; }
+        var lm2 = line.match(/^sLabel\s*=\s*'([^']*)'/);
+        if (lm2) { currentLabel = lm2[1]; continue; }
+    }
+    points.sort(function(a, b) { return a.number - b.number; });
+    var seen = {};
+    var result = [];
+    for (var i = 0; i < points.length; i++) {
+        var p = points[i];
+        if (!seen[p.number]) {
+            seen[p.number] = true;
+            result.push(p);
+        }
+    }
+    return result;
+}
+
+function makeCell(text, cls) {
+    var td = document.createElement("td");
+    if (cls) td.className = cls;
+    td.textContent = text;
+    return td;
+}
+
+function updateTable(points) {
+    ptBody.innerHTML = "";
+    if (points.length === 0) {
+        var tr = document.createElement("tr");
+        var td = document.createElement("td");
+        td.colSpan = 3;
+        td.style.cssText = "color:#94a3b8;text-align:center;padding:16px";
+        td.textContent = "No points detected";
+        tr.appendChild(td);
+        ptBody.appendChild(tr);
+        statsEl.style.display = "none";
+        return;
+    }
+    var validCount = 0;
+    var emptyCount = 0;
+    var nums = [];
+    for (var i = 0; i < points.length; i++) {
+        var p = points[i];
+        nums.push(p.number);
+        if (p.hasLabel) validCount++;
+        else emptyCount++;
+        var tr = document.createElement("tr");
+        tr.appendChild(makeCell(p.number, "pt-num"));
+        tr.appendChild(makeCell(p.hasLabel ? p.label : "(no name - skipped)", p.hasLabel ? "pt-label" : "pt-empty"));
+        tr.appendChild(makeCell(p.hasLabel ? "OK" : "Empty", ""));
+        ptBody.appendChild(tr);
+    }
+    document.getElementById("ptTotal").textContent = points.length;
+    document.getElementById("ptValid").textContent = validCount;
+    document.getElementById("ptEmpty").textContent = emptyCount;
+    document.getElementById("ptRange").textContent = Math.min.apply(null, nums) + " ~ " + Math.max.apply(null, nums);
+    statsEl.style.display = "flex";
+    if (emptyCount > 0) {
+        warnBox.style.display = "block";
+        warnBox.textContent = "Warning: " + emptyCount + " point(s) have empty sLabel and will be skipped.";
+    } else {
+        warnBox.style.display = "none";
+    }
+}
+
+function generateScript() {
+    var validPoints = [];
+    for (var i = 0; i < parsedPoints.length; i++) {
+        if (parsedPoints[i].hasLabel) validPoints.push(parsedPoints[i]);
+    }
+    if (validPoints.length === 0) {
+        outputEl.textContent = "' Paste robot.pts content on the left to generate script...";
+        statusBadge.textContent = "Waiting";
+        statusBadge.className = "badge badge-warn";
+        return;
+    }
+    var loop = document.getElementById("loopCount").value || "50";
+    var spd = document.getElementById("speed").value || "100";
+    var spdS = document.getElementById("speedS").value || "100";
+    var wait = document.getElementById("waitSec").value || "5";
+    var power = document.getElementById("powerMode").value;
+    var indent = document.getElementById("indentStyle").value === "tab" ? "\t" : "    ";
+    var seqText = document.getElementById("sequence").value.trim();
+    var map = {};
+    for (var i = 0; i < validPoints.length; i++) {
+        map[validPoints[i].number] = validPoints[i].label;
+    }
+    var sequence = [];
+    if (seqText) {
+        var parts = seqText.split(/[\s,]+/);
+        for (var i = 0; i < parts.length; i++) {
+            if (parts[i] === "") continue;
+            var n = parseInt(parts[i], 10);
+            if (!isNaN(n)) sequence.push(n);
+        }
+    } else {
+        for (var i = 0; i < validPoints.length; i++) sequence.push(validPoints[i].number);
+    }
+    var validSeq = [];
+    var skipped = [];
+    for (var i = 0; i < sequence.length; i++) {
+        if (map[sequence[i]] !== undefined) validSeq.push(sequence[i]);
+        else skipped.push(sequence[i]);
+    }
+    var I = indent;
+    var I2 = indent + indent;
+    var lines = [];
+    lines.push("' ============================================================");
+    lines.push("'  Epson RC+ Script - Auto Generated by PTS Converter");
+    lines.push("'  Generated: " + new Date().toLocaleString());
+    lines.push("' ============================================================");
+    lines.push("'");
+    lines.push("' ----- Point Reference Table -----");
+    for (var i = 0; i < validPoints.length; i++) {
+        var p = validPoints[i];
+        lines.push("'  [" + padLeft(String(p.number), 2) + "] " + p.label);
+    }
+    var emptyPts = [];
+    for (var i = 0; i < parsedPoints.length; i++) {
+        if (!parsedPoints[i].hasLabel) emptyPts.push(parsedPoints[i]);
+    }
+    if (emptyPts.length > 0) {
+        lines.push("'");
+        lines.push("'  (Skipped - empty sLabel:)");
+        for (var i = 0; i < emptyPts.length; i++) {
+            lines.push("'  [" + padLeft(String(emptyPts[i].number), 2) + "] (no name)");
+        }
+    }
+    lines.push("'");
+    lines.push("Function main");
+    lines.push(I + "Power " + power + "        ' Set motor power mode");
+    lines.push(I + "Speed " + spd + "          ' Joint speed " + spd + "%");
+    lines.push(I + "SpeedS " + spdS + "         ' Linear speed " + spdS + "%");
+    lines.push(I + "Wait " + wait + "          ' Wait " + wait + " sec before start");
+    lines.push(I + "Integer i       ' Loop variable");
+    lines.push("'");
+    lines.push(I + "' ----- Main Loop (" + loop + " times) -----");
+    lines.push(I + "For i = 0 To " + loop);
+    lines.push("'");
+    if (validSeq.length === 0) {
+        lines.push(I2 + "' Warning: no valid movement points");
+    } else {
+        for (var i = 0; i < validSeq.length; i++) {
+            var num = validSeq[i];
+            var label = map[num];
+            var step = i === 0 ? " ' Step " + (i+1) : "";
+            lines.push(I2 + "Go " + label + " '" + num + step);
+        }
+    }
+    lines.push("'");
+    lines.push(I + "Next            ' End loop");
+    lines.push("Fend              ' End main");
+    outputEl.textContent = lines.join("\n");
+    var badgeText = "Generated (" + validSeq.length + " steps)";
+    if (skipped.length > 0) badgeText += " / skipped " + skipped.length;
+    statusBadge.textContent = badgeText;
+    statusBadge.className = "badge badge-ok";
+}
+
+function padLeft(str, len) {
+    while (str.length < len) str = " " + str;
+    return str;
+}
+
+function onInput() {
+    parsedPoints = parseInput(inputEl.value);
+    updateTable(parsedPoints);
+    generateScript();
+}
+
+inputEl.addEventListener("input", onInput);
+inputEl.addEventListener("paste", function() { setTimeout(onInput, 10); });
+
+var settingIds = ["loopCount","speed","speedS","waitSec","powerMode","indentStyle","sequence"];
+for (var i = 0; i < settingIds.length; i++) {
+    var el = document.getElementById(settingIds[i]);
+    el.addEventListener("input", generateScript);
+    el.addEventListener("change", generateScript);
+}
+
+function getPlainText() {
+    return outputEl.textContent;
+}
+
+function copyScript() {
+    var text = getPlainText();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+            showToast("Copied to clipboard!");
+        }).catch(function() {
+            fallbackCopy(text);
+        });
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+function fallbackCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    showToast("Copied to clipboard!");
+}
+
+function downloadScript() {
+    var text = getPlainText();
+    var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    var d = new Date();
+    var ds = d.getFullYear() + padLeft(String(d.getMonth()+1), 2) + padLeft(String(d.getDate()), 2);
+    a.download = "robot_epson_" + ds + ".txt";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("Downloaded!");
+}
+
+function resetAll() {
+    inputEl.value = "";
+    document.getElementById("sequence").value = "";
+    onInput();
+    showToast("Cleared");
+}
+
+function showToast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(function() { t.classList.remove("show"); }, 2500);
+}
+
+onInput();
+</script>
+</body>
+</html>
