@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>40天市場規律分析器</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif; 
+      background: #f5f7fa; 
+      padding: 16px;
+      color: #1a202c;
+      line-height: 1.6;
+    }
+    .wrap { max-width: 480px; margin: 0 auto; }
+    .card { 
+      background: #fff; 
+      border-radius: 16px; 
+      padding: 20px; 
+      margin-bottom: 14px; 
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    h1 { font-size: 18px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+    .subtitle { font-size: 12px; color: #a0aec0; text-align: center; margin-bottom: 18px; }
+    .input-group { margin-bottom: 12px; }
+    .input-group label { 
+      display: block; 
+      font-size: 12px; 
+      color: #718096; 
+      margin-bottom: 4px; 
+      font-weight: 600;
+    }
+    .input-group input { 
+      width: 100%; 
+      padding: 12px 14px; 
+      border: 2px solid #e2e8f0; 
+      border-radius: 10px; 
+      font-size: 18px; 
+      font-family: 'Courier New', monospace; 
+      font-weight: 700;
+      color: #1a202c;
+    }
+    .input-group input:focus { outline: none; border-color: #3182ce; }
+    .btn { 
+      width: 100%; 
+      padding: 14px; 
+      border: none; 
+      border-radius: 10px; 
+      font-size: 16px; 
+      font-weight: 700; 
+      cursor: pointer; 
+      background: #3182ce; 
+      color: white;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #2b6cb0; }
+    .hidden { display: none !important; }
+
+    /* 狀態標籤 */
+    .status-bar { 
+      text-align: center; 
+      padding: 14px; 
+      border-radius: 12px; 
+      margin-bottom: 14px;
+      font-weight: 700;
+    }
+    .status-falling { background: #fed7d7; color: #c53030; }
+    .status-valley { background: #bee3f8; color: #2b6cb0; }
+    .status-small { background: #fefcbf; color: #975a16; }
+    .status-big { background: #c6f6d5; color: #276749; }
+
+    /* 結果區 */
+    .result-box { 
+      background: #f7fafc; 
+      border-radius: 10px; 
+      padding: 14px; 
+      margin-bottom: 10px;
+      border-left: 4px solid #cbd5e0;
+    }
+    .result-box.red { border-left-color: #e53e3e; }
+    .result-box.green { border-left-color: #38a169; }
+    .result-box.blue { border-left-color: #3182ce; }
+    .result-box.yellow { border-left-color: #d69e2e; }
+    .result-box .title { font-size: 11px; color: #718096; margin-bottom: 4px; font-weight: 600; }
+    .result-box .num { font-size: 20px; font-weight: 800; font-family: 'Courier New', monospace; }
+    .result-box .note { font-size: 12px; color: #a0aec0; margin-top: 2px; }
+
+    /* 表格 */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 8px 6px; text-align: center; border-bottom: 1px solid #edf2f7; }
+    th { background: #edf2f7; color: #4a5568; font-weight: 600; }
+    .td-red { color: #e53e3e; font-weight: 700; }
+    .td-green { color: #38a169; font-weight: 700; }
+    .td-blue { color: #3182ce; font-weight: 700; }
+
+    /* 規律卡片 */
+    .rule-card { 
+      background: #f7fafc; 
+      border-radius: 10px; 
+      padding: 14px; 
+      margin-bottom: 10px;
+    }
+    .rule-card .num-badge { 
+      display: inline-block; 
+      width: 22px; height: 22px; 
+      background: #3182ce; 
+      color: white; 
+      border-radius: 50%; 
+      text-align: center; 
+      line-height: 22px; 
+      font-size: 12px; 
+      font-weight: 700;
+      margin-right: 6px;
+    }
+    .rule-card h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; }
+    .rule-card p { font-size: 13px; color: #4a5568; }
+
+    /* 公式區 */
+    .formula { 
+      background: #1a202c; 
+      color: #e2e8f0; 
+      padding: 16px; 
+      border-radius: 12px; 
+      font-family: 'Courier New', monospace; 
+      font-size: 14px;
+      text-align: center;
+      line-height: 2;
+    }
+    .formula .r { color: #fc8181; }
+    .formula .g { color: #68d391; }
+    .formula .b { color: #63b3ed; }
+    .formula .y { color: #f6e05e; }
+
+    .section-title { font-size: 14px; font-weight: 700; color: #2d3748; margin-bottom: 10px; }
+    .arrow { color: #a0aec0; margin: 0 4px; }
+
+    .plain-box { 
+      background: #fffaf0; 
+      border: 1px solid #fbd38d; 
+      border-radius: 10px; 
+      padding: 14px; 
+      font-size: 13px; 
+      color: #744210;
+      text-align: center;
+    }
+    .plain-box b { color: #975a16; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- 輸入區 -->
+    <div class="card">
+      <h1>📈 40天市場規律分析器</h1>
+      <div class="subtitle">輸入價格 → 自動套用全部規律</div>
+
+      <div class="input-group">
+        <label>上一峰值 Pₙ</label>
+        <input type="number" id="peak" placeholder="例如：5905" onkeydown="if(event.key==='Enter')analyze()">
+      </div>
+
+      <div class="input-group">
+        <label>當前價格（選填，判斷位置）</label>
+        <input type="number" id="current" placeholder="例如：5600" onkeydown="if(event.key==='Enter')analyze()">
+      </div>
+
+      <button class="btn" onclick="analyze()">🔍 分析</button>
+    </div>
+
+    <!-- 結果區 -->
+    <div id="output" class="hidden">
+
+      <!-- 狀態 -->
+      <div class="card">
+        <div class="section-title">📍 當前狀態</div>
+        <div id="statusBar" class="status-bar"></div>
+
+        <div class="result-box red">
+          <div class="title">📉 谷值區間（跌 10% ~ 20%）</div>
+          <div class="num" id="valleyRange">—</div>
+          <div class="note">從峰值 <span id="peakRef">—</span> 計算</div>
+        </div>
+
+        <div class="result-box green">
+          <div class="title">📈 大反彈目標（彈 20% ~ 30%）</div>
+          <div class="num" id="reboundRange">—</div>
+          <div class="note">從谷底 <span id="valleyRef">—</span> 計算</div>
+        </div>
+
+        <div class="result-box yellow">
+          <div class="title">🟡 小反彈區間（彈 0% ~ 10%）</div>
+          <div class="num" id="smallRange">—</div>
+        </div>
+      </div>
+
+      <!-- 連續推論 -->
+      <div class="card">
+        <div class="section-title">🔮 連續推論（按規律循環）</div>
+        <table>
+          <thead>
+            <tr><th>階段</th><th>價格區間</th><th>狀態</th></tr>
+          </thead>
+          <tbody id="forecastTable">
+          </tbody>
+        </table>
+        <div class="note" style="font-size:11px;color:#a0aec0;margin-top:8px;text-align:center;">
+          基於「跌10~20% → 彈20~30%」循環規律連續推算
+        </div>
+      </div>
+
+      <!-- 4大規律 -->
+      <div class="card">
+        <div class="section-title">📊 40天數字中的4大規律</div>
+
+        <div class="rule-card">
+          <h3><span class="num-badge">1</span>波動擴大 → 爆發 → 收縮</h3>
+          <p>下跌：900 → 1295 → 1875 → <b>645</b><br>
+          反彈：970 → 1065 → <b>2610</b> → 340<br>
+          不是固定大小，而是「越跌越深、越彈越強」後突然收縮。</p>
+        </div>
+
+        <div class="rule-card">
+          <h3><span class="num-badge">2</span>跌得越深，彈得越強</h3>
+          <p>① -16.9% → +21.9%　② -24.0% → +26.0%<br>
+          ③ <b>-36.3% → +79.2%</b>（爆發）　④ -10.9% → +6.5%<br>
+          跌幅與反彈力度呈正相關。</p>
+        </div>
+
+        <div class="rule-card">
+          <h3><span class="num-badge">3</span>低點由破低轉為抬高</h3>
+          <p>4430 → 4105 → <b>3295</b>（一直創低）<br>
+          → <b>5260</b>（突然大幅抬高）<br>
+          3295 後不再破低，結構轉折。</p>
+        </div>
+
+        <div class="rule-card">
+          <h3><span class="num-badge">4</span>高點由盤整轉為突破</h3>
+          <p>5330 → 5400 → 5170（約5170~5400盤整）<br>
+          → <b>5905</b>（直接突破舊高區）<br>
+          與低點抬高同時發生，形成「雙突破」。</p>
+        </div>
+      </div>
+
+      <!-- 白話版 -->
+      <div class="card">
+        <div class="section-title">💬 最白話的規律</div>
+        <div class="plain-box">
+          <b>🔴 峰 → 谷：跌 10% ~ 20%</b><br>
+          <b>🟢 谷 → 峰：漲 20% ~ 30%</b><br><br>
+          循環就是：<br>
+          <b>跌一成 → 漲兩成 → 跌一成 → 漲兩成</b><br><br>
+          取中間值每輪淨增長約 <b>+6.25%</b>
+        </div>
+      </div>
+
+      <!-- 公式區 -->
+      <div class="card">
+        <div class="section-title">📐 核心公式</div>
+        <div class="formula">
+          <span class="b">P<sub>n+1</sub></span> = <span class="b">P<sub>n</sub></span> × (1 − <span class="r">d</span>) × (1 + <span class="g">r</span>)<br>
+          <span class="y">d = 10% ~ 20%</span>　　<span class="y">r = 20% ~ 30%</span><br><br>
+          <span class="b">峰</span> <span class="arrow">→</span> <span class="r">谷</span> <span class="arrow">→</span> <span class="g">下一峰</span><br><br>
+          普通循環：<span class="b">P<sub>n+1</sub></span> = <span class="b">P<sub>n</sub></span> × <span class="r">(0.80~0.90)</span> × <span class="g">(1.20~1.30)</span><br>
+          爆發循環：<span class="b">P<sub>n+1</sub></span> = <span class="b">P<sub>n</sub></span> × <span class="r">(0.70~0.80)</span> × <span class="g">(1.50+)</span>
+        </div>
+      </div>
+
+      <!-- 歷史對照 -->
+      <div class="card">
+        <div class="section-title">📋 40天歷史對照</div>
+        <table>
+          <thead>
+            <tr><th>輪次</th><th>峰值</th><th>谷值</th><th>跌幅</th><th>反彈</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>①</td><td class="td-green">5330</td><td class="td-red">4430</td><td class="td-red">-16.9%</td><td class="td-green">+21.9%</td></tr>
+            <tr><td>②</td><td class="td-green">5400</td><td class="td-red">4105</td><td class="td-red">-24.0%</td><td class="td-green">+26.0%</td></tr>
+            <tr><td>③</td><td class="td-green">5170</td><td class="td-red">3295</td><td class="td-red">-36.3%</td><td class="td-green">+79.2%</td></tr>
+            <tr><td>④</td><td class="td-green">5905</td><td class="td-red">5260</td><td class="td-red">-10.9%</td><td class="td-green" id="r4">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function analyze() {
+      const peak = parseFloat(document.getElementById('peak').value);
+      const current = parseFloat(document.getElementById('current').value);
+
+      if (!peak || peak <= 0) {
+        alert('請輸入上一峰值');
+        return;
+      }
+
+      // 計算區間
+      const vLow = peak * 0.80;
+      const vHigh = peak * 0.90;
+      const vMid = peak * 0.85;
+
+      const sLow = vMid * 1.00;
+      const sHigh = vMid * 1.10;
+
+      const rLow = vMid * 1.20;
+      const rHigh = vMid * 1.30;
+      const rMid = vMid * 1.25;
+
+      // 顯示基本區間
+      document.getElementById('valleyRange').textContent = 
+        Math.round(vLow).toLocaleString() + ' ~ ' + Math.round(vHigh).toLocaleString();
+      document.getElementById('peakRef').textContent = peak.toLocaleString();
+
+      document.getElementById('reboundRange').textContent = 
+        Math.round(rLow).toLocaleString() + ' ~ ' + Math.round(rHigh).toLocaleString();
+      document.getElementById('valleyRef').textContent = Math.round(vMid).toLocaleString() + '（中間值）';
+
+      document.getElementById('smallRange').textContent = 
+        Math.round(sLow).toLocaleString() + ' ~ ' + Math.round(sHigh).toLocaleString();
+
+      // 狀態判斷
+      const statusBar = document.getElementById('statusBar');
+      const r4cell = document.getElementById('r4');
+
+      if (current && current > 0) {
+        const decline = ((current / peak) - 1) * 100;
+        const fromValley = ((current / vMid) - 1) * 100;
+
+        if (current >= peak) {
+          statusBar.className = 'status-bar status-at-valley';
+          statusBar.innerHTML = '📍 在峰值之上或剛創高';
+          r4cell.textContent = '—';
+        } else if (current <= vLow) {
+          statusBar.className = 'status-bar status-valley';
+          statusBar.innerHTML = '📍 已觸及或跌破谷值區間<br><small>反彈目標 +' + ((rLow/current-1)*100).toFixed(0) + '% ~ +' + ((rHigh/current-1)*100).toFixed(0) + '%</small>';
+          r4cell.textContent = '—';
+        } else if (current <= vHigh) {
+          statusBar.className = 'status-bar status-valley';
+          statusBar.innerHTML = '📍 在谷值區間內（跌 ' + Math.abs(decline).toFixed(1) + '%）<br><small>反彈目標 +' + ((rLow/current-1)*100).toFixed(0) + '% ~ +' + ((rHigh/current-1)*100).toFixed(0) + '%</small>';
+          r4cell.textContent = '—';
+        } else if (current <= sHigh) {
+          statusBar.className = 'status-bar status-small';
+          statusBar.innerHTML = '🟡 小反彈區（已反彈 ' + fromValley.toFixed(1) + '%）<br><small>距大反彈門檻 +' + ((rLow/current-1)*100).toFixed(0) + '%</small>';
+          r4cell.textContent = '+' + fromValley.toFixed(1) + '%';
+        } else if (current < rLow) {
+          statusBar.className = 'status-bar status-small';
+          statusBar.innerHTML = '🟡 小反彈尾段（已反彈 ' + fromValley.toFixed(1) + '%）<br><small>即將進入大反彈區</small>';
+          r4cell.textContent = '+' + fromValley.toFixed(1) + '%';
+        } else if (current <= rHigh) {
+          statusBar.className = 'status-bar status-big';
+          statusBar.innerHTML = '🟢 大反彈區（已反彈 ' + fromValley.toFixed(1) + '%）<br><small>目標達成中</small>';
+          r4cell.textContent = '+' + fromValley.toFixed(1) + '%';
+        } else {
+          statusBar.className = 'status-bar status-big';
+          statusBar.innerHTML = '🟢 已突破大反彈區（反彈 ' + fromValley.toFixed(1) + '%）<br><small>可能形成新峰值</small>';
+          r4cell.textContent = '+' + fromValley.toFixed(1) + '%';
+        }
+      } else {
+        statusBar.className = 'status-bar status-valley';
+        statusBar.innerHTML = '💡 輸入當前價格可判斷具體位置';
+        r4cell.textContent = '—';
+      }
+
+      // 連續推論
+      let p = rMid; // 用中間值作為下一峰
+      let html = '';
+      const stages = [
+        { name: '第④峰', color: 'td-green', type: 'peak' },
+        { name: '下一谷', color: 'td-red', type: 'valley' },
+        { name: '下一峰', color: 'td-green', type: 'peak' },
+        { name: '再下谷', color: 'td-red', type: 'valley' },
+        { name: '再下峰', color: 'td-green', type: 'peak' }
+      ];
+
+      for (let i = 0; i < stages.length; i++) {
+        const s = stages[i];
+        let priceLow, priceHigh, label;
+
+        if (s.type === 'peak') {
+          // 谷 → 峰：彈20~30%（如果是爆發峰則50%+，但這裡用普通循環）
+          if (i === 2) {
+            // 第三輪用爆發規律 +50%+
+            priceLow = p * 1.50;
+            priceHigh = p * 1.70;
+            label = '爆發反彈';
+          } else {
+            priceLow = p * 1.20;
+            priceHigh = p * 1.30;
+            label = '大反彈';
+          }
+          p = (priceLow + priceHigh) / 2;
+        } else {
+          // 峰 → 谷：跌10~20%
+          priceLow = p * 0.80;
+          priceHigh = p * 0.90;
+          label = '普通下跌';
+          p = (priceLow + priceHigh) / 2;
+        }
+
+        html += `<tr>
+          <td>${s.name}</td>
+          <td class="${s.color}">${Math.round(priceLow).toLocaleString()} ~ ${Math.round(priceHigh).toLocaleString()}</td>
+          <td>${label}</td>
+        </tr>`;
+      }
+      document.getElementById('forecastTable').innerHTML = html;
+
+      document.getElementById('output').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
