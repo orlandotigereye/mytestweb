@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robot PTS 轉換器 - 點位編輯 / Epson Script / PTS 輸出</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0f1a;color:#e2e8f0;font-family:"Segoe UI","Microsoft JhengHei","PingFang TC",sans-serif;padding:12px;min-width:1400px}
+.container{max-width:1800px;margin:0 auto}
+h1{text-align:center;font-size:1.4rem;margin-bottom:4px;background:linear-gradient(90deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:#64748b;font-size:.78rem;margin-bottom:14px}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:10px 14px;background:#111827;border:1px solid #1e293b;border-radius:8px}
+.toolbar-title{font-size:.85rem;color:#38bdf8;font-weight:600;margin-right:8px}
+.btn{padding:6px 14px;border:none;border-radius:5px;font-size:.78rem;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px)}
+.btn-blue{background:linear-gradient(135deg,#38bdf8,#6366f1);color:#0f172a}
+.btn-green{background:linear-gradient(135deg,#4ade80,#22c55e);color:#064e3b}
+.btn-orange{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#451a03}
+.btn-red{background:linear-gradient(135deg,#f87171,#ef4444);color:#450a0a}
+.btn-purple{background:linear-gradient(135deg,#c084fc,#a855f7);color:#3b0764}
+.btn-gray{background:#334155;color:#e2e8f0}
+.btn-gray:hover{background:#475569}
+.btn-sm{padding:4px 10px;font-size:.72rem}
+.grid{display:grid;grid-template-columns:1.3fr .7fr;gap:12px}
+@media(max-width:1400px){body{min-width:auto}.grid{grid-template-columns:1fr}}
+.panel{background:#111827;border:1px solid #1e293b;border-radius:8px;padding:12px}
+.panel-title{font-size:.9rem;font-weight:600;margin-bottom:8px;color:#38bdf8;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.panel-title .badge{font-size:.6rem;padding:1px 6px;border-radius:3px;margin-left:4px}
+.badge-ok{background:rgba(74,222,128,.15);color:#4ade80}
+.badge-warn{background:rgba(251,191,36,.15);color:#fbbf24}
+.badge-info{background:rgba(56,189,248,.15);color:#38bdf8}
+textarea{width:100%;min-height:140px;background:#0b1220;border:1px solid #334155;border-radius:5px;padding:8px;color:#e2e8f0;font-family:Consolas,Courier New,monospace;font-size:.75rem;line-height:1.45;resize:vertical}
+textarea:focus{outline:none;border-color:#38bdf8}
+textarea::placeholder{color:#475569}
+.hint{font-size:.68rem;color:#64748b;margin-top:4px;line-height:1.4}
+.table-wrap{max-height:380px;overflow-y:auto;border-radius:5px;border:1px solid #1e293b;margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:.72rem}
+th,td{padding:4px 6px;text-align:left;border-bottom:1px solid #1e293b;white-space:nowrap}
+th{background:rgba(56,189,248,.06);color:#38bdf8;font-weight:600;position:sticky;top:0;font-size:.68rem}
+tr:hover td{background:rgba(255,255,255,.02)}
+tr.dragging{opacity:.4;background:rgba(56,189,248,.1)}
+tr.drag-over{background:rgba(74,222,128,.08);border-top:2px solid #4ade80}
+.pt-num{color:#fbbf24;font-family:monospace;font-weight:bold;width:32px;font-size:.75rem}
+.pt-label{color:#4ade80;font-family:monospace;max-width:140px;overflow:hidden;text-overflow:ellipsis;font-size:.72rem}
+.pt-empty{color:#f87171;font-style:italic;font-size:.72rem}
+.coord{font-family:monospace;color:#94a3b8;font-size:.68rem}
+.coord-input{width:52px;background:#0b1220;border:1px solid #334155;border-radius:3px;padding:2px 4px;color:#fbbf24;font-family:monospace;font-size:.68rem;text-align:right}
+.coord-input:focus{outline:none;border-color:#38bdf8;background:#1e293b}
+.coord-input.changed{color:#4ade80;border-color:#4ade80}
+.label-input{width:130px;background:#0b1220;border:1px solid #334155;border-radius:3px;padding:2px 4px;color:#4ade80;font-family:monospace;font-size:.7rem}
+.label-input:focus{outline:none;border-color:#38bdf8}
+.label-input.changed{color:#4ade80;border-color:#4ade80}
+.actions{display:flex;gap:3px}
+.act-btn{width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:none;border-radius:3px;cursor:pointer;font-size:.7rem;padding:0}
+.act-copy{background:rgba(56,189,248,.15);color:#38bdf8}
+.act-copy:hover{background:rgba(56,189,248,.3)}
+.act-del{background:rgba(248,113,113,.15);color:#f87171}
+.act-del:hover{background:rgba(248,113,113,.3)}
+.act-up{background:rgba(251,191,36,.15);color:#fbbf24}
+.act-up:hover{background:rgba(251,191,36,.3)}
+.act-down{background:rgba(251,191,36,.15);color:#fbbf24}
+.act-down:hover{background:rgba(251,191,36,.3)}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin:8px 0}
+.setting{display:flex;flex-direction:column;gap:2px}
+.setting label{font-size:.65rem;color:#94a3b8}
+.setting input,.setting select{background:#0b1220;border:1px solid #334155;border-radius:3px;padding:3px 5px;color:#e2e8f0;font-size:.72rem}
+.setting input:focus,.setting select:focus{outline:none;border-color:#38bdf8}
+.chk-row{display:flex;gap:12px;align-items:center;margin:6px 0;font-size:.72rem;color:#94a3b8;flex-wrap:wrap}
+.chk-row input{margin-right:4px}
+.uvw-box{margin-top:8px;padding:8px;background:#0b1220;border-radius:5px;border:1px solid #1e293b}
+.uvw-box-title{font-size:.78rem;color:#38bdf8;font-weight:600;margin-bottom:6px}
+.uvw-row{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap;margin-bottom:6px}
+.uvw-field{display:flex;flex-direction:column;gap:2px}
+.uvw-field label{font-size:.65rem;color:#94a3b8}
+.uvw-field input{width:65px;background:#0b1220;border:1px solid #334155;border-radius:3px;padding:3px 5px;color:#e2e8f0;font-family:monospace;font-size:.72rem;text-align:right}
+.uvw-field input:focus{outline:none;border-color:#38bdf8}
+.btn-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.code-block{background:#0b1220;border:1px solid #1e293b;border-radius:5px;padding:10px;font-family:Consolas,Courier New,monospace;font-size:.72rem;line-height:1.55;white-space:pre;overflow-x:auto;color:#cdd6f4;min-height:180px;max-height:350px;overflow-y:auto}
+.toast{position:fixed;bottom:16px;right:16px;background:#4ade80;color:#064e3b;padding:10px 16px;border-radius:8px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.3);transform:translateY(100px);opacity:0;transition:.3s;z-index:1000;font-size:.85rem}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-warn{background:#fbbf24;color:#451a03}
+.stats{display:flex;gap:10px;margin-top:5px;font-size:.7rem;color:#64748b;flex-wrap:wrap}
+.stat-item span{color:#38bdf8;font-weight:700}
+.warn-box{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.15);border-radius:4px;padding:5px 8px;font-size:.7rem;color:#fbbf24;margin-top:4px;display:none}
+.info-row{font-size:.68rem;color:#64748b;margin-top:4px}
+.tab-bar{display:flex;gap:2px;margin-bottom:8px;border-bottom:1px solid #1e293b}
+.tab-btn{padding:6px 14px;border:none;background:transparent;color:#94a3b8;font-size:.78rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
+.tab-btn:hover{color:#e2e8f0}
+.tab-btn.active{color:#38bdf8;border-bottom-color:#38bdf8}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.drag-handle{cursor:grab;color:#475569;font-size:.8rem;padding:0 4px}
+.drag-handle:active{cursor:grabbing}
+.seq-box{margin-top:6px;padding:6px;background:#0b1220;border-radius:5px;border:1px dashed #334155}
+.seq-box label{font-size:.68rem;color:#94a3b8;display:block;margin-bottom:3px}
+.seq-box textarea{min-height:40px;font-size:.72rem}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Robot PTS 轉換器</h1>
+<p class="subtitle">點位編輯 / 拖拉排序 / UVW統一 / Epson Script / PTS 輸出</p>
+
+<div class="toolbar">
+  <span class="toolbar-title">快速操作</span>
+  <button class="btn btn-blue" onclick="loadSample()">載入範例資料</button>
+  <button class="btn btn-green" onclick="importFromInput()">從左側輸入解析</button>
+  <button class="btn btn-orange" onclick="removeEmptyPoints()">清除空標籤點位</button>
+  <button class="btn btn-red" onclick="removeSelected()">刪除選中點位</button>
+  <button class="btn btn-purple" onclick="exportPTS()">匯出 PTS 檔</button>
+  <button class="btn btn-purple" onclick="exportSample()">存成範例(JSON)</button>
+  <button class="btn btn-gray" onclick="resetAll()">全部清空</button>
+  <span class="stats" style="margin-left:auto">
+    <span class="stat-item">點位: <span id="ptTotal">0</span></span>
+    <span class="stat-item">有效: <span id="ptValid">0</span></span>
+    <span class="stat-item">已改: <span id="ptChanged">0</span></span>
+  </span>
+</div>
+
+<div class="grid">
+<div>
+  <div class="panel">
+    <div class="panel-title">輸入區 (貼上 robot.pts 內容)</div>
+    <textarea id="input" placeholder="貼上 robot.pts 檔案內容，或點擊「載入範例資料」測試..."></textarea>
+    <div class="hint">支援格式：PointX { nNumber=數字 sLabel=&quot;名稱&quot; rX=... rY=... rZ=... rU=... rV=... rW=... ... }</div>
+    <div class="warn-box" id="warnBox"></div>
+  </div>
+
+  <div class="panel" style="margin-top:10px">
+    <div class="panel-title">點位列表 (可拖拉排序、編輯、複製、刪除) <span class="badge badge-info" id="dragHint">拖拉排序</span></div>
+    <div class="table-wrap">
+      <table id="ptTable">
+        <thead>
+          <tr>
+            <th style="width:24px"></th>
+            <th style="width:32px">#</th>
+            <th>標籤</th>
+            <th style="width:50px">X</th>
+            <th style="width:50px">Y</th>
+            <th style="width:50px">Z</th>
+            <th style="width:50px">U</th>
+            <th style="width:50px">V</th>
+            <th style="width:50px">W</th>
+            <th style="width:60px">操作</th>
+          </tr>
+        </thead>
+        <tbody id="ptBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:10px">
+    <div class="panel-title">批次 UVW 編輯器</div>
+    <div class="uvw-box">
+      <div class="uvw-row">
+        <div class="uvw-field"><label>目標 U</label><input type="number" id="batchU" step="0.001" placeholder="保留"></div>
+        <div class="uvw-field"><label>目標 V</label><input type="number" id="batchV" step="0.001" placeholder="保留"></div>
+        <div class="uvw-field"><label>目標 W</label><input type="number" id="batchW" step="0.001" placeholder="保留"></div>
+        <button class="btn btn-blue btn-sm" onclick="applyBatchUVW()">套用至全部</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-green btn-sm" onclick="autoNormalizeVW()">自動正角 V,W</button>
+        <button class="btn btn-orange btn-sm" onclick="autoNormalizeAll()">自動正角 U,V,W</button>
+        <button class="btn btn-red btn-sm" onclick="resetUVW()">恢復原始 UVW</button>
+      </div>
+      <div class="info-row" id="autoInfo"></div>
+    </div>
+
+  <div class="panel" style="margin-top:10px">
+    <div class="panel-title">產品平移複製 (310×310 + 緩衝)</div>
+    <div class="uvw-box">
+      <div class="uvw-row">
+        <div class="uvw-field" style="min-width:160px">
+          <label>基準點位</label>
+          <select id="basePointSelect" style="width:100%;background:#0b1220;border:1px solid #334155;border-radius:3px;padding:3px 5px;color:#e2e8f0;font-size:.72rem"></select>
+        </div>
+        <div class="uvw-field">
+          <label>平移軸向</label>
+          <select id="shiftAxis" style="background:#0b1220;border:1px solid #334155;border-radius:3px;padding:3px 5px;color:#e2e8f0;font-size:.72rem">
+            <option value="X">X 軸</option>
+            <option value="Y">Y 軸</option>
+          </select>
+        </div>
+        <div class="uvw-field">
+          <label>方向</label>
+          <select id="shiftDir" style="background:#0b1220;border:1px solid #334155;border-radius:3px;padding:3px 5px;color:#e2e8f0;font-size:.72rem">
+            <option value="1">正向 (+)</option>
+            <option value="-1">負向 (-)</option>
+          </select>
+        </div>
+      </div>
+      <div class="uvw-row">
+        <div class="uvw-field">
+          <label>產品尺寸 (mm)</label>
+          <input type="number" id="productSize" value="310" step="1" style="width:80px">
+        </div>
+        <div class="uvw-field">
+          <label>緩衝距離 (mm)</label>
+          <input type="number" id="bufferSize" value="5" step="0.1" style="width:80px">
+        </div>
+        <div class="uvw-field">
+          <label>生成數量</label>
+          <input type="number" id="shiftCount" value="1" min="1" max="50" style="width:60px">
+        </div>
+        <div class="uvw-field" style="min-width:140px">
+          <label>新標籤前綴 (可選)</label>
+          <input type="text" id="shiftLabelPrefix" value="" placeholder="預設沿用基準" style="width:100%">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-purple btn-sm" onclick="generateShiftedPoints()">生成平移點位</button>
+      </div>
+      <div class="info-row" id="shiftInfo"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div>
+  <div class="panel">
+    <div class="panel-title">腳本設定</div>
+    <div class="settings">
+      <div class="setting"><label>循環次數</label><input type="number" id="loopCount" value="50" min="0"></div>
+      <div class="setting"><label>Speed (%)</label><input type="number" id="speed" value="100" min="1" max="100"></div>
+      <div class="setting"><label>SpeedS (%)</label><input type="number" id="speedS" value="100" min="1" max="100"></div>
+      <div class="setting"><label>Wait (秒)</label><input type="number" id="waitSec" value="5" min="0"></div>
+      <div class="setting"><label>Power</label><select id="powerMode"><option value="High">High</option><option value="Low">Low</option></select></div>
+      <div class="setting"><label>縮排</label><select id="indentStyle"><option value="4">4空格</option><option value="tab">Tab</option></select></div>
+    </div>
+    <div class="chk-row">
+      <label><input type="checkbox" id="includeXY" checked> 輸出 XY() 點位定義</label>
+      <label><input type="checkbox" id="useModified" checked> 使用修改後 UVW</label>
+    </div>
+    <div class="seq-box">
+      <label>移動順序 (輸入 Number，空格/逗號/換行分隔。空白 = 依目前順序)</label>
+      <textarea id="sequence" placeholder="例：0 1 2 1 30 31 32 31 30 40 50 51 50 40 0"></textarea>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:10px">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('tabScript')">Epson Script</button>
+      <button class="tab-btn" onclick="switchTab('tabPTS')">PTS 輸出</button>
+      <button class="tab-btn" onclick="switchTab('tabJSON')">範例 JSON</button>
+    </div>
+
+    <div class="tab-content active" id="tabScript">
+      <div class="panel-title">生成的 Epson Script <span class="badge badge-warn" id="statusBadge">等待輸入</span></div>
+      <pre class="code-block" id="outputScript">' 貼上 robot.pts 內容或載入範例以生成腳本...</pre>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn btn-blue btn-sm" onclick="copyScript()">複製腳本</button>
+        <button class="btn btn-green btn-sm" onclick="downloadScript()">下載 .txt</button>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tabPTS">
+      <div class="panel-title">PTS 格式輸出 <span class="badge badge-info" id="ptsBadge">-</span></div>
+      <pre class="code-block" id="outputPTS">' 點位整理後可在此匯出標準 PTS 格式...</pre>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn btn-blue btn-sm" onclick="copyPTS()">複製 PTS</button>
+        <button class="btn btn-green btn-sm" onclick="downloadPTS()">下載 .pts</button>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tabJSON">
+      <div class="panel-title">範例 JSON <span class="badge badge-info" id="jsonBadge">-</span></div>
+      <pre class="code-block" id="outputJSON">' 點位資料可存成 JSON 範例...</pre>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn btn-blue btn-sm" onclick="copyJSON()">複製 JSON</button>
+        <button class="btn btn-green btn-sm" onclick="downloadJSON()">下載 .json</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="toast" id="toast">已複製!</div>
+
+<script>
+
+// ===================== 內建範例資料 (21個點位) =====================
+var SAMPLE_DATA = [{"nNumber": 0, "sLabel": "Home", "sDescription": "", "nUndefined": 0, "rX": 9.038, "rY": 549.113, "rZ": 660.0, "rU": -169.287, "rV": -89.409, "rW": 80.302, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 1, "sLabel": "Camera", "sDescription": "", "nUndefined": 0, "rX": 221.197, "rY": 953.035, "rZ": 435.506, "rU": -22.783, "rV": -89.409, "rW": -69.269, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 2, "sLabel": "C1", "sDescription": "", "nUndefined": 0, "rX": 125.74, "rY": 1243.083, "rZ": 430.765, "rU": 105.706, "rV": -88.433, "rW": 164.154, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 10, "sLabel": "", "sDescription": "", "nUndefined": 0, "rX": 1164.364, "rY": 143.271, "rZ": 500.0, "rU": 100.17, "rV": -89.41, "rW": 80.332, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 11, "sLabel": "PrinterInputLocation", "sDescription": "", "nUndefined": 0, "rX": 1164.3, "rY": 127.0, "rZ": 425.0, "rU": 102.116, "rV": -89.509, "rW": 78.387, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 12, "sLabel": "", "sDescription": "", "nUndefined": 0, "rX": 1164.363, "rY": 138.247, "rZ": 500.0, "rU": 100.148, "rV": -89.41, "rW": 80.354, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 24, "sLabel": "PrinterToOV07", "sDescription": "", "nUndefined": 0, "rX": 9.028, "rY": 578.035, "rZ": 459.0, "rU": -169.761, "rV": -89.404, "rW": 80.779, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 25, "sLabel": "OV07HoldPoint", "sDescription": "", "nUndefined": 0, "rX": 9.028, "rY": 928.838, "rZ": 459.0, "rU": -169.758, "rV": -89.404, "rW": 80.776, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 26, "sLabel": "OV07Left", "sDescription": "", "nUndefined": 0, "rX": 9.028, "rY": 1207.631, "rZ": 450.0, "rU": -170.491, "rV": -89.404, "rW": 80.808, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 27, "sLabel": "OV07Right", "sDescription": "", "nUndefined": 0, "rX": 9.028, "rY": 1224.779, "rZ": 450.0, "rU": -170.463, "rV": -89.404, "rW": 80.78, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 28, "sLabel": "", "sDescription": "", "nUndefined": 0, "rX": 1413.931, "rY": -223.438, "rZ": 421.466, "rU": 79.288, "rV": -89.001, "rW": 100.202, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 30, "sLabel": "PlatformHoldPoint", "sDescription": "", "nUndefined": 0, "rX": -446.259, "rY": 568.077, "rZ": 500.074, "rU": -167.314, "rV": -89.41, "rW": 80.33, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 31, "sLabel": "AligenFinishLocation", "sDescription": "", "nUndefined": 0, "rX": -446.258, "rY": 568.077, "rZ": 371.77, "rU": -166.935, "rV": -89.41, "rW": 80.334, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 32, "sLabel": "AligenLocation", "sDescription": "", "nUndefined": 0, "rX": -464.314, "rY": 565.68, "rZ": 370.0, "rU": -166.706, "rV": -89.412, "rW": 80.396, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 33, "sLabel": "PrinterOutHoldPoint", "sDescription": "", "nUndefined": 0, "rX": -460.653, "rY": 568.076, "rZ": 500.0, "rU": -167.299, "rV": -89.41, "rW": 80.315, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 34, "sLabel": "PrinterInHoldPoint", "sDescription": "", "nUndefined": 0, "rX": 525.482, "rY": 143.271, "rZ": 500.0, "rU": 100.168, "rV": -89.41, "rW": 80.334, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 35, "sLabel": "", "sDescription": "", "nUndefined": 0, "rX": 163.407, "rY": 629.556, "rZ": 428.813, "rU": 101.337, "rV": -87.264, "rW": 36.09, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 40, "sLabel": "SAFEPOINT", "sDescription": "", "nUndefined": 0, "rX": 3.032, "rY": 207.439, "rZ": 1201.897, "rU": -90.167, "rV": 14.709, "rW": 2.562, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 50, "sLabel": "", "sDescription": "", "nUndefined": 0, "rX": 63.849, "rY": 568.076, "rZ": 500.0, "rU": -167.312, "rV": -89.41, "rW": 80.328, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 51, "sLabel": "PutToBridgingConveyor", "sDescription": "", "nUndefined": 0, "rX": 63.848, "rY": 1439.781, "rZ": 483.515, "rU": -167.346, "rV": -89.41, "rW": 80.362, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}, {"nNumber": 52, "sLabel": "", "sDescription": "", "nUndefined": 0, "rX": 63.848, "rY": 1439.781, "rZ": 404.496, "rU": -167.356, "rV": -89.41, "rW": 80.372, "rR": 0.0, "rS": 0.0, "rT": 0.0, "nLocal": 0, "nHand": 1, "nElbow": 1, "nWrist": 2, "nJ1Flag": 0, "nJ2Flag": 0, "nJ4Flag": 0, "nJ6Flag": 0, "rJ1Angle": 0.0, "rJ4Angle": 0.0, "bSimVisible": "False"}];
+
+// ===================== 全域變數 =====================
+var points = [];          // 當前點位陣列 (依畫面順序)
+var dragSrcIndex = -1;    // 拖拉來源索引
+
+// ===================== 解析輸入 =====================
+function parsePTS(text) {
+    var pts = [];
+    if (!text || !text.trim()) return pts;
+    var lines = text.split(/\r?\n/);
+    var cur = null;
+    var inBlock = false;
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (line.indexOf("Point") === 0 && line.indexOf("{") >= 0) {
+            inBlock = true;
+            cur = makeEmptyPoint();
+            continue;
+        }
+        if (line === "}" && inBlock) {
+            if (cur && cur.nNumber !== null) {
+                cur._orig = JSON.parse(JSON.stringify(cur));
+                pts.push(cur);
+            }
+            inBlock = false;
+            cur = null;
+            continue;
+        }
+        if (!inBlock || !cur) continue;
+        var m;
+        if ((m = line.match(/^nNumber\s*=\s*(\d+)$/))) cur.nNumber = parseInt(m[1],10);
+        else if ((m = line.match(/^sLabel\s*=\s*"([^"]*)"/))) cur.sLabel = m[1];
+        else if ((m = line.match(/^sLabel\s*=\s*'([^']*)'/))) cur.sLabel = m[1];
+        else if ((m = line.match(/^sDescription\s*=\s*"([^"]*)"/))) cur.sDescription = m[1];
+        else if ((m = line.match(/^nUndefined\s*=\s*(\d+)/))) cur.nUndefined = parseInt(m[1],10);
+        else if ((m = line.match(/^rX\s*=\s*([-\d.]+)/))) cur.rX = parseFloat(m[1]);
+        else if ((m = line.match(/^rY\s*=\s*([-\d.]+)/))) cur.rY = parseFloat(m[1]);
+        else if ((m = line.match(/^rZ\s*=\s*([-\d.]+)/))) cur.rZ = parseFloat(m[1]);
+        else if ((m = line.match(/^rU\s*=\s*([-\d.]+)/))) cur.rU = parseFloat(m[1]);
+        else if ((m = line.match(/^rV\s*=\s*([-\d.]+)/))) cur.rV = parseFloat(m[1]);
+        else if ((m = line.match(/^rW\s*=\s*([-\d.]+)/))) cur.rW = parseFloat(m[1]);
+        else if ((m = line.match(/^rR\s*=\s*([-\d.]+)/))) cur.rR = parseFloat(m[1]);
+        else if ((m = line.match(/^rS\s*=\s*([-\d.]+)/))) cur.rS = parseFloat(m[1]);
+        else if ((m = line.match(/^rT\s*=\s*([-\d.]+)/))) cur.rT = parseFloat(m[1]);
+        else if ((m = line.match(/^nLocal\s*=\s*(\d+)/))) cur.nLocal = parseInt(m[1],10);
+        else if ((m = line.match(/^nHand\s*=\s*(\d+)/))) cur.nHand = parseInt(m[1],10);
+        else if ((m = line.match(/^nElbow\s*=\s*(\d+)/))) cur.nElbow = parseInt(m[1],10);
+        else if ((m = line.match(/^nWrist\s*=\s*(\d+)/))) cur.nWrist = parseInt(m[1],10);
+        else if ((m = line.match(/^nJ1Flag\s*=\s*(\d+)/))) cur.nJ1Flag = parseInt(m[1],10);
+        else if ((m = line.match(/^nJ2Flag\s*=\s*(\d+)/))) cur.nJ2Flag = parseInt(m[1],10);
+        else if ((m = line.match(/^nJ4Flag\s*=\s*(\d+)/))) cur.nJ4Flag = parseInt(m[1],10);
+        else if ((m = line.match(/^nJ6Flag\s*=\s*(\d+)/))) cur.nJ6Flag = parseInt(m[1],10);
+        else if ((m = line.match(/^rJ1Angle\s*=\s*([-\d.]+)/))) cur.rJ1Angle = parseFloat(m[1]);
+        else if ((m = line.match(/^rJ4Angle\s*=\s*([-\d.]+)/))) cur.rJ4Angle = parseFloat(m[1]);
+        else if ((m = line.match(/^bSimVisible\s*=\s*(\w+)/))) cur.bSimVisible = m[1];
+    }
+    return pts;
+}
+
+function makeEmptyPoint() {
+    return {
+        nNumber: null, sLabel: "", sDescription: "", nUndefined: 0,
+        rX: 0, rY: 0, rZ: 0, rU: 0, rV: 0, rW: 0,
+        rR: 0, rS: 0, rT: 0,
+        nLocal: 0, nHand: 1, nElbow: 1, nWrist: 2,
+        nJ1Flag: 0, nJ2Flag: 0, nJ4Flag: 0, nJ6Flag: 0,
+        rJ1Angle: 0, rJ4Angle: 0, bSimVisible: "False",
+        _orig: null
+    };
+}
+
+function clonePoint(pt) {
+    var c = JSON.parse(JSON.stringify(pt));
+    c._orig = JSON.parse(JSON.stringify(pt._orig || pt));
+    return c;
+}
+
+function fmt(n) {
+    var s = (typeof n === 'number' ? n : parseFloat(n)).toFixed(3);
+    return s.replace(/\.?0+$/, "");
+}
+
+function hasLabel(pt) {
+    return pt.sLabel && pt.sLabel.trim().length > 0;
+}
+
+function isModified(pt) {
+    if (!pt._orig) return false;
+    return Math.abs(pt.rU - pt._orig.rU) > 0.001 ||
+           Math.abs(pt.rV - pt._orig.rV) > 0.001 ||
+           Math.abs(pt.rW - pt._orig.rW) > 0.001 ||
+           pt.sLabel !== pt._orig.sLabel;
+}
+
+// ===================== 表格渲染 (含拖拉) =====================
+function renderTable() {
+    var tbody = document.getElementById("ptBody");
+    tbody.innerHTML = "";
+    if (points.length === 0) {
+        var tr = document.createElement("tr");
+        var td = document.createElement("td");
+        td.colSpan = 10;
+        td.style.cssText = "color:#64748b;text-align:center;padding:16px";
+        td.textContent = "尚無點位資料，請貼上 PTS 內容或載入範例";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        updateStats();
+        return;
+    }
+    for (var i = 0; i < points.length; i++) {
+        var pt = points[i];
+        var tr = document.createElement("tr");
+        tr.draggable = true;
+        tr.dataset.index = i;
+        tr.addEventListener("dragstart", onDragStart);
+        tr.addEventListener("dragover", onDragOver);
+        tr.addEventListener("drop", onDrop);
+        tr.addEventListener("dragend", onDragEnd);
+
+        // 拖拉手柄
+        var tdHandle = document.createElement("td");
+        tdHandle.className = "drag-handle";
+        tdHandle.textContent = "\u2630";
+        tdHandle.title = "拖拉排序";
+        tr.appendChild(tdHandle);
+
+        // 編號
+        tr.appendChild(makeCell(pt.nNumber, "pt-num"));
+
+        // 標籤 (可編輯)
+        var tdLabel = document.createElement("td");
+        var inpLabel = document.createElement("input");
+        inpLabel.type = "text";
+        inpLabel.className = "label-input" + (pt.sLabel !== (pt._orig && pt._orig.sLabel || "") ? " changed" : "");
+        inpLabel.value = pt.sLabel;
+        inpLabel.dataset.idx = i;
+        inpLabel.addEventListener("change", onLabelChange);
+        tdLabel.appendChild(inpLabel);
+        tr.appendChild(tdLabel);
+
+        // X Y Z (唯讀顯示)
+        tr.appendChild(makeCell(fmt(pt.rX), "coord"));
+        tr.appendChild(makeCell(fmt(pt.rY), "coord"));
+        tr.appendChild(makeCell(fmt(pt.rZ), "coord"));
+
+        // U V W (可編輯)
+        tr.appendChild(makeCoordCell(pt.rU, i, "rU", pt));
+        tr.appendChild(makeCoordCell(pt.rV, i, "rV", pt));
+        tr.appendChild(makeCoordCell(pt.rW, i, "rW", pt));
+
+        // 操作按鈕
+        var tdAct = document.createElement("td");
+        tdAct.className = "actions";
+        tdAct.appendChild(makeActBtn("\u2398", "act-copy", "複製為新點位", function(idx){ return function(){copyPoint(idx);}; }(i)));
+        tdAct.appendChild(makeActBtn("\u25b2", "act-up", "上移", function(idx){ return function(){movePoint(idx, -1);}; }(i)));
+        tdAct.appendChild(makeActBtn("\u25bc", "act-down", "下移", function(idx){ return function(){movePoint(idx, 1);}; }(i)));
+        tdAct.appendChild(makeActBtn("\u00d7", "act-del", "刪除", function(idx){ return function(){deletePoint(idx);}; }(i)));
+        tr.appendChild(tdAct);
+
+        tbody.appendChild(tr);
+    }
+    updateStats();
+    updateBasePointSelect();
+}
+
+function makeCell(text, cls) {
+    var td = document.createElement("td");
+    if (cls) td.className = cls;
+    td.textContent = text;
+    return td;
+}
+
+function makeCoordCell(val, idx, field, pt) {
+    var td = document.createElement("td");
+    var inp = document.createElement("input");
+    inp.type = "number";
+    inp.step = "0.001";
+    inp.className = "coord-input";
+    var origVal = pt._orig ? pt._orig[field] : val;
+    if (Math.abs(val - origVal) > 0.001) inp.classList.add("changed");
+    inp.value = fmt(val);
+    inp.dataset.idx = idx;
+    inp.dataset.field = field;
+    inp.addEventListener("change", onCoordChange);
+    td.appendChild(inp);
+    return td;
+}
+
+function makeActBtn(text, cls, title, fn) {
+    var btn = document.createElement("button");
+    btn.className = "act-btn " + cls;
+    btn.textContent = text;
+    btn.title = title;
+    btn.onclick = fn;
+    return btn;
+}
+
+function onCoordChange(e) {
+    var idx = parseInt(e.target.dataset.idx, 10);
+    var field = e.target.dataset.field;
+    var val = parseFloat(e.target.value);
+    if (isNaN(val)) return;
+    points[idx][field] = val;
+    var orig = points[idx]._orig ? points[idx]._orig[field] : val;
+    if (Math.abs(val - orig) > 0.001) e.target.classList.add("changed");
+    else e.target.classList.remove("changed");
+    updateStats();
+    generateAll();
+}
+
+function onLabelChange(e) {
+    var idx = parseInt(e.target.dataset.idx, 10);
+    points[idx].sLabel = e.target.value;
+    var orig = points[idx]._orig ? points[idx]._orig.sLabel : "";
+    if (points[idx].sLabel !== orig) e.target.classList.add("changed");
+    else e.target.classList.remove("changed");
+    updateStats();
+    generateAll();
+}
+
+// ===================== 拖拉排序 =====================
+function onDragStart(e) {
+    dragSrcIndex = parseInt(e.target.closest("tr").dataset.index, 10);
+    e.target.closest("tr").classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+}
+function onDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    var tr = e.target.closest("tr");
+    if (tr && !tr.classList.contains("dragging")) tr.classList.add("drag-over");
+}
+function onDrop(e) {
+    e.preventDefault();
+    var tr = e.target.closest("tr");
+    if (!tr) return;
+    var dstIndex = parseInt(tr.dataset.index, 10);
+    tr.classList.remove("drag-over");
+    if (dragSrcIndex === dstIndex) return;
+    var item = points.splice(dragSrcIndex, 1)[0];
+    points.splice(dstIndex, 0, item);
+    renderTable();
+    generateAll();
+}
+function onDragEnd(e) {
+    var trs = document.querySelectorAll("#ptBody tr");
+    for (var i = 0; i < trs.length; i++) {
+        trs[i].classList.remove("dragging", "drag-over");
+    }
+}
+
+// ===================== 點位操作 =====================
+function copyPoint(idx) {
+    var pt = clonePoint(points[idx]);
+    var maxNum = 0;
+    for (var i = 0; i < points.length; i++) {
+        if (points[i].nNumber > maxNum) maxNum = points[i].nNumber;
+    }
+    pt.nNumber = maxNum + 1;
+    pt.sLabel = pt.sLabel + "_Copy";
+    points.splice(idx + 1, 0, pt);
+    renderTable();
+    generateAll();
+    showToast("已複製點位 [" + pt.nNumber + "] " + pt.sLabel);
+}
+
+function deletePoint(idx) {
+    var pt = points[idx];
+    points.splice(idx, 1);
+    renderTable();
+    generateAll();
+    showToast("已刪除點位 [" + pt.nNumber + "]");
+}
+
+function movePoint(idx, dir) {
+    var newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= points.length) return;
+    var tmp = points[idx];
+    points[idx] = points[newIdx];
+    points[newIdx] = tmp;
+    renderTable();
+    generateAll();
+}
+
+function removeEmptyPoints() {
+    var before = points.length;
+    points = points.filter(function(p) { return hasLabel(p); });
+    var removed = before - points.length;
+    renderTable();
+    generateAll();
+    showToast("已清除 " + removed + " 個空標籤點位");
+}
+
+function removeSelected() {
+    removeEmptyPoints();
+}
+
+// ===================== 批次 UVW =====================
+function applyBatchUVW() {
+    var u = document.getElementById("batchU").value;
+    var v = document.getElementById("batchV").value;
+    var w = document.getElementById("batchW").value;
+    var hasU = u !== "";
+    var hasV = v !== "";
+    var hasW = w !== "";
+    if (!hasU && !hasV && !hasW) { showToast("請至少輸入一個目標值"); return; }
+    for (var i = 0; i < points.length; i++) {
+        if (hasU) points[i].rU = parseFloat(u);
+        if (hasV) points[i].rV = parseFloat(v);
+        if (hasW) points[i].rW = parseFloat(w);
+    }
+    renderTable();
+    generateAll();
+    showToast("已套用至全部 " + points.length + " 個點位");
+}
+
+function autoNormalizeVW() {
+    if (points.length === 0) return;
+    var valid = points.filter(function(p) { return hasLabel(p); });
+    if (valid.length === 0) valid = points;
+    var vCounts = {}, wCounts = {};
+    for (var i = 0; i < valid.length; i++) {
+        var vo = valid[i]._orig ? valid[i]._orig.rV : valid[i].rV;
+        var wo = valid[i]._orig ? valid[i]._orig.rW : valid[i].rW;
+        vCounts[Math.round(vo)] = (vCounts[Math.round(vo)] || 0) + 1;
+        wCounts[Math.round(wo)] = (wCounts[Math.round(wo)] || 0) + 1;
+    }
+    var vMode = 0, vMax = 0, wMode = 0, wMax = 0;
+    for (var k in vCounts) { if (vCounts[k] > vMax) { vMax = vCounts[k]; vMode = parseInt(k,10); } }
+    for (var k in wCounts) { if (wCounts[k] > wMax) { wMax = wCounts[k]; wMode = parseInt(k,10); } }
+    document.getElementById("batchU").value = "";
+    document.getElementById("batchV").value = vMode;
+    document.getElementById("batchW").value = wMode;
+    for (var i = 0; i < points.length; i++) {
+        points[i].rV = vMode;
+        points[i].rW = wMode;
+    }
+    renderTable();
+    generateAll();
+    document.getElementById("autoInfo").textContent = "自動正角：V=" + vMode + " (眾數 " + vMax + " 點), W=" + wMode + " (眾數 " + wMax + " 點)。U 保留原始值。";
+    showToast("V,W 自動正角完成");
+}
+
+function autoNormalizeAll() {
+    if (points.length === 0) return;
+    var valid = points.filter(function(p) { return hasLabel(p); });
+    if (valid.length === 0) valid = points;
+    var vCounts = {}, wCounts = {};
+    for (var i = 0; i < valid.length; i++) {
+        var vo = valid[i]._orig ? valid[i]._orig.rV : valid[i].rV;
+        var wo = valid[i]._orig ? valid[i]._orig.rW : valid[i].rW;
+        vCounts[Math.round(vo)] = (vCounts[Math.round(vo)] || 0) + 1;
+        wCounts[Math.round(wo)] = (wCounts[Math.round(wo)] || 0) + 1;
+    }
+    var vMode = 0, vMax = 0, wMode = 0, wMax = 0;
+    for (var k in vCounts) { if (vCounts[k] > vMax) { vMax = vCounts[k]; vMode = parseInt(k,10); } }
+    for (var k in wCounts) { if (wCounts[k] > wMax) { wMax = wCounts[k]; wMode = parseInt(k,10); } }
+    document.getElementById("batchU").value = 0;
+    document.getElementById("batchV").value = vMode;
+    document.getElementById("batchW").value = wMode;
+    for (var i = 0; i < points.length; i++) {
+        points[i].rU = 0;
+        points[i].rV = vMode;
+        points[i].rW = wMode;
+    }
+    renderTable();
+    generateAll();
+    document.getElementById("autoInfo").textContent = "自動正角全部：U=0, V=" + vMode + ", W=" + wMode + "。";
+    showToast("U,V,W 自動正角完成");
+}
+
+function resetUVW() {
+    for (var i = 0; i < points.length; i++) {
+        if (points[i]._orig) {
+            points[i].rU = points[i]._orig.rU;
+            points[i].rV = points[i]._orig.rV;
+            points[i].rW = points[i]._orig.rW;
+        }
+    }
+    document.getElementById("batchU").value = "";
+    document.getElementById("batchV").value = "";
+    document.getElementById("batchW").value = "";
+    document.getElementById("autoInfo").textContent = "";
+    renderTable();
+    generateAll();
+    showToast("已恢復原始 UVW");
+}
+
+// ===================== 統計更新 =====================
+function updateStats() {
+    var total = points.length;
+    var valid = 0, changed = 0;
+    for (var i = 0; i < points.length; i++) {
+        if (hasLabel(points[i])) valid++;
+        if (isModified(points[i])) changed++;
+    }
+    document.getElementById("ptTotal").textContent = total;
+    document.getElementById("ptValid").textContent = valid;
+    document.getElementById("ptChanged").textContent = changed;
+    var warn = document.getElementById("warnBox");
+    if (total > valid) {
+        warn.style.display = "block";
+        warn.textContent = "注意：" + (total - valid) + " 個點位標籤為空，Go 指令會跳過這些點位";
+    } else {
+        warn.style.display = "none";
+    }
+}
+
+// ===================== 生成 Epson Script =====================
+function generateScript() {
+    var valid = points.filter(function(p) { return hasLabel(p); });
+    if (valid.length === 0) {
+        document.getElementById("outputScript").textContent = "' 請先載入或貼上點位資料...";
+        document.getElementById("statusBadge").textContent = "等待輸入";
+        document.getElementById("statusBadge").className = "badge badge-warn";
+        return;
+    }
+    var loop = document.getElementById("loopCount").value || "50";
+    var spd = document.getElementById("speed").value || "100";
+    var spdS = document.getElementById("speedS").value || "100";
+    var wait = document.getElementById("waitSec").value || "5";
+    var power = document.getElementById("powerMode").value;
+    var indent = document.getElementById("indentStyle").value === "tab" ? "\t" : "    ";
+    var seqText = document.getElementById("sequence").value.trim();
+    var includeXY = document.getElementById("includeXY").checked;
+    var useMod = document.getElementById("useModified").checked;
+    var I = indent;
+    var I2 = indent + indent;
+    var lines = [];
+    lines.push("' ============================================================");
+    lines.push("'  Epson RC+ 腳本 - 由 Robot PTS 轉換器自動生成");
+    lines.push("'  生成時間: " + new Date().toLocaleString("zh-TW"));
+    lines.push("' ============================================================");
+    lines.push("'");
+    lines.push("' ----- 點位對照表 -----");
+    for (var i = 0; i < valid.length; i++) {
+        var p = valid[i];
+        var u = useMod ? p.rU : p._orig.rU;
+        var v = useMod ? p.rV : p._orig.rV;
+        var w = useMod ? p.rW : p._orig.rW;
+        var mod = isModified(p) ? " [已修改]" : "";
+        lines.push("'  [" + padLeft(String(p.nNumber),2) + "] " + p.sLabel + "  XYZ=(" + fmt(p.rX) + "," + fmt(p.rY) + "," + fmt(p.rZ) + ") UVW=(" + fmt(u) + "," + fmt(v) + "," + fmt(w) + ")" + mod);
+    }
+    var empty = points.filter(function(p) { return !hasLabel(p); });
+    if (empty.length > 0) {
+        lines.push("'");
+        lines.push("'  (已跳過 - 空標籤點位:)");
+        for (var i = 0; i < empty.length; i++) {
+            lines.push("'  [" + padLeft(String(empty[i].nNumber),2) + "] (無名稱)");
+        }
+    }
+    lines.push("'");
+    lines.push("Function main");
+    lines.push(I + "Power " + power + "        ' 設定馬達功率模式");
+    lines.push(I + "Speed " + spd + "          ' 關節速度 " + spd + "%");
+    lines.push(I + "SpeedS " + spdS + "         ' 直線速度 " + spdS + "%");
+    lines.push(I + "Wait " + wait + "          ' 啟動前等待 " + wait + " 秒");
+    lines.push(I + "Integer i       ' 宣告迴圈變數");
+    lines.push("'");
+    if (includeXY) {
+        lines.push(I + "' ----- 點位定義 (XY 坐標) -----");
+        for (var i = 0; i < valid.length; i++) {
+            var p = valid[i];
+            var u = useMod ? p.rU : p._orig.rU;
+            var v = useMod ? p.rV : p._orig.rV;
+            var w = useMod ? p.rW : p._orig.rW;
+            lines.push(I + p.sLabel + " = XY(" + fmt(p.rX) + ", " + fmt(p.rY) + ", " + fmt(p.rZ) + ", " + fmt(u) + ", " + fmt(v) + ", " + fmt(w) + ")");
+        }
+        lines.push("'");
+    }
+    var map = {};
+    for (var i = 0; i < valid.length; i++) map[valid[i].nNumber] = valid[i].sLabel;
+    var seq = [];
+    if (seqText) {
+        var parts = seqText.split(/[\s,]+/);
+        for (var i = 0; i < parts.length; i++) {
+            if (parts[i] === "") continue;
+            var n = parseInt(parts[i], 10);
+            if (!isNaN(n)) seq.push(n);
+        }
+    } else {
+        for (var i = 0; i < valid.length; i++) seq.push(valid[i].nNumber);
+    }
+    var vseq = [], skipped = [];
+    for (var i = 0; i < seq.length; i++) {
+        if (map[seq[i]] !== undefined) vseq.push(seq[i]);
+        else skipped.push(seq[i]);
+    }
+    lines.push(I + "' ----- 主迴圈 (執行 " + loop + " 次) -----");
+    lines.push(I + "For i = 0 To " + loop);
+    lines.push("'");
+    if (vseq.length === 0) {
+        lines.push(I2 + "' 警告：無可用移動點位");
+    } else {
+        for (var i = 0; i < vseq.length; i++) {
+            var num = vseq[i];
+            var lbl = map[num];
+            var step = i === 0 ? " ' 步驟 " + (i+1) : "";
+            lines.push(I2 + "Go " + lbl + " '" + num + step);
+        }
+    }
+    lines.push("'");
+    lines.push(I + "Next            ' 迴圈結束");
+    lines.push("Fend              ' 主程式結束");
+    document.getElementById("outputScript").textContent = lines.join("\n");
+    var bt = "已生成 (" + vseq.length + " 步)";
+    if (skipped.length > 0) bt += " / 跳過 " + skipped.length;
+    document.getElementById("statusBadge").textContent = bt;
+    document.getElementById("statusBadge").className = "badge-ok";
+}
+
+// ===================== 生成 PTS =====================
+function generatePTS() {
+    if (points.length === 0) {
+        document.getElementById("outputPTS").textContent = "' 尚無點位資料...";
+        document.getElementById("ptsBadge").textContent = "-";
+        return;
+    }
+    var lines = [];
+    lines.push('sVersion="2.0.0"');
+    lines.push("bDisplayR=False");
+    lines.push("bDisplayS=False");
+    lines.push("bDisplayT=False");
+    lines.push("nNumberOfJoints=6");
+    lines.push("nNumberOfPoints=" + points.length);
+    for (var i = 0; i < points.length; i++) {
+        var p = points[i];
+        lines.push("Point" + (i+1) + " {");
+        lines.push("\tnNumber=" + p.nNumber);
+        lines.push('\tsLabel="' + (p.sLabel || "") + '"');
+        lines.push('\tsDescription="' + (p.sDescription || "") + '"');
+        lines.push("\tnUndefined=" + p.nUndefined);
+        lines.push("\trX=" + fmt(p.rX));
+        lines.push("\trY=" + fmt(p.rY));
+        lines.push("\trZ=" + fmt(p.rZ));
+        lines.push("\trU=" + fmt(p.rU));
+        lines.push("\trV=" + fmt(p.rV));
+        lines.push("\trW=" + fmt(p.rW));
+        lines.push("\trR=" + fmt(p.rR));
+        lines.push("\trS=" + fmt(p.rS));
+        lines.push("\trT=" + fmt(p.rT));
+        lines.push("\tnLocal=" + p.nLocal);
+        lines.push("\tnHand=" + p.nHand);
+        lines.push("\tnElbow=" + p.nElbow);
+        lines.push("\tnWrist=" + p.nWrist);
+        lines.push("\tnJ1Flag=" + p.nJ1Flag);
+        lines.push("\tnJ2Flag=" + p.nJ2Flag);
+        lines.push("\tnJ4Flag=" + p.nJ4Flag);
+        lines.push("\tnJ6Flag=" + p.nJ6Flag);
+        lines.push("\trJ1Angle=" + fmt(p.rJ1Angle));
+        lines.push("\trJ4Angle=" + fmt(p.rJ4Angle));
+        lines.push("\tbSimVisible=" + p.bSimVisible);
+        lines.push("}");
+    }
+    document.getElementById("outputPTS").textContent = lines.join("\n");
+    document.getElementById("ptsBadge").textContent = points.length + " 點";
+}
+
+// ===================== 生成 JSON =====================
+function generateJSON() {
+    if (points.length === 0) {
+        document.getElementById("outputJSON").textContent = "' 尚無點位資料...";
+        document.getElementById("jsonBadge").textContent = "-";
+        return;
+    }
+    var exportArr = [];
+    for (var i = 0; i < points.length; i++) {
+        var p = JSON.parse(JSON.stringify(points[i]));
+        delete p._orig;
+        exportArr.push(p);
+    }
+    var json = JSON.stringify(exportArr, null, 2);
+    document.getElementById("outputJSON").textContent = json;
+    document.getElementById("jsonBadge").textContent = exportArr.length + " 點";
+}
+
+function generateAll() {
+    generateScript();
+    generatePTS();
+    generateJSON();
+}
+
+// ===================== 工具列功能 =====================
+function loadSample() {
+    points = JSON.parse(JSON.stringify(SAMPLE_DATA));
+    for (var i = 0; i < points.length; i++) {
+        points[i]._orig = JSON.parse(JSON.stringify(points[i]));
+    }
+    renderTable();
+    generateAll();
+    showToast("已載入範例資料 (" + points.length + " 個點位)");
+    updateBasePointSelect();
+}
+
+function importFromInput() {
+    var text = document.getElementById("input").value;
+    if (!text || !text.trim()) { showToast("請先貼上 PTS 內容"); return; }
+    points = parsePTS(text);
+    renderTable();
+    generateAll();
+    showToast("已解析 " + points.length + " 個點位");
+    updateBasePointSelect();
+}
+
+function exportPTS() {
+    if (points.length === 0) { showToast("尚無點位可匯出"); return; }
+    generatePTS();
+    downloadText(document.getElementById("outputPTS").textContent, "robot_export.pts");
+    showToast("已下載 PTS 檔");
+}
+
+function exportSample() {
+    if (points.length === 0) { showToast("尚無點位可儲存"); return; }
+    var exportArr = [];
+    for (var i = 0; i < points.length; i++) {
+        var p = JSON.parse(JSON.stringify(points[i]));
+        delete p._orig;
+        exportArr.push(p);
+    }
+    var json = JSON.stringify(exportArr, null, 2);
+    downloadText(json, "robot_sample.json");
+    showToast("已儲存範例 JSON");
+}
+
+function resetAll() {
+    points = [];
+    document.getElementById("input").value = "";
+    document.getElementById("sequence").value = "";
+    document.getElementById("batchU").value = "";
+    document.getElementById("batchV").value = "";
+    document.getElementById("batchW").value = "";
+    document.getElementById("autoInfo").textContent = "";
+    renderTable();
+    generateAll();
+    showToast("已清空全部資料");
+    updateBasePointSelect();
+}
+
+
+// ===================== 產品平移複製 =====================
+function updateBasePointSelect() {
+    var sel = document.getElementById("basePointSelect");
+    if (!sel) return;
+    sel.innerHTML = "";
+    if (points.length === 0) {
+        var opt = document.createElement("option");
+        opt.textContent = "尚無點位";
+        opt.value = "";
+        sel.appendChild(opt);
+        return;
+    }
+    for (var i = 0; i < points.length; i++) {
+        var p = points[i];
+        var opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = "[" + p.nNumber + "] " + (p.sLabel || "(無名稱)") + "  XYZ(" + fmt(p.rX) + "," + fmt(p.rY) + "," + fmt(p.rZ) + ")";
+        sel.appendChild(opt);
+    }
+}
+
+function generateShiftedPoints() {
+    var sel = document.getElementById("basePointSelect");
+    if (!sel || sel.value === "") {
+        showToast("請先載入點位資料");
+        return;
+    }
+    var baseIdx = parseInt(sel.value, 10);
+    var basePt = points[baseIdx];
+    if (!basePt) {
+        showToast("基準點位無效");
+        return;
+    }
+
+    var axis = document.getElementById("shiftAxis").value;
+    var dir = parseInt(document.getElementById("shiftDir").value, 10);
+    var size = parseFloat(document.getElementById("productSize").value) || 310;
+    var buffer = parseFloat(document.getElementById("bufferSize").value) || 0;
+    var count = parseInt(document.getElementById("shiftCount").value, 10) || 1;
+    var prefix = document.getElementById("shiftLabelPrefix").value.trim();
+
+    var step = (size + buffer) * dir;
+    var maxNum = 0;
+    for (var i = 0; i < points.length; i++) {
+        if (points[i].nNumber > maxNum) maxNum = points[i].nNumber;
+    }
+
+    var generated = 0;
+    for (var n = 1; n <= count; n++) {
+        var newPt = clonePoint(basePt);
+        maxNum++;
+        newPt.nNumber = maxNum;
+        var offset = step * n;
+        if (axis === "X") {
+            newPt.rX = basePt.rX + offset;
+        } else {
+            newPt.rY = basePt.rY + offset;
+        }
+        // 自動命名
+        if (prefix) {
+            newPt.sLabel = prefix + "_" + n;
+        } else if (basePt.sLabel) {
+            newPt.sLabel = basePt.sLabel + "_Shift" + n;
+        } else {
+            newPt.sLabel = "Shift_" + maxNum;
+        }
+        // 清除修改標記，設為新生成
+        newPt._orig = JSON.parse(JSON.stringify(newPt));
+        points.push(newPt);
+        generated++;
+    }
+
+    renderTable();
+    generateAll();
+    updateBasePointSelect();
+    // 保持選中基準點位
+    if (baseIdx < points.length - generated) {
+        document.getElementById("basePointSelect").value = baseIdx;
+    }
+    document.getElementById("shiftInfo").textContent = 
+        "已從 [" + basePt.nNumber + "] " + (basePt.sLabel || "(無名稱)") + 
+        " 沿 " + axis + " 軸" + (dir > 0 ? "正向" : "負向") + 
+        " 生成 " + generated + " 個點位，步距 " + fmt(Math.abs(step)) + " mm";
+    showToast("已生成 " + generated + " 個平移點位");
+}
+
+// ===================== Tab 切換 =====================
+function switchTab(tabId) {
+    var tabs = ["tabScript", "tabPTS", "tabJSON"];
+    var btns = document.querySelectorAll(".tab-btn");
+    for (var i = 0; i < tabs.length; i++) {
+        document.getElementById(tabs[i]).classList.remove("active");
+        btns[i].classList.remove("active");
+    }
+    document.getElementById(tabId).classList.add("active");
+    for (var i = 0; i < btns.length; i++) {
+        if (btns[i].getAttribute("onclick").indexOf(tabId) >= 0) {
+            btns[i].classList.add("active");
+        }
+    }
+}
+
+// ===================== 複製 / 下載 =====================
+function copyScript() {
+    copyToClipboard(document.getElementById("outputScript").textContent, "腳本已複製");
+}
+function copyPTS() {
+    copyToClipboard(document.getElementById("outputPTS").textContent, "PTS 已複製");
+}
+function copyJSON() {
+    copyToClipboard(document.getElementById("outputJSON").textContent, "JSON 已複製");
+}
+function downloadScript() {
+    var d = new Date();
+    var ds = d.getFullYear() + padLeft(String(d.getMonth()+1),2) + padLeft(String(d.getDate()),2);
+    downloadText(document.getElementById("outputScript").textContent, "robot_epson_" + ds + ".txt");
+    showToast("已下載腳本");
+}
+function downloadPTS() {
+    downloadText(document.getElementById("outputPTS").textContent, "robot_export.pts");
+    showToast("已下載 PTS");
+}
+function downloadJSON() {
+    downloadText(document.getElementById("outputJSON").textContent, "robot_sample.json");
+    showToast("已下載 JSON");
+}
+
+function copyToClipboard(text, msg) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() { showToast(msg); }).catch(function() { fbCopy(text, msg); });
+    } else { fbCopy(text, msg); }
+}
+function fbCopy(text, msg) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    showToast(msg);
+}
+function downloadText(text, filename) {
+    var blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function padLeft(str, len) {
+    str = String(str);
+    while (str.length < len) str = " " + str;
+    return str;
+}
+
+function showToast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(function() { t.classList.remove("show"); }, 2500);
+}
+
+// ===================== 事件綁定 =====================
+var settingIds = ["loopCount","speed","speedS","waitSec","powerMode","indentStyle","sequence","includeXY","useModified"];
+for (var i = 0; i < settingIds.length; i++) {
+    var el = document.getElementById(settingIds[i]);
+    if (el) {
+        el.addEventListener("input", generateAll);
+        el.addEventListener("change", generateAll);
+    }
+}
+
+// 初始化
+renderTable();
+generateAll();
+</script>
+</body>
+</html>
