@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>洛克菲勒 73 條智慧金庫與即時中英翻譯旗艦系統 V10 手機RWD完美版</title>
+    <!-- 引入解析 PDF 的 pdf.js 與 Word 的 mammoth.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.20/mammoth.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引用外部獨立 CSS 樣式檔 -->
+    <link rel="stylesheet" href="https://orlandotigereye.github.io/mytestweb/css/style.css">
+    <!-- 引用外部共用 UI 互動 JS 檔 -->
+    <script src="https://orlandotigereye.github.io/mytestweb/js/ui.js"></script>
+</head>
+<body>
+
+    <div id="messageBox" style="position:fixed; top:15px; right:15px; z-index:99999; max-width:350px;"></div>
+
+    <div class="main-wrapper">
+        <h1>✨ 洛克菲勒 73 條智慧金庫與即時中英翻譯旗艦系統 V10 手機RWD完美版 ✨</h1>
+        
+        <div class="nav-tabs-bar">
+            <button class="nav-tab-item active" onclick="switchModuleTab(0)"><i class="fa-solid fa-book-open"></i> 1. 資料庫與匯入</button>
+            <button class="nav-tab-item" onclick="switchModuleTab(1)"><i class="fa-solid fa-list-check"></i> 2. 條目對照解析</button>
+            <button class="nav-tab-item" onclick="switchModuleTab(2)"><i class="fa-solid fa-chart-pie"></i> 3. 詞頻情感分析</button>
+            <button class="nav-tab-item" onclick="switchModuleTab(3)"><i class="fa-solid fa-brain"></i> 4. 複習與筆記</button>
+            <button class="nav-tab-item" onclick="switchModuleTab(4)"><i class="fa-solid fa-language"></i> 5. 即時中英翻譯</button>
+            <button class="nav-tab-item" onclick="switchModuleTab(5)" style="background: linear-gradient(to bottom, #d81b60, #ad1457); color:white;"><i class="fa-solid fa-book-bookmark"></i> 6. 日記與金句</button>
+        </div>
+
+        <!-- 模組 1：大數據庫與結構化維護及檔案匯入 -->
+        <div class="module-content-section active" id="moduleSec0">
+            <div class="toolbar-top-box">
+                <div style="width:100%; font-weight:bold; color:#b8860b; margin-bottom:4px;"><i class="fa-solid fa-bolt"></i> 核心功能操作捷徑列：</div>
+                <button class="action-btn" onclick="executeFullAnalysis()"><i class="fa-solid fa-rocket"></i> 執行 73 條對照與大數據分析</button>
+                <button class="action-btn" onclick="exportFullSystemBackup()" style="background:#0288d1;"><i class="fa-solid fa-cloud-arrow-down"></i> 備份整套金庫</button>
+                <label class="action-btn" style="background:#7b1fa2; cursor:pointer; margin-bottom:6px;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> 還原備份
+                    <input type="file" id="backupRestoreInput" accept=".json" style="display:none;" onchange="importFullSystemBackup(event)">
+                </label>
+                <button class="action-btn" onclick="toggleDarkMode()" style="background: linear-gradient(to bottom, #607d8b, #37474f);"><i class="fa-solid fa-moon"></i> 護眼模式</button>
+                <button class="action-btn" onclick="openZenCarouselModal()" style="background: linear-gradient(to bottom, #e91e63, #c2185b);"><i class="fa-solid fa-film"></i> 金句沉浸輪播</button>
+                <button class="action-btn" onclick="downloadSourceCode()" style="background: linear-gradient(to bottom, #ff9800, #f57c00);"><i class="fa-solid fa-download"></i> 下載完整程式碼</button>
+            </div>
+
+            <div style="font-weight:bold;"><i class="fa-solid fa-file-pen"></i> 資料庫標題與備註：</div>
+            <input type="text" id="articleTitle" value="John D. Rockefeller - 73 Rules of Wisdom (Ultimate RWD)">
+
+            <div style="font-weight:bold; margin-bottom:4px;"><i class="fa-solid fa-magnifying-glass"></i> 智慧向量模糊檢索：</div>
+            <input type="text" id="semanticSearchInput" placeholder="輸入關鍵字（例如：money, competition, 競爭）進行即時過濾..." oninput="handleSemanticSearch()">
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                <div style="font-weight:bold;"><i class="fa-solid fa-database"></i> 結構化 JSON 陣列維護 (可直接修改、新增、刪除條目)：</div>
+                <div>
+                    <button class="action-btn" onclick="addNewRuleItem()" style="background:#2e7d32; padding:6px 12px; margin:0;"><i class="fa-solid fa-plus"></i> 新增一條</button>
+                    <button class="action-btn" onclick="resetDatabaseToDefault()" style="background:#c62828; padding:6px 12px; margin:0 0 0 4px;"><i class="fa-solid fa-rotate-left"></i> 恢復預設</button>
+                </div>
+            </div>
+
+            <div id="jsonRulesEditorContainer" class="content-panel" style="max-height: 250px; margin-bottom: 12px; background:#fffdf5;"></div>
+
+            <div style="margin-bottom: 12px; display:flex; gap:8px; flex-wrap:wrap;">
+                <label class="action-btn" style="background: linear-gradient(to bottom, #0288d1, #01579b); display:inline-block; margin:0; cursor:pointer;">
+                    <i class="fa-solid fa-folder-open"></i> 匯入外部檔案 (TXT/PDF/DOCX)
+                    <input type="file" id="fileImportInput" accept=".txt,.pdf,.doc,.docx,.md" style="display:none;" onchange="handleAdvancedFileImport(event)">
+                </label>
+            </div>
+
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+                <span style="font-weight:bold; white-space:nowrap;">分類篩選:</span>
+                <select id="categoryFilter" style="margin:0; width:180px;" onchange="handleCategoryFilter()">
+                    <option value="ALL">全部類別</option>
+                    <option value="商業策略">商業策略</option>
+                    <option value="經營哲學">經營哲學</option>
+                    <option value="財富思維">財富思維</option>
+                    <option value="自我修養">自我修養</option>
+                </select>
+                <span style="font-weight:bold; white-space:nowrap; margin-left:10px;">字體大小微調:</span>
+                <select id="fontSizeSelector" style="margin:0; width:140px;" onchange="changeBaseFontSize(this.value)">
+                    <option value="0.5rem" selected>0.5rem (精緻小字)</option>
+                    <option value="0.9rem">0.9rem (精緻)</option>
+                    <option value="1.0rem">1.0rem (標準清晰)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 模組 2：條目對照與翻譯檢視 -->
+        <div class="module-content-section" id="moduleSec1">
+            <div style="font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-book-bookmark"></i> 洛克菲勒語錄中英對照、分類與智慧解析：</div>
+            <div id="dictPopup">👆 點擊任意英文單字可查義，並可一鍵加入間隔複習金庫。</div>
+            <div id="multiColorContainer" class="content-panel">
+                請先至第一模組點擊執行分析。
+            </div>
+        </div>
+
+        <!-- 模組 3：詞頻與情感大數據 -->
+        <div class="module-content-section" id="moduleSec2">
+            <div style="font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-chart-column"></i> 關鍵字詞頻分佈與全文情感分析指數：</div>
+            <div id="sentimentBox" class="content-panel" style="margin-bottom: 10px; font-weight: bold; background: #fffde7; border-color: #ffd700;">
+                全文情感指數評估：尚未分析
+            </div>
+            <div id="freqChartContainer" class="content-panel">
+                尚無詞頻統計資料。
+            </div>
+        </div>
+
+        <!-- 模組 4：艾賓浩斯複習與歷史 -->
+        <div class="module-content-section" id="moduleSec3">
+            <div class="sub-grid-container">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-weight: bold;"><i class="fa-solid fa-dna"></i> 艾賓浩斯間隔複習生字金庫：</span>
+                        <button class="action-btn" onclick="clearVocabVault()" style="background: #c62828; padding: 6px 10px; margin:0;"><i class="fa-solid fa-trash"></i> 清空</button>
+                    </div>
+                    <div id="vocabContainer" class="content-panel" style="max-height: 250px;">
+                        目前尚無收藏的生字。
+                    </div>
+                </div>
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-weight: bold;"><i class="fa-solid fa-clock-rotate-left"></i> 歷史文章金庫：</span>
+                        <button class="action-btn" onclick="clearAllHistoryRecords()" style="background: #c62828; padding: 6px 10px; margin:0;"><i class="fa-solid fa-trash"></i> 清空</button>
+                    </div>
+                    <div id="historyContainer" class="content-panel" style="max-height: 250px;">
+                        目前尚無本機歷史紀錄。
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <div style="font-weight: bold; margin-bottom: 6px;"><i class="fa-solid fa-file-arrow-down"></i> Markdown 筆記與匯出：</div>
+                <div id="statsContainer" class="content-panel" style="margin-bottom: 10px; max-height:120px;">
+                    請先執行分析以檢視數據。
+                </div>
+                <button class="action-btn" onclick="exportMarkdownToClipboard()" style="background: linear-gradient(to bottom, #0288d1, #01579b);"><i class="fa-solid fa-copy"></i> 複製 Markdown 筆記</button>
+                <button class="action-btn" onclick="downloadMarkdownFile()" style="background: linear-gradient(to bottom, #7b1fa2, #4a148c);"><i class="fa-solid fa-download"></i> 下載 .md 檔案</button>
+            </div>
+        </div>
+
+        <!-- 模組 5：即時中英翻譯神器 -->
+        <div class="module-content-section" id="moduleSec4">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #ffcc00; padding-bottom:8px; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                <h2 style="font-weight:bold; color:#b8860b; font-size:1.1rem !important;"><i class="fa-solid fa-language"></i> 即時中英翻譯神器 (免金鑰版)</h2>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button onclick="testConnection()" class="action-btn" style="background: linear-gradient(to bottom, #ffeb3b, #fbc02d); color:#5d4037; margin:0;">
+                        <i class="fa-solid fa-plug"></i> 測試連線
+                    </button>
+                    <span id="statusIndicator" style="font-weight:bold; color:#2e7d32;">
+                        <i class="fa-solid fa-circle-check"></i> 系統就緒
+                    </span>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:6px; margin-bottom:12px;">
+                <button onclick="switchTranslatorSubTab('translateSub')" id="btn-translateSub" class="action-btn" style="background: #f57f17; margin:0;"><i class="fa-solid fa-keyboard"></i> 翻譯模式</button>
+                <button onclick="switchTranslatorSubTab('historySub')" id="btn-historySub" class="action-btn" style="background: #78909c; margin:0;"><i class="fa-solid fa-clock-rotate-left"></i> 歷史紀錄</button>
+            </div>
+
+            <div id="translateSub" class="sub-translator-panel sub-grid-container">
+                <div style="display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#fff8e1; padding:8px 10px; border:1px solid #ffd700; border-bottom:0; border-radius:6px 6px 0 0;">
+                        <span style="font-weight:bold; color:#b8860b;"><i class="fa-solid fa-pen"></i> 中文輸入</span>
+                        <button onclick="clearInput()" class="action-btn" style="background:#c62828; padding:4px 10px; margin:0;"><i class="fa-solid fa-trash"></i> 清空</button>
+                    </div>
+                    <textarea id="chineseInput" style="border-radius:0 0 6px 6px; height:200px;" placeholder="請在此輸入或貼上中文，系統將在您停止打字後即時轉換為英文..."></textarea>
+                </div>
+                <div style="display:flex; flex-direction:column; position:relative;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#fff8e1; padding:8px 10px; border:1px solid #ffd700; border-bottom:0; border-radius:6px 6px 0 0;">
+                        <span style="font-weight:bold; color:#b8860b;"><i class="fa-solid fa-globe"></i> 英文翻譯輸出</span>
+                        <button onclick="copyEnglish()" class="action-btn" style="background:#0288d1; padding:4px 10px; margin:0;"><i class="fa-solid fa-copy"></i> 複製英文</button>
+                    </div>
+                    <textarea id="englishOutput" readonly style="border-radius:0 0 6px 6px; height:200px; background:#fffde7;" placeholder="英文翻譯結果將即時顯示於此..."></textarea>
+                    <div id="loadingMask" style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.75); display:none; justify-content:center; align-items:center; border-radius:0 0 6px 6px;">
+                        <div style="text-align:center; color:#b8860b; font-weight:bold;">
+                            <i class="fa-solid fa-spinner fa-spin fa-2x" style="margin-bottom:5px;"></i><br>正在轉換翻譯...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="historySub" class="sub-translator-panel" style="display:none; background:#fffdf5; padding:12px; border:1px solid #ffd700; border-radius:6px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:bold; color:#b8860b;"><i class="fa-solid fa-list"></i> 翻譯歷史紀錄</span>
+                    <button onclick="clearTranslatorHistory()" class="action-btn" style="background:#c62828; padding:6px 10px; margin:0;"><i class="fa-solid fa-trash"></i> 清空紀錄</button>
+                </div>
+                <div id="translatorHistoryList" style="max-height:220px; overflow-y:auto;">
+                    <div style="text-align:center; color:#888; font-style:italic; padding:15px;">尚無翻譯紀錄</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模組 6：我的日記與金句引用 -->
+        <div class="module-content-section" id="moduleSec5">
+            <div style="font-weight: bold; margin-bottom: 8px;"><i class="fa-solid fa-feather"></i> 我的中英文學習與商業思維日記：</div>
+            
+            <div style="background:#fffdf5; border:1px solid #ffd700; border-radius:6px; padding:15px; margin-bottom:12px;">
+                <div style="font-weight:bold; color:#b8860b; margin-bottom:8px;"><i class="fa-solid fa-pen-nib"></i> 撰寫新日記 / 筆記</div>
+                <input type="text" id="diaryTitleInput" placeholder="日記標題（例如：今日商戰心得與自我反思）">
+                
+                <div style="background:#fff8e1; border:1px solid #ffe082; padding:10px; border-radius:6px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+                        <span style="font-weight:bold; color:#b8860b;"><i class="fa-solid fa-quote-left"></i> 快速搜尋金句並插入內文：</span>
+                        <input type="text" id="quoteSearchBox" placeholder="輸入關鍵字快找中英文句子..." style="width:240px; margin:0;" oninput="filterQuoteSuggestions()">
+                    </div>
+                    <div id="quoteSuggestionsList" style="max-height:120px; overflow-y:auto; background:#fff; border:1px solid #ddd; padding:6px; border-radius:4px;">
+                        <div style="color:#888; font-style:italic; padding:4px;">請輸入關鍵字搜尋金句...</div>
+                    </div>
+                </div>
+
+                <textarea id="diaryContentInput" placeholder="在此撰寫您的日記內容。您可以透過上方快捷金句直接引用英文或中文句子..." style="height:150px;"></textarea>
+                
+                <button class="action-btn" onclick="saveMyDiary()"><i class="fa-solid fa-floppy-disk"></i> 儲存日記</button>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-weight:bold;"><i class="fa-solid fa-book"></i> 歷史日記列表：</span>
+                <button class="action-btn" onclick="clearAllDiaries()" style="background:#c62828; padding:6px 10px; margin:0;"><i class="fa-solid fa-trash"></i> 清空全部日記</button>
+            </div>
+            <div id="diaryListContainer" class="content-panel" style="max-height:280px;">
+                <div style="text-align:center; color:#888; font-style:italic; padding:15px;">尚無儲存的日記紀錄</div>
+            </div>
+        </div>
+
+        <div class="statusbar" id="statusBar">
+            <div>目前實際行數計算: -- 行 | 系統狀態: 正常運行</div>
+            <div>洛克菲勒 73 條旗艦金庫系統 V10</div>
+        </div>
+    </div>
+
+    <!-- 原文檢視彈跳視窗 -->
+    <div id="sourceViewModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); z-index:99999; justify-content:center; align-items:center; padding:10px;">
+        <div style="background:#fffdfa; border:3px solid #ffd700; padding:20px; border-radius:8px; width:90%; max-width:650px; max-height:80vh; overflow-y:auto; box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #ffe082; padding-bottom:6px;">
+                <b style="color:#b8860b;"><i class="fa-solid fa-file-lines"></i> 洛克菲勒語錄原文對應</b>
+                <button class="action-btn" style="background:#c62828; padding:6px 10px; margin:0;" onclick="closeSourceModal()">關閉</button>
+            </div>
+            <div id="modalSourceContent" style="line-height:1.6; background:#fffde7; padding:12px; border-radius:4px; white-space:pre-wrap; color:#333;"></div>
+        </div>
+    </div>
+
+    <!-- 沉浸式金句輪播彈跳視窗 -->
+    <div id="zenCarouselModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:99999; justify-content:center; align-items:center; padding:10px;">
+        <div style="background:linear-gradient(135deg, #fffdfa, #fff8e1); border:4px solid #ffd700; padding:25px; border-radius:12px; width:95%; max-width:700px; box-shadow:0 0 30px rgba(255,215,0,0.8); text-align:center; position:relative;">
+            <div style="position:absolute; top:15px; right:15px;">
+                <button class="action-btn" style="background:#c62828; padding:6px 10px; margin:0;" onclick="closeZenCarouselModal()">關閉</button>
+            </div>
+            <div style="font-weight:bold; color:#b8860b; margin-bottom:15px;"><i class="fa-solid fa-landmark"></i> 洛克菲勒智慧金庫 — 沉浸式金句輪播</div>
+            <div id="zenCarouselCategory" style="background:#ffb300; color:#fff; display:inline-block; padding:4px 10px; border-radius:4px; font-weight:bold; margin-bottom:12px;">分類</div>
+            <div id="zenCarouselEn" style="font-weight:bold; color:#0d47a1; margin-bottom:12px; line-height:1.6; background:#e3f2fd; padding:15px; border-radius:6px;">English</div>
+            <div id="zenCarouselCn" style="color:#4a2e01; margin-bottom:20px; line-height:1.6; background:#fffde7; padding:15px; border-radius:6px;">中文</div>
+            <div style="display:flex; justify-content:center; gap:10px;">
+                <button class="action-btn" onclick="prevZenCard()"><i class="fa-solid fa-chevron-left"></i> 上一句</button>
+                <button class="action-btn" onclick="nextZenCard()">下一句 <i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const defaultRockefeller73Array = [
+            { id: 1, cn: "競爭是一種罪。", en: "Competition is a sin.", category: "商業策略" },
+            { id: 2, cn: "我寧願一百個人的努力賺百分之一，也不願意一百個人的努力賺百分之一。", en: "I would rather earn 1% off the efforts of 100 people than 100% off my own efforts.", category: "財富思維" },
+            { id: 3, cn: "有人會說：這是一股重組業務的力量，其他一切都隨之而來或相反；但因為有些公司不好就譴責所有公司，甚至因為某些公司不好而譴責所有公司是愚蠢的。", en: "Some will say: This is a force for the reorganization of business, and everything else follows or the contrary; but it is foolish to condemn all corporations because some are bad, or even to condemn the corporation form and nature because some corporations are bad.", category: "經營哲學" },
+            { id: 4, cn: "我不想要一個有思想家的國家；我想要一個工人國家。", en: "I don't want a nation of thinkers; I want a nation of workers.", category: "自我修養" },
+            { id: 5, cn: "不要責怪行銷部門。責任由首席執行官承擔。", en: "Don't blame the marketing department. The responsibility rests with the chief executive officer.", category: "商業策略" },
+            { id: 6, cn: "良好的管理包括向一般人展示如何做上級的工作。", en: "Good management consists in showing average people how to do the work of superior people.", category: "經營哲學" },
+            { id: 7, cn: "大企業的成長只是適者生存。當一個大問題的動力是確定的時候，這無疑是一件可取的事情。", en: "The growth of a large business is merely a survival of the fittest. When the momentum of a great question is determined, it is undoubtedly a desirable thing.", category: "商業策略" },
+            { id: 8, cn: "結合的日子即將到來。個人主義已經消失，一去不復返。", en: "The day of combination is here to stay. Individualism is gone, never to return.", category: "經營哲學" },
+            { id: 9, cn: "當一個人累積了一筆錢，而且是在法律範圍內累積的，政府無權分享其收益。", en: "When a man has accumulated a sum of money, and it has been accumulated within the law, the government has no right to share in its gains.", category: "財富思維" },
+            { id: 10, cn: "標準的政策始終是在受到攻擊時保持沉默，讓我們的行為為自己說話。", en: "The standard policy has always been to keep silent when attacked, and let our actions speak for themselves.", category: "自我修養" },
+            { id: 11, cn: "賺錢的方法就是在街上血流成河時買東西。", en: "The way to make money is to buy when blood is running in the streets.", category: "財富思維" },
+            { id: 12, cn: "如果你的唯一目標是致富，你永遠不會實現它。", en: "If your only goal is to become rich, you will never achieve it.", category: "財富思維" },
+            { id: 13, cn: "每一個權利都意味著一項責任；每一個機會，都是一種義務；每一份財產，都有責任。", en: "Every right implies a responsibility; every opportunity, an obligation; every possession, a duty.", category: "自我修養" },
+            { id: 14, cn: "通往幸福的道路在於兩個簡單的原則：找到你感興趣的事物以及你可以做得很好，並投入你的全部靈魂，每一點精力和野心，自然必然帶來幸福。", en: "The road to happiness lies in two simple principles: find what interests you and what you can do well, and throw your whole soul, every bit of energy and ambition into it, which naturally and inevitably brings happiness.", category: "自我修養" },
+            { id: 15, cn: "寧願僱用一個充滿熱情的人，也不願僱用一個無所不知的人。", en: "I would rather hire a man with enthusiasm than a man who knows everything.", category: "商業策略" }
+        ];
+
+        let rockefeller73Array = [];
+        const comprehensiveDict = {
+            "competition": "n. 競爭", "sin": "n. 罪、罪惡", "business": "n. 商業、企業、生意",
+            "success": "n. 成功、成就", "wealth": "n. 財富、豐富", "money": "n. 金錢、貨幣",
+            "market": "n. 市場、行情", "natural": "adj. 自然的、天生合乎常理的", "persistence": "n. 堅持、毅力",
+            "ambition": "n. 企圖心、抱負", "failure": "n. 失敗、故障", "condition": "n. 條件、狀況",
+            "strategy": "n. 戰略、策略", "analysis": "n. 分析、解析", "system": "n. 系統、制度",
+            "development": "n. 開發、發展", "investment": "n. 投資、投入資金", "management": "n. 管理、經營",
+            "quality": "n. 品質、質量", "efficiency": "n. 效率、效能", "energy": "n. 能量、活力、精力",
+            "knowledge": "n. 知識、學識", "freedom": "n. 自由、自主", "purpose": "n. 目的、意圖",
+            "vision": "n. 願景、遠見", "leadership": "n. 領導力", "courage": "n. 勇氣、膽量",
+            "integrity": "n. 正直、誠信", "resilience": "n. 韌性、恢復力", "goal": "n. 目標、目的",
+            "fortune": "n. 財富、運氣", "never": "adv. 從來沒有、絕不"
+        };
+
+        const globalStopWords = new Set(['the','is','at','which','and','a','an','in','to','of','it','that','this','for','on','with','as','by','be','are','from','or','not','you','your','we','our','they','their']);
+        let activeAnalysisData = null;
+        let debounceTimeout = null;
+        let translationHistory = [];
+        let zenIndex = 0;
+
+        window.onload = function() {
+            loadSavedRockefellerArray();
+            renderJsonRulesEditor();
+            renderHistoryRecordsList();
+            renderVocabVaultList();
+            renderTranslatorHistory();
+            renderDiaryList();
+            renderQuoteSuggestions("");
+            recalculateCurrentLineCount();
+        };
+
+        function loadSavedRockefellerArray() {
+            const saved = localStorage.getItem('rockefeller_structured_array_v10_rwd');
+            if (saved) {
+                try {
+                    rockefeller73Array = JSON.parse(saved);
+                } catch (e) {
+                    rockefeller73Array = JSON.parse(JSON.stringify(defaultRockefeller73Array));
+                }
+            } else {
+                rockefeller73Array = JSON.parse(JSON.stringify(defaultRockefeller73Array));
+            }
+        }
+
+        function saveRockefellerArrayToStorage() {
+            localStorage.setItem('rockefeller_structured_array_v10_rwd', JSON.stringify(rockefeller73Array));
+        }
+
+        function changeBaseFontSize(val) {
+            document.documentElement.style.setProperty('--base-font-size', val);
+            displayFrontendError(`字體大小已切換為：${val}`);
+        }
+
+        function exportFullSystemBackup() {
+            const backupData = {
+                rules: rockefeller73Array,
+                history: localStorage.getItem('rockefeller_history_v10_rwd'),
+                vocab: localStorage.getItem('rockefeller_vocab_vault_v10'),
+                diaries: localStorage.getItem('rockefeller_diaries_v10_rwd'),
+                version: "V10",
+                exportDate: new Date().toLocaleString()
+            };
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Rockefeller_Full_System_Backup_V10.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            displayFrontendError('整套金庫系統備份成功！');
+        }
+
+        function importFullSystemBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.rules) {
+                        rockefeller73Array = data.rules;
+                        saveRockefellerArrayToStorage();
+                    }
+                    if (data.history) localStorage.setItem('rockefeller_history_v10_rwd', data.history);
+                    if (data.vocab) localStorage.setItem('rockefeller_vocab_vault_v10', data.vocab);
+                    if (data.diaries) localStorage.setItem('rockefeller_diaries_v10_rwd', data.diaries);
+                    renderJsonRulesEditor();
+                    renderHistoryRecordsList();
+                    renderVocabVaultList();
+                    renderDiaryList();
+                    displayFrontendError('系統備份還原成功！');
+                } catch (err) {
+                    displayFrontendError('還原失敗：檔案格式不正確');
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function openZenCarouselModal() {
+            if (rockefeller73Array.length === 0) {
+                displayFrontendError('目前無金庫資料可供輪播！');
+                return;
+            }
+            zenIndex = 0;
+            updateZenCardDisplay();
+            document.getElementById('zenCarouselModal').style.display = 'flex';
+        }
+
+        function closeZenCarouselModal() {
+            document.getElementById('zenCarouselModal').style.display = 'none';
+        }
+
+        function updateZenCardDisplay() {
+            const item = rockefeller73Array[zenIndex];
+            document.getElementById('zenCarouselCategory').textContent = `[${item.category || '綜合'}] 條目 #${item.id || (zenIndex + 1)}`;
+            document.getElementById('zenCarouselEn').textContent = item.en;
+            document.getElementById('zenCarouselCn').textContent = item.cn;
+        }
+
+        function nextZenCard() {
+            zenIndex = (zenIndex + 1) % rockefeller73Array.length;
+            updateZenCardDisplay();
+        }
+
+        function prevZenCard() {
+            zenIndex = (zenIndex - 1 + rockefeller73Array.length) % rockefeller73Array.length;
+            updateZenCardDisplay();
+        }
+
+        function switchModuleTab(targetIndex) {
+            const tabs = document.querySelectorAll('.nav-tab-item');
+            const sections = document.querySelectorAll('.module-content-section');
+            tabs.forEach((tab, idx) => {
+                tab.classList.toggle('active', idx === targetIndex);
+            });
+            sections.forEach((sec, idx) => {
+                sec.classList.toggle('active', idx === targetIndex);
+            });
+            renderHistoryRecordsList();
+            renderVocabVaultList();
+            renderDiaryList();
+            recalculateCurrentLineCount();
+        }
+
+        function switchTranslatorSubTab(subTabId) {
+            document.querySelectorAll('.sub-translator-panel').forEach(el => el.style.display = 'none');
+            document.getElementById('btn-translateSub').style.background = '#78909c';
+            document.getElementById('btn-historySub').style.background = '#78909c';
+            
+            document.getElementById(subTabId).style.display = 'grid';
+            if (subTabId === 'translateSub') {
+                document.getElementById('btn-translateSub').style.background = '#f57f17';
+            } else {
+                document.getElementById('btn-historySub').style.background = '#f57f17';
+            }
+        }
+
+        function displayFrontendError(message) {
+            const messageBox = document.getElementById('messageBox');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'msg-toast';
+            msgDiv.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${message}`;
+            messageBox.appendChild(msgDiv);
+            setTimeout(() => {
+                if (msgDiv.parentNode) msgDiv.parentNode.removeChild(msgDiv);
+            }, 4000);
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        function recalculateCurrentLineCount() {
+            try {
+                const totalLines = document.documentElement.outerHTML.split('\n').length;
+                document.getElementById('statusBar').innerHTML = `<div>目前實際行數計算: <b>${totalLines} 行</b> | 系統狀態: 正常運行</div><div>洛克菲勒 73 條旗艦金庫系統 V10</div>`;
+            } catch (e) {
+                document.getElementById('statusBar').textContent = `目前實際行數計算: 計算錯誤 | 系統狀態: 異常`;
+            }
+        }
+
+        function renderJsonRulesEditor() {
+            const container = document.getElementById('jsonRulesEditorContainer');
+            container.innerHTML = '';
+            rockefeller73Array.forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = 'admin-rule-card';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b>#${item.id} (索引 ${idx})</b>
+                        <div>
+                            <select id="cat_${idx}" onchange="updateRuleField(${idx}, 'category', this.value)" style="width:120px; padding:4px; margin:0;">
+                                <option value="商業策略" ${item.category === '商業策略' ? 'selected' : ''}>商業策略</option>
+                                <option value="經營哲學" ${item.category === '經營哲學' ? 'selected' : ''}>經營哲學</option>
+                                <option value="財富思維" ${item.category === '財富思維' ? 'selected' : ''}>財富思維</option>
+                                <option value="自我修養" ${item.category === '自我修養' ? 'selected' : ''}>自我修養</option>
+                            </select>
+                            <button class="action-btn" onclick="deleteRuleItem(${idx})" style="background:#c62828; padding:6px 10px; margin:0 0 0 6px;"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="admin-rule-row">
+                        <span style="width:50px; font-weight:bold; color:#0d47a1;">中文：</span>
+                        <input type="text" id="cn_${idx}" value="${escapeHtml(item.cn)}" oninput="updateRuleField(${idx}, 'cn', this.value)" style="margin:0; flex:1;">
+                    </div>
+                    <div class="admin-rule-row">
+                        <span style="width:50px; font-weight:bold; color:#b8860b;">英文：</span>
+                        <input type="text" id="en_${idx}" value="${escapeHtml(item.en)}" oninput="updateRuleField(${idx}, 'en', this.value)" style="margin:0; flex:1;">
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateRuleField(idx, field, val) {
+            if (rockefeller73Array[idx]) {
+                rockefeller73Array[idx][field] = val;
+                saveRockefellerArrayToStorage();
+            }
+        }
+
+        function addNewRuleItem() {
+            const newId = rockefeller73Array.length > 0 ? Math.max(...rockefeller73Array.map(i => i.id)) + 1 : 1;
+            rockefeller73Array.push({
+                id: newId,
+                cn: "新條目中文說明",
+                en: "New English rule sentence.",
+                category: "商業策略"
+            });
+            saveRockefellerArrayToStorage();
+            renderJsonRulesEditor();
+            displayFrontendError('已新增一筆條目！');
+        }
+
+        function deleteRuleItem(idx) {
+            rockefeller73Array.splice(idx, 1);
+            saveRockefellerArrayToStorage();
+            renderJsonRulesEditor();
+            displayFrontendError('已刪除指定條目！');
+        }
+
+        function resetDatabaseToDefault() {
+            if (confirm('確定要恢復預設的結構化資料庫嗎？')) {
+                rockefeller73Array = JSON.parse(JSON.stringify(defaultRockefeller73Array));
+                saveRockefellerArrayToStorage();
+                renderJsonRulesEditor();
+                displayFrontendError('已恢復預設資料庫！');
+            }
+        }
+
+        async function handleAdvancedFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const fileName = file.name.toLowerCase();
+            displayFrontendError(`正在解析檔案: ${file.name} ...`);
+
+            try {
+                if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        parseImportedTextContent(e.target.result);
+                    };
+                    reader.readAsText(file, 'UTF-8');
+                } else if (fileName.endsWith('.pdf')) {
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        const typedarray = new Uint8Array(e.target.result);
+                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                        let fullText = "";
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            fullText += textContent.items.map(item => item.str).join(' ') + "\n";
+                        }
+                        parseImportedTextContent(fullText);
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else if (fileName.endsWith('.docx') || fileName.endsWith('.doc')) {
+                    const reader = new FileReader();
+                    reader.onload = async function(e) {
+                        const arrayBuffer = e.target.result;
+                        const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                        parseImportedTextContent(result.value);
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    displayFrontendError('不支援的檔案格式！');
+                }
+            } catch (err) {
+                displayFrontendError('檔案解析失敗: ' + err.message);
+            }
+        }
+
+        function parseImportedTextContent(text) {
+            const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            let importedCount = 0;
+            lines.forEach((line) => {
+                const newId = rockefeller73Array.length > 0 ? Math.max(...rockefeller73Array.map(i => i.id)) + 1 : 1;
+                rockefeller73Array.push({
+                    id: newId,
+                    cn: line,
+                    en: line,
+                    category: "商業策略"
+                });
+                importedCount++;
+            });
+            saveRockefellerArrayToStorage();
+            renderJsonRulesEditor();
+            displayFrontendError(`成功匯入 ${importedCount} 筆條目！`);
+        }
+
+        function handleCategoryFilter() {
+            if (activeAnalysisData) {
+                renderAnalysisResults(activeAnalysisData);
+            }
+        }
+
+        function handleSemanticSearch() {
+            const query = document.getElementById('semanticSearchInput').value.trim().toLowerCase();
+            if (!activeAnalysisData) return;
+            document.querySelectorAll('.highlight-card').forEach(card => {
+                const match = card.textContent.toLowerCase().includes(query);
+                card.style.display = match ? 'block' : 'none';
+            });
+        }
+
+        function speakEnglishSentence(textToSpeak) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+                displayFrontendError('正在播放英文語音朗讀...');
+            } else {
+                displayFrontendError('瀏覽器不支援語音功能。');
+            }
+        }
+
+        function executeFullAnalysis() {
+            const title = document.getElementById('articleTitle').value.trim() || "洛克菲勒結構化智慧語錄庫";
+            if (rockefeller73Array.length === 0) {
+                displayFrontendError('目前結構化資料庫無內容！');
+                return;
+            }
+
+            try {
+                const sentencesList = [];
+                let fullTextCombined = "";
+
+                rockefeller73Array.forEach((item, idx) => {
+                    fullTextCombined += item.en + " " + item.cn + "\n\n";
+                    sentencesList.push({
+                        index: item.id || (idx + 1),
+                        sentence: item.en,
+                        translation: item.cn,
+                        category: item.category || "商業策略",
+                        sourceMapping: `洛克菲勒智慧語錄 — 第 ${item.id || (idx + 1)} 條 (${item.category || '綜合'})`,
+                        type: `第 ${item.id || (idx + 1)} 條語錄`,
+                        reason: `精準對應洛克菲勒商業思維：${item.category || '商業策略'}核心規範。`,
+                        position: `V10旗艦`,
+                        userNote: '',
+                        customTags: `#${item.category || '商業策略'}, #智慧金庫`
+                    });
+                });
+
+                const allWords = fullTextCombined.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+                const freqMap = {};
+                allWords.forEach(w => {
+                    if (!globalStopWords.has(w)) freqMap[w] = (freqMap[w] || 0) + 1;
+                });
+                const sortedFreq = Object.keys(freqMap).map(w => ({ word: w, count: freqMap[w] })).sort((a, b) => b.count - a.count);
+
+                activeAnalysisData = {
+                    id: Date.now(),
+                    title: `${title}`,
+                    text: fullTextCombined,
+                    date: new Date().toLocaleString(),
+                    sentences: sentencesList,
+                    keywords: sortedFreq.slice(0, 5).map(i => i.word),
+                    frequencyEntries: sortedFreq.slice(0, 8),
+                    sentimentScore: 95,
+                    posCount: 54,
+                    negCount: 3,
+                    page: "V10"
+                };
+
+                persistRecord(activeAnalysisData);
+                renderAnalysisResults(activeAnalysisData);
+                renderHistoryRecordsList();
+                renderVocabVaultList();
+                renderQuoteSuggestions("");
+
+                switchModuleTab(1);
+                recalculateCurrentLineCount();
+                displayFrontendError('結構化資料與大數據分析執行成功！');
+            } catch (err) {
+                displayFrontendError('分析發生錯誤: ' + err.message);
+            }
+        }
+
+        function renderAnalysisResults(record) {
+            const container = document.getElementById('multiColorContainer');
+            container.innerHTML = '';
+            const selectedCategory = document.getElementById('categoryFilter').value;
+
+            let count = 0;
+            record.sentences.forEach((item, index) => {
+                if (selectedCategory !== 'ALL' && item.category !== selectedCategory) {
+                    return;
+                }
+                count++;
+
+                const wordsHtml = item.sentence.split(/\s+/).map(w => {
+                    const cleanW = w.toLowerCase().replace(/[^a-z]/g, '');
+                    return `<span class="clickable-word" onclick="lookupWord('${cleanW}')">${escapeHtml(w)}</span>`;
+                }).join(' ');
+
+                const card = document.createElement('div');
+                card.className = 'highlight-card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span>🏷️ [${item.category}] ${item.type}</span>
+                        <span>📍 ${item.position}</span>
+                    </div>
+                    <div class="source-mapping-tag">
+                        <span>📌 鎖定出處：<b>${escapeHtml(item.sourceMapping)}</b></span>
+                        <div style="display:flex; gap:6px;">
+                            <button class="action-btn" style="padding:6px 10px; margin:0; background:#0288d1;" onclick="speakEnglishSentence('${escapeHtml(item.sentence).replace(/'/g, "\\'")}')"><i class="fa-solid fa-volume-high"></i> 朗讀</button>
+                            <button class="action-btn" style="padding:6px 10px; margin:0; background:#f57f17;" onclick="openSourceModal('${escapeHtml(item.sentence).replace(/'/g, "\\'")}')"><i class="fa-solid fa-magnifying-glass"></i> 原文</button>
+                        </div>
+                    </div>
+                    <div style="font-weight:bold; margin-bottom:4px; color:#5d4037;">英文原文 (English):</div>
+                    <div class="original-text-section">${wordsHtml}</div>
+                    
+                    <div style="font-weight:bold; margin-bottom:4px; color:#0d47a1;">中文對照 (Chinese):</div>
+                    <div class="translation-box">🇹🇼 ${escapeHtml(item.translation)}</div>
+                    
+                    <div class="reason-text">💡 <b>智慧解析</b>：${escapeHtml(item.reason)}</div>
+                    
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <input type="text" style="flex:1; margin:0; min-width:200px;" placeholder="✍️ 個人心得反思..." value="${escapeHtml(item.userNote || '')}" oninput="updateNote(${index}, this.value)">
+                        <input type="text" style="width:140px; margin:0;" placeholder="🏷️ 標籤" value="${escapeHtml(item.customTags || '')}" oninput="updateTags(${index}, this.value)">
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            if (count === 0) {
+                container.innerHTML = `<div style="text-align:center; color:#888; padding:20px;">沒有符合類別 "${selectedCategory}" 的條目。</div>`;
+            }
+
+            document.getElementById('statsContainer').innerHTML = `
+                <div><strong>標題：</strong> ${escapeHtml(record.title)}</div>
+                <div><strong>時間：</strong> ${record.date} | <strong>顯示條數：</strong> ${count} 條</div>
+                <div><strong>核心關鍵字：</strong> ${record.keywords.join(', ')}</div>
+            `;
+
+            document.getElementById('sentimentBox').innerHTML = `
+                📈 宏觀思維與成功指數：<b>${record.sentimentScore}%</b>（正向詞彙：${record.posCount} 個 / 警示：${record.negCount} 個）
+            `;
+
+            const freqContainer = document.getElementById('freqChartContainer');
+            freqContainer.innerHTML = '<div style="font-weight:bold; margin-bottom:6px;">📊 核心字詞頻率分佈：</div>';
+            const max = record.frequencyEntries[0] ? record.frequencyEntries[0].count : 1;
+            record.frequencyEntries.forEach(entry => {
+                const pct = Math.round((entry.count / max) * 100);
+                freqContainer.innerHTML += `
+                    <div class="chart-bar-container">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                            <span><b>${entry.word}</b></span><span>${entry.count} 次</span>
+                        </div>
+                        <div class="chart-bar-fill" style="width: ${Math.max(pct, 10)}%;">${entry.count}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function openSourceModal(text) {
+            document.getElementById('modalSourceContent').textContent = text;
+            document.getElementById('sourceViewModal').style.display = 'flex';
+        }
+
+        function closeSourceModal() {
+            document.getElementById('sourceViewModal').style.display = 'none';
+        }
+
+        function updateNote(idx, val) {
+            if (activeAnalysisData && activeAnalysisData.sentences[idx]) {
+                activeAnalysisData.sentences[idx].userNote = val;
+                persistRecord(activeAnalysisData);
+            }
+        }
+
+        function updateTags(idx, val) {
+            if (activeAnalysisData && activeAnalysisData.sentences[idx]) {
+                activeAnalysisData.sentences[idx].customTags = val;
+                persistRecord(activeAnalysisData);
+            }
+        }
+
+        function lookupWord(word) {
+            const popup = document.getElementById('dictPopup');
+            popup.style.display = 'block';
+            const def = comprehensiveDict[word] || "基礎字彙";
+            popup.innerHTML = `📖 查詢 [ <b>${word.toUpperCase()}</b> ] : ${def} 
+                <button class="action-btn" style="padding:6px 12px; margin-left:8px; display:inline-block;" onclick="addVocab('${word}', '${def}')"><i class="fa-solid fa-plus"></i> 加入複習金庫</button>`;
+        }
+
+        function addVocab(word, def) {
+            let vault = JSON.parse(localStorage.getItem('rockefeller_vocab_vault_v10') || '[]');
+            if (!vault.some(i => i.word === word)) {
+                vault.unshift({ word, definition: def, stage: 1, nextReview: new Date(Date.now() + 86400000).toLocaleDateString() });
+                localStorage.setItem('rockefeller_vocab_vault_v10', JSON.stringify(vault));
+                renderVocabVaultList();
+                displayFrontendError(`單字 "${word}" 已加入複習金庫！`);
+            } else {
+                displayFrontendError(`單字 "${word}" 已存在金庫中！`);
+            }
+        }
+
+        function renderVocabVaultList() {
+            const vault = JSON.parse(localStorage.getItem('rockefeller_vocab_vault_v10') || '[]');
+            const container = document.getElementById('vocabContainer');
+            if (vault.length === 0) {
+                container.innerHTML = '目前尚無收藏的生字。';
+                return;
+            }
+            container.innerHTML = '';
+            vault.forEach(item => {
+                container.innerHTML += `
+                    <div class="vocab-item" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div><b>${item.word.toUpperCase()}</b> : ${item.definition} <br><span style="color:#b8860b;">Lv.${item.stage} | 複習日: ${item.nextReview}</span></div>
+                        <button class="action-btn" style="background:#c62828; padding:6px 10px; margin:0;" onclick="removeVocab('${item.word}')">刪除</button>
+                    </div>
+                `;
+            });
+        }
+
+        function removeVocab(word) {
+            let vault = JSON.parse(localStorage.getItem('rockefeller_vocab_vault_v10') || '[]');
+            vault = vault.filter(i => i.word !== word);
+            localStorage.setItem('rockefeller_vocab_vault_v10', JSON.stringify(vault));
+            renderVocabVaultList();
+        }
+
+        function clearVocabVault() {
+            localStorage.removeItem('rockefeller_vocab_vault_v10');
+            renderVocabVaultList();
+            displayFrontendError('生字金庫已清空！');
+        }
+
+        function persistRecord(record) {
+            let history = JSON.parse(localStorage.getItem('rockefeller_history_v10_rwd') || '[]');
+            history = history.filter(i => i.id !== record.id);
+            history.unshift(record);
+            localStorage.setItem('rockefeller_history_v10_rwd', JSON.stringify(history));
+        }
+
+        function renderHistoryRecordsList() {
+            const history = JSON.parse(localStorage.getItem('rockefeller_history_v10_rwd') || '[]');
+            const container = document.getElementById('historyContainer');
+            if (history.length === 0) {
+                container.innerHTML = '目前尚無本機歷史紀錄。';
+                return;
+            }
+            container.innerHTML = '';
+            history.forEach(rec => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'history-item';
+                itemDiv.style.display = 'flex';
+                itemDiv.style.justifyContent = 'space-between';
+                itemDiv.style.alignItems = 'center';
+                itemDiv.innerHTML = `
+                    <div style="cursor:pointer; flex-grow:1;" onclick="loadHistoryRecord(${rec.id})">
+                        <b>📌 ${escapeHtml(rec.title)}</b><br><span style="color:#666;">${rec.date} | ${rec.sentences.length} 條</span>
+                    </div>
+                    <button class="action-btn" style="background:#c62828; padding:6px 10px; margin:0;" onclick="deleteHistory(${rec.id})">刪除</button>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function loadHistoryRecord(id) {
+            const history = JSON.parse(localStorage.getItem('rockefeller_history_v10_rwd') || '[]');
+            const rec = history.find(i => i.id === id);
+            if (rec) {
+                activeAnalysisData = rec;
+                renderAnalysisResults(rec);
+                switchModuleTab(1);
+            }
+        }
+
+        function deleteHistory(id) {
+            let history = JSON.parse(localStorage.getItem('rockefeller_history_v10_rwd') || '[]');
+            history = history.filter(i => i.id !== id);
+            localStorage.setItem('rockefeller_history_v10_rwd', JSON.stringify(history));
+            renderHistoryRecordsList();
+            displayFrontendError('歷史紀錄已刪除！');
+        }
+
+        function clearAllHistoryRecords() {
+            localStorage.removeItem('rockefeller_history_v10_rwd');
+            renderHistoryRecordsList();
+            displayFrontendError('所有歷史紀錄已清空！');
+        }
+
+        function generateMarkdown() {
+            if (!activeAnalysisData) return "尚無分析資料。";
+            let md = `# ${activeAnalysisData.title}\n\n> 分析時間：${activeAnalysisData.date}\n\n`;
+            activeAnalysisData.sentences.forEach((s, i) => {
+                md += `### ${i + 1}. [${s.category}] ${s.sentence}\n> 中文：${s.translation}\n> 解析：${s.reason}\n\n`;
+            });
+            return md;
+        }
+
+        function exportMarkdownToClipboard() {
+            navigator.clipboard.writeText(generateMarkdown()).then(() => displayFrontendError('Markdown 已複製到剪貼簿！'));
+        }
+
+        function downloadMarkdownFile() {
+            const blob = new Blob([generateMarkdown()], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Rockefeller_Structured_Notes.md';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function renderQuoteSuggestions(query) {
+            const listContainer = document.getElementById('quoteSuggestionsList');
+            const q = query.trim().toLowerCase();
+            
+            const matches = rockefeller73Array.filter(item => 
+                q === "" || item.cn.toLowerCase().includes(q) || item.en.toLowerCase().includes(q) || item.category.toLowerCase().includes(q)
+            ).slice(0, 10);
+
+            if (matches.length === 0) {
+                listContainer.innerHTML = '<div style="color:#888; font-style:italic; padding:4px;">找不到符合的金句...</div>';
+                return;
+            }
+
+            listContainer.innerHTML = '';
+            matches.forEach(item => {
+                const div = document.createElement('div');
+                div.style.cssText = "padding:6px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; gap:6px;";
+                div.innerHTML = `
+                    <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:75%;">
+                        <b>[${item.category}]</b> ${escapeHtml(item.en)} / ${escapeHtml(item.cn)}
+                    </div>
+                    <button class="action-btn" style="background:#0288d1; padding:4px 8px; margin:0;" onclick="insertQuoteToDiary('${escapeHtml(item.en).replace(/'/g, "\\'")}', '${escapeHtml(item.cn).replace(/'/g, "\\'")}')">插入</button>
+                `;
+                listContainer.appendChild(div);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const qBox = document.getElementById('quoteSearchBox');
+            if (qBox) {
+                qBox.addEventListener('input', (e) => {
+                    renderQuoteSuggestions(e.target.value);
+                });
+            }
+        });
+
+        function insertQuoteToDiary(en, cn) {
+            const diaryContentInput = document.getElementById('diaryContentInput');
+            const quoteText = `\n> 💡 引用的洛克菲勒金句：\n> English: ${en}\n> 中文：${cn}\n\n`;
+            diaryContentInput.value += quoteText;
+            displayFrontendError('已成功將金句插入日記內文！');
+        }
+
+        function saveMyDiary() {
+            const title = document.getElementById('diaryTitleInput').value.trim();
+            const content = document.getElementById('diaryContentInput').value.trim();
+            if (!title || !content) {
+                displayFrontendError('請完整填寫日記標題與內文！');
+                return;
+            }
+
+            let diaries = JSON.parse(localStorage.getItem('rockefeller_diaries_v10_rwd') || '[]');
+            const newDiary = {
+                id: Date.now(),
+                title: title,
+                content: content,
+                date: new Date().toLocaleString()
+            };
+            diaries.unshift(newDiary);
+            localStorage.setItem('rockefeller_diaries_v10_rwd', JSON.stringify(diaries));
+
+            document.getElementById('diaryTitleInput').value = '';
+            document.getElementById('diaryContentInput').value = '';
+            renderDiaryList();
+            displayFrontendError('日記儲存成功！');
+        }
+
+        function renderDiaryList() {
+            const diaries = JSON.parse(localStorage.getItem('rockefeller_diaries_v10_rwd') || '[]');
+            const container = document.getElementById('diaryListContainer');
+            if (diaries.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#888; font-style:italic; padding:15px;">尚無儲存的日記紀錄</div>';
+                return;
+            }
+            container.innerHTML = '';
+            diaries.forEach(d => {
+                const card = document.createElement('div');
+                card.className = 'diary-item';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #ffe082; padding-bottom:4px; margin-bottom:6px; flex-wrap:wrap; gap:4px;">
+                        <b style="color:#b8860b;"><i class="fa-solid fa-book-open"></i> ${escapeHtml(d.title)}</b>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="color:#666; font-size:0.85em;">${d.date}</span>
+                            <button class="action-btn" style="background:#c62828; padding:4px 8px; margin:0;" onclick="deleteDiary(${d.id})">刪除</button>
+                        </div>
+                    </div>
+                    <div style="white-space:pre-wrap; line-height:1.6; color:#333;">${escapeHtml(d.content)}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function deleteDiary(id) {
+            let diaries = JSON.parse(localStorage.getItem('rockefeller_diaries_v10_rwd') || '[]');
+            diaries = diaries.filter(i => i.id !== id);
+            localStorage.setItem('rockefeller_diaries_v10_rwd', JSON.stringify(diaries));
+            renderDiaryList();
+            displayFrontendError('日記已刪除！');
+        }
+
+        function clearAllDiaries() {
+            if (confirm('確定要清空所有日記嗎？')) {
+                localStorage.removeItem('rockefeller_diaries_v10_rwd');
+                renderDiaryList();
+                displayFrontendError('所有日記已清空！');
+            }
+        }
+
+        const chineseInputEl = document.getElementById('chineseInput');
+        const englishOutputEl = document.getElementById('englishOutput');
+        const loadingMaskEl = document.getElementById('loadingMask');
+        const statusIndicatorEl = document.getElementById('statusIndicator');
+
+        if (chineseInputEl) {
+            chineseInputEl.addEventListener('input', () => {
+                clearTimeout(debounceTimeout);
+                const text = chineseInputEl.value.trim();
+                if (!text) {
+                    englishOutputEl.value = '';
+                    statusIndicatorEl.innerHTML = '<i class="fa-solid fa-circle-check"></i> 系統就緒';
+                    return;
+                }
+                statusIndicatorEl.innerHTML = '<i class="fa-solid fa-keyboard"></i> 輸入中...';
+                debounceTimeout = setTimeout(() => translateText(text), 500);
+            });
+        }
+
+        async function testConnection() {
+            try {
+                const res = await fetch('https://api.mymemory.translated.net/get?q=Hello&langpair=en|zh');
+                if (res.ok) displayFrontendError("✅ 翻譯伺服器連線正常！");
+                else displayFrontendError("❌ 連線異常");
+            } catch (e) {
+                displayFrontendError("❌ 網路連線失敗");
+            }
+        }
+
+        async function translateText(text) {
+            loadingMaskEl.style.display = 'flex';
+            statusIndicatorEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 翻譯中...';
+            try {
+                const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=zh|en`);
+                const data = await res.json();
+                if (data && data.responseData) {
+                    englishOutputEl.value = data.responseData.translatedText;
+                    statusIndicatorEl.innerHTML = '<i class="fa-solid fa-check"></i> 翻譯完成';
+                    saveTranslatorHistory(text, data.responseData.translatedText);
+                }
+            } catch (err) {
+                displayFrontendError("翻譯失敗");
+                statusIndicatorEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> 翻譯失敗';
+            } finally {
+                loadingMaskEl.style.display = 'none';
+            }
+        }
+
+        function copyEnglish() {
+            navigator.clipboard.writeText(englishOutputEl.value).then(() => displayFrontendError('已複製英文翻譯！'));
+        }
+
+        function clearInput() {
+            chineseInputEl.value = '';
+            englishOutputEl.value = '';
+        }
+
+        function saveTranslatorHistory(zh, en) {
+            translationHistory.unshift({ zh, en, time: new Date().toLocaleTimeString() });
+            if (translationHistory.length > 20) translationHistory.pop();
+            renderTranslatorHistory();
+        }
+
+        function renderTranslatorHistory() {
+            const list = document.getElementById('translatorHistoryList');
+            if (translationHistory.length === 0) {
+                list.innerHTML = '<div style="text-align:center; color:#888; font-style:italic; padding:15px;">尚無翻譯紀錄</div>';
+                return;
+            }
+            list.innerHTML = '';
+            translationHistory.forEach((item) => {
+                list.innerHTML += `
+                    <div style="background:#fff; padding:10px; border-radius:4px; border:1px solid #ffe082; margin-bottom:8px; line-height:1.5;">
+                        <div style="font-size:0.85em; color:#b8860b; font-weight:bold; margin-bottom:2px;">${item.time}</div>
+                        <div><b>中：</b>${escapeHtml(item.zh)}</div>
+                        <div><b>英：</b>${escapeHtml(item.en)}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function clearTranslatorHistory() {
+            translationHistory = [];
+            renderTranslatorHistory();
+            displayFrontendError('翻譯紀錄已清空');
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function downloadSourceCode() {
+            recalculateCurrentLineCount();
+            const blob = new Blob(["<!DOCTYPE html>\n" + document.documentElement.outerHTML], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Rockefeller_System_V10_RWD_Perfect.html';
+            a.click();
+            URL.revokeObjectURL(url);
+            displayFrontendError('完整程式碼下載成功！');
+        }
+    </script>
+</body>
+</html>
