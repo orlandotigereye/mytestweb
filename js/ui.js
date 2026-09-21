@@ -1,6 +1,6 @@
 /**
  * Rockefeller System V10 - UI Module (ui.js)
- * 負責介面渲染、分頁切換、錯誤訊息吐司提示與視窗控制
+ * 負責介面渲染、分頁切換、錯誤訊息吐司提示、視窗控制與手機舒適卡片轉化
  */
 
 /**
@@ -36,6 +36,7 @@ export function switchModuleTab(targetIndex) {
     });
     
     recalculateCurrentLineCount();
+    initMobileCardTables();
 }
 
 /**
@@ -141,4 +142,39 @@ export function escapeHtml(str) {
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+}
+
+/**
+ * ==========================================
+ * 手機專用卡片式響應排版工具函式 (autoCardTable.js)
+ * ==========================================
+ */
+export function initMobileCardTables() {
+    const tables = document.querySelectorAll('table.auto-card, .module-content-section table');
+    
+    tables.forEach(table => {
+        const headers = Array.from(table.querySelectorAll('th')).map(th => {
+            let text = th.innerText.trim();
+            return text.length > 3 ? text.substring(0, 3) : text;
+        });
+
+        table.querySelectorAll('tbody tr').forEach(tr => {
+            Array.from(tr.querySelectorAll('td')).forEach((td, idx) => {
+                if (headers[idx]) {
+                    td.setAttribute('data-label', headers[idx]);
+                }
+            });
+        });
+    });
+}
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', () => {
+        initMobileCardTables();
+    });
+    window.addEventListener('resize', () => {
+        if (window.innerWidth <= 768) {
+            initMobileCardTables();
+        }
+    });
 }
