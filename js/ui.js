@@ -4,28 +4,32 @@
  * 嚴格遵循完整輸出、無偽代碼、無省略原則。
  */
 
-// 自動注入漢堡選單與佈景主題所需的基礎 CSS 樣式，確保其他程式載入即可直接運作
+// 自動注入漢堡選單與佈景主題所需的基礎 CSS 樣式（金幣輝煌主題風格），確保其他程式載入即可直接運作
 function injectDefaultStyles() {
     if (document.getElementById('rockefeller-ui-injected-styles')) return;
     const style = document.createElement('style');
     style.id = 'rockefeller-ui-injected-styles';
     style.textContent = `
-        /* 側邊隱藏式漢堡選單基礎樣式 */
+        :root {
+            --base-font-size: 0.5rem;
+        }
+        /* 側邊隱藏式漢堡選單基礎樣式 - 金光閃閃金幣輝煌主題 */
         .hidden-sidebar-menu {
             position: fixed;
             top: 0;
             left: -300px;
             width: 280px;
             height: 100%;
-            background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+            background: linear-gradient(135deg, #2b1d0c, #4a3512, #1a1a1a);
             color: #ffd700;
-            box-shadow: 4px 0 15px rgba(0,0,0,0.5);
+            box-shadow: 4px 0 20px rgba(255, 215, 0, 0.4);
             transition: left 0.3s ease-in-out;
             z-index: 9999;
             padding: 20px;
             box-sizing: border-box;
             border-right: 2px solid #ffd700;
             overflow-y: auto;
+            font-size: var(--base-font-size);
         }
         .hidden-sidebar-menu.open {
             left: 0;
@@ -37,7 +41,7 @@ function injectDefaultStyles() {
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(2px);
             opacity: 0;
             visibility: hidden;
@@ -59,13 +63,13 @@ function injectDefaultStyles() {
             gap: 10px;
         }
         .msg-toast {
-            background: rgba(26, 26, 26, 0.95);
+            background: linear-gradient(135deg, #2b1d0c, #1a1a1a);
             color: #ffd700;
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 10px 16px;
+            border-radius: 6px;
             border: 1px solid #ffd700;
-            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
-            font-size: var(--base-font-size, 0.5rem);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+            font-size: var(--base-font-size);
             animation: fadeInOut 4s forwards;
         }
         @keyframes fadeInOut {
@@ -116,8 +120,6 @@ export function switchModuleTab(targetIndex) {
     
     recalculateCurrentLineCount();
     initMobileCardTables();
-    
-    // 當切換分頁時，若是在手機版或漢堡選單展開狀態，自動收合側邊選單
     closeHiddenSidebarMenu();
 }
 
@@ -153,7 +155,7 @@ export function toggleDarkMode() {
 
 /**
  * 調整全域基準字體大小
- * @param {string} val 字體大小設定值 (例如 0.5rem, 1rem)
+ * @param {string} val 字體大小設定值 (例如 0.5rem)
  */
 export function changeBaseFontSize(val) {
     document.documentElement.style.setProperty('--base-font-size', val);
@@ -214,12 +216,6 @@ export function closeZenCarouselModal() {
 }
 
 /**
- * ==========================================
- * 側邊隱藏式漢堡分頁選單控制函式 (Sidebar Menu)
- * ==========================================
- */
-
-/**
  * 開啟側邊隱藏漢堡分頁選單與半透明遮罩
  */
 export function openHiddenSidebarMenu() {
@@ -265,9 +261,7 @@ export function escapeHtml(str) {
 }
 
 /**
- * ==========================================
  * 手機專用卡片式響應排版工具函式 (autoCardTable.js)
- * ==========================================
  */
 export function initMobileCardTables() {
     const tables = document.querySelectorAll('table.auto-card, .module-content-section table');
@@ -294,7 +288,6 @@ if (typeof window !== 'undefined') {
         injectDefaultStyles();
         initMobileCardTables();
         
-        // 自動綁定漢堡按鈕與遮罩的點擊事件（相容其他程式的 DOM ID）
         const hamburgerBtn = document.getElementById('hamburgerToggleBtn');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
         const closeSidebarBtn = document.getElementById('closeSidebarBtn');
