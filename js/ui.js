@@ -1,6 +1,6 @@
 /**
  * Rockefeller System V10 - UI Module (ui.js)
- * 負責介面渲染、分頁切換、錯誤訊息吐司提示、視窗控制與手機舒適卡片轉化
+ * 負責介面渲染、分頁切換、錯誤訊息吐司提示、視窗控制與手機舒適卡片轉化、側邊隱藏式漢堡選單控制
  */
 
 /**
@@ -37,6 +37,9 @@ export function switchModuleTab(targetIndex) {
     
     recalculateCurrentLineCount();
     initMobileCardTables();
+    
+    // 當切換分頁時，若是在手機版或漢堡選單展開狀態，自動收合側邊選單
+    closeHiddenSidebarMenu();
 }
 
 /**
@@ -132,6 +135,44 @@ export function closeZenCarouselModal() {
 }
 
 /**
+ * ==========================================
+ * 側邊隱藏式漢堡分頁選單控制函式 (Sidebar Menu)
+ * ==========================================
+ */
+
+/**
+ * 開啟側邊隱藏漢堡分頁選單與半透明遮罩
+ */
+export function openHiddenSidebarMenu() {
+    const sidebar = document.getElementById('hiddenSidebarMenu');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar) sidebar.classList.add('open');
+    if (overlay) overlay.classList.add('active');
+}
+
+/**
+ * 關閉側邊隱藏漢堡分頁選單與半透明遮罩
+ */
+export function closeHiddenSidebarMenu() {
+    const sidebar = document.getElementById('hiddenSidebarMenu');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('active');
+}
+
+/**
+ * 切換側邊隱藏漢堡分頁選單開關狀態
+ */
+export function toggleHiddenSidebarMenu() {
+    const sidebar = document.getElementById('hiddenSidebarMenu');
+    if (sidebar && sidebar.classList.contains('open')) {
+        closeHiddenSidebarMenu();
+    } else {
+        openHiddenSidebarMenu();
+    }
+}
+
+/**
  * HTML 特殊字元跳脫保護
  * @param {string} str 原始字串
  * @returns {string} 安全字串
@@ -171,7 +212,23 @@ export function initMobileCardTables() {
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
         initMobileCardTables();
+        
+        // 自動綁定漢堡按鈕與遮罩的點擊事件
+        const hamburgerBtn = document.getElementById('hamburgerToggleBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        
+        if (hamburgerBtn) {
+            hamburgerBtn.addEventListener('click', toggleHiddenSidebarMenu);
+        }
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', closeHiddenSidebarMenu);
+        }
+        if (closeSidebarBtn) {
+            closeSidebarBtn.addEventListener('click', closeHiddenSidebarMenu);
+        }
     });
+    
     window.addEventListener('resize', () => {
         if (window.innerWidth <= 768) {
             initMobileCardTables();
