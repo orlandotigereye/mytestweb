@@ -1,51 +1,99 @@
 /* ==========================================
- * 手機專用舒適化卡片與 2-3 字重點標籤樣式
- * ========================================== */
-@media (max-width: 768px) {
-    .module-content-section table, 
-    .module-content-section table thead, 
-    .module-content-section table tbody, 
-    .module-content-section table th, 
-    .module-content-section table td, 
-    .module-content-section table tr {
-        display: block;
-        width: 100% !important;
-        box-sizing: border-box;
-    }
-    
-    .module-content-section table thead {
-        display: none;
-    }
-    
-    .module-content-section table tr {
-        margin-bottom: 10px;
-        border: 1px solid var(--border-color, #ffd700);
-        border-radius: 6px;
-        background: var(--card-bg, rgba(255,255,255,0.95));
-        padding: 6px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
-    .module-content-section table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-align: right;
-        padding: 6px 4px !important;
-        border-bottom: 1px dashed rgba(200,180,100,0.3);
-        font-size: 0.5rem !important;
-    }
-    
-    .module-content-section table td:last-child {
-        border-bottom: none;
-    }
-    
-    .module-content-section table td::before {
-        content: attr(data-label);
-        font-weight: bold;
-        text-align: left;
-        color: var(--text-color, #5c4000);
-        margin-right: 10px;
-        flex-shrink: 0;
-    }
+   金幣輝煌共用樣式表 (Single Gold Theme)
+   ================================---------- */
+
+:root {
+    --bg-gradient-start: #fffae6;
+    --bg-gradient-mid: #fff3cc;
+    --bg-gradient-end: #fffae6;
+    --text-color: #5c4000;
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --border-color: #e6b800;
+    --input-bg: #ffffff;
+    --input-color: #332200;
+}
+
+body {
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-mid) 50%, var(--bg-gradient-end) 100%),
+                radial-gradient(circle, rgba(255,215,0,0.25) 0%, transparent 70%);
+    background-blend-mode: overlay;
+    color: var(--text-color);
+    font-size: 0.5rem !important;
+    margin: 0;
+    padding: 4px;
+    width: 100vw;
+    box-sizing: border-box;
+    overflow-x: hidden !important;
+}
+
+.gold-border {
+    border: 1px solid var(--border-color);
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+}
+
+.gold-bg {
+    background: linear-gradient(135deg, #ffd700 0%, #ffcc00 50%, #e6b800 100%);
+    color: #2b1d00 !important;
+    font-weight: bold;
+}
+
+.gold-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 15px rgba(218, 165, 32, 0.25);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+input, select, textarea {
+    font-size: 0.5rem !important;
+    background: var(--input-bg) !important;
+    color: var(--input-color) !important;
+    border: 1px solid var(--border-color) !important;
+    max-width: 100%;
+}
+
+table th, table td {
+    font-size: 0.5rem !important;
+    padding: 4px !important;
+    color: var(--text-color);
+    word-break: break-all;
+}
+
+button {
+    white-space: nowrap !important;
+    font-size: 0.5rem !important;
+    cursor: pointer;
+}
+
+/* 側邊選單防卡死與抽屜動畫：絕對不卡住、層級最高 */
+#sidebarMenu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 210px;
+    z-index: 99999;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease-in-out;
+    overflow-y: auto;
+    box-shadow: 5px 0 20px rgba(0,0,0,0.3);
+}
+
+#sidebarMenu.show-sidebar {
+    transform: translateX(0);
+}
+
+.d3-tooltip {
+    position: absolute;
+    background: rgba(43, 29, 0, 0.9);
+    color: #ffd700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.5rem;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    border: 1px solid #ffd700;
+    z-index: 10000;
+    display: none;
 }
