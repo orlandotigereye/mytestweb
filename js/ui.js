@@ -13,6 +13,18 @@ function injectDefaultStyles() {
         :root {
             --base-font-size: 0.5rem;
         }
+        body {
+            background: linear-gradient(135deg, #fffae6 0%, #fff3cc 50%, #fffae6 100%),
+                        radial-gradient(circle, rgba(255,215,0,0.25) 0%, transparent 70%);
+            background-blend-mode: overlay;
+            color: #5c4000;
+            font-size: var(--base-font-size) !important;
+            margin: 0;
+            padding: 4px;
+            width: 100vw;
+            box-sizing: border-box;
+            overflow-x: hidden !important;
+        }
         /* 側邊隱藏式漢堡選單基礎樣式 - 金光閃閃金幣輝煌主題 */
         .hidden-sidebar-menu {
             position: fixed;
@@ -78,12 +90,15 @@ function injectDefaultStyles() {
             90% { opacity: 1; transform: translateY(0); }
             100% { opacity: 0; transform: translateY(-20px); }
         }
+        input, select, textarea, button, table th, table td {
+            font-size: var(--base-font-size) !important;
+        }
     `;
     document.head.appendChild(style);
 }
 
 /**
- * 顯示前端懸浮提示訊息 (Toast)
+ * 顯示前端懸浮提示訊息 (Toast - 完全不用 alert)
  * @param {string} message 提示訊息文字
  */
 export function displayFrontendError(message) {
@@ -177,6 +192,26 @@ export function recalculateCurrentLineCount() {
         if (statusBar) {
             statusBar.textContent = `目前實際行數計算: 計算錯誤 | 系統狀態: 異常`;
         }
+    }
+}
+
+/**
+ * 一鍵下載當前頁面完整代碼 (強制規定功能)
+ */
+export function downloadCode() {
+    try {
+        const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'rockefeller_system_v10_download.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        displayFrontendError("代碼下載成功！");
+    } catch (e) {
+        displayFrontendError("代碼下載失敗：" + e.message);
     }
 }
 
