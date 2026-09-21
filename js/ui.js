@@ -1,15 +1,94 @@
 /**
  * Rockefeller System V10 - UI Module (ui.js)
  * 負責介面渲染、分頁切換、錯誤訊息吐司提示、視窗控制與手機舒適卡片轉化、側邊隱藏式漢堡選單控制
+ * 嚴格遵循完整輸出、無偽代碼、無省略原則。
  */
+
+// 自動注入漢堡選單與佈景主題所需的基礎 CSS 樣式，確保其他程式載入即可直接運作
+function injectDefaultStyles() {
+    if (document.getElementById('rockefeller-ui-injected-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'rockefeller-ui-injected-styles';
+    style.textContent = `
+        /* 側邊隱藏式漢堡選單基礎樣式 */
+        .hidden-sidebar-menu {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a1a, #2c2c2c);
+            color: #ffd700;
+            box-shadow: 4px 0 15px rgba(0,0,0,0.5);
+            transition: left 0.3s ease-in-out;
+            z-index: 9999;
+            padding: 20px;
+            box-sizing: border-box;
+            border-right: 2px solid #ffd700;
+            overflow-y: auto;
+        }
+        .hidden-sidebar-menu.open {
+            left: 0;
+        }
+        /* 半透明遮罩 */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(2px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            z-index: 9998;
+        }
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        /* 訊息吐司提示 */
+        #messageBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .msg-toast {
+            background: rgba(26, 26, 26, 0.95);
+            color: #ffd700;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid #ffd700;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+            font-size: var(--base-font-size, 0.5rem);
+            animation: fadeInOut 4s forwards;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+    `;
+    document.head.appendChild(style);
+}
 
 /**
  * 顯示前端懸浮提示訊息 (Toast)
  * @param {string} message 提示訊息文字
  */
 export function displayFrontendError(message) {
-    const messageBox = document.getElementById('messageBox');
-    if (!messageBox) return;
+    let messageBox = document.getElementById('messageBox');
+    if (!messageBox) {
+        messageBox = document.createElement('div');
+        messageBox.id = 'messageBox';
+        document.body.appendChild(messageBox);
+    }
     const msgDiv = document.createElement('div');
     msgDiv.className = 'msg-toast';
     msgDiv.innerHTML = `<i class="fa-solid fa-circle-info"></i> ${message}`;
@@ -74,7 +153,7 @@ export function toggleDarkMode() {
 
 /**
  * 調整全域基準字體大小
- * @param {string} val 字體大小設定值 (例如 0.9rem, 1rem, 1.15rem)
+ * @param {string} val 字體大小設定值 (例如 0.5rem, 1rem)
  */
 export function changeBaseFontSize(val) {
     document.documentElement.style.setProperty('--base-font-size', val);
@@ -209,11 +288,13 @@ export function initMobileCardTables() {
     });
 }
 
+// 自動初始化與事件綁定
 if (typeof window !== 'undefined') {
     window.addEventListener('DOMContentLoaded', () => {
+        injectDefaultStyles();
         initMobileCardTables();
         
-        // 自動綁定漢堡按鈕與遮罩的點擊事件
+        // 自動綁定漢堡按鈕與遮罩的點擊事件（相容其他程式的 DOM ID）
         const hamburgerBtn = document.getElementById('hamburgerToggleBtn');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
         const closeSidebarBtn = document.getElementById('closeSidebarBtn');
@@ -227,6 +308,8 @@ if (typeof window !== 'undefined') {
         if (closeSidebarBtn) {
             closeSidebarBtn.addEventListener('click', closeHiddenSidebarMenu);
         }
+        
+        recalculateCurrentLineCount();
     });
     
     window.addEventListener('resize', () => {
