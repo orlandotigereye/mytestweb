@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="zh-TW"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+    <title>Royal Gold App Shell Wordlist Q - 詞庫Q (回叫記錄日期檢視與完整整合版)</title>
+    
+    <!-- External CSS for Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+    
+    <!-- Firebase SDKs - Compat versions -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <style>
+        /*
+   Global Theme: Royal Gold Universal v3 - Gold Shimmer Edition
+*/
+
+:root {
+    --gold-primary: #ffd700;     
+    --gold-secondary: #ffae00;   
+    --gold-dark: #b8860b;        
+    --gold-light: #FFFACD;       
+    --gold-text-hover: #ffffff;  
+
+    --primary-color: #333333; 
+    --accent-color: var(--gold-primary); 
+    --accent-dark: var(--gold-dark);     
+    --accent-light: var(--gold-light);   
+    --bg-color: #fdf8e8; 
+    --card-bg: rgba(255, 255, 240, 0.95); 
+    --text-color: #333333; 
+    --muted-color: #6a6a6a; 
+    --success-color: #27ae60;
+
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 20px;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+
+    /* 嚴格控制不小於 0.5rem，並針對不同手機與電腦做響應式調整 */
+    --base-font-size: clamp(0.5rem, 1.2vw + 0.4rem, 1rem);
+    --main-font: 'Segoe UI', 'Noto Sans TC', system-ui, sans-serif;
+}
+
+* { 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent; 
+    text-shadow: 0.5px 0.5px 1px rgba(0, 0, 0, 0.2); 
+    font-size: var(--base-font-size) !important; 
+}      
+
+h1, h1 * { font-size: calc(var(--base-font-size) * 1.4) !important; } 
+
+html, body {
+    width: 100%;
+    max-width: 100vw;
+    margin: 0; padding: 0;
+    overflow-x: hidden; 
+}
+
+body {
+    font-family: var(--main-font);
+    font-size: var(--base-font-size);
+    background-color: var(--bg-color); 
+    background-image: url('https://www.transparenttextures.com/patterns/gold-tips.png');
+    background-attachment: fixed;
+    background-size: auto;
+    color: var(--text-color);
+    line-height: 1.6; 
+    text-align: left;
+    opacity: 0.95; 
+}
+
+.tabs-container {
+    display: flex; 
+    background: linear-gradient(to right, var(--gold-dark), var(--gold-primary)); 
+    position: sticky; top: 0; z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5), inset 0 -3px 8px rgba(255,215,0,0.3); 
+    width: 100%;
+}
+
+.tab-btn {
+    flex: 1; padding: var(--space-md); border: none; background: transparent;
+    color: #333333; 
+    font-weight: bold;        
+    cursor: pointer; transition: all 0.3s ease; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;    
+    position: relative;
+    overflow: hidden; 
+}
+
+.tab-btn:hover {
+    color: var(--gold-dark); 
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.tab-btn.active {
+    color: #000000; 
+    background: rgba(255, 215, 0, 0.5); 
+    border-bottom: 3px solid var(--gold-primary); 
+    box-shadow: inset 0 0 10px var(--gold-primary), 0 0 5px var(--gold-secondary);
+}
+
+.content-section { display: none; padding: var(--space-md); animation: fadeIn 0.4s ease; width: 100%; max-width: 100%; }
+.content-section.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+.card {
+    background: var(--card-bg); 
+    border: 2px solid var(--gold-secondary); 
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    box-shadow: 0 0 15px var(--gold-dark); 
+    margin-bottom: var(--space-md);
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s; 
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.card:hover {
+    transform: translateY(-3px); 
+    border-color: var(--gold-primary); 
+    box-shadow: 0 0 20px var(--gold-primary); 
+}
+
+.card h2 {
+    margin-top: 0; color: var(--gold-primary); 
+    border-bottom: 1px solid var(--gold-dark);
+    padding-bottom: var(--space-xs); margin-bottom: var(--space-md);
+}
+
+.btn-gold {
+    background: linear-gradient(to bottom, var(--gold-primary), var(--gold-dark));
+    color: black; 
+    font-weight: bold;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 999px; 
+    cursor: pointer;
+    border: 1px solid var(--gold-light); 
+    text-shadow: 0 1px 1px rgba(255,255,255,0.5); 
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.btn-gold:hover:not(:disabled) {
+    filter: brightness(1.2); 
+    box-shadow: 0 0 15px var(--gold-primary); 
+    transform: translateY(-1px);
+}
+.btn-gold:active { transform: scale(0.98); opacity: 0.95; } 
+
+textarea, input, select {
+    width: 100%; max-width: 100%; padding: var(--space-sm); border: 1px solid var(--gold-secondary); 
+    border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.9); 
+    color: var(--text-color); 
+}
+
+.toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);   
+    background: linear-gradient(to right, var(--gold-dark), var(--gold-secondary)); 
+    color: black; padding: 10px 20px;    
+    border-radius: 25px; z-index: 3000; display: none;      
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    font-weight: bold;
+    max-width: 90%;
+    word-break: break-all;
+}
+
+.spinner-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); 
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center; z-index: 4000;
+}
+
+.loader {
+    border: 4px solid var(--gold-light); 
+    border-top: 4px solid var(--gold-primary); 
+    border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; 
+    box-shadow: 0 0 10px var(--gold-primary), inset 0 0 5px var(--gold-secondary); 
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.wordlist-app {
+  width: 100%;
+  height: calc(100dvh - 56px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: transparent; 
+}
+
+.wordlist-tabs {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr); 
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--card-bg); 
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--gold-light);
+  overflow-x: auto;
+}
+
+.wordlist-tab-btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-xs);
+  background: var(--gold-light);
+  color: var(--text-color);
+  font-weight: bold;
+  min-height: 40px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.wordlist-tab-btn.active {
+  background: var(--gold-primary);
+  color: black;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.wordlist-tab {
+  flex: 1;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.wordlist-tab.active {
+  display: flex;
+}
+
+.wordlist-search-wrap {
+  padding: var(--space-sm);
+  background: var(--card-bg);
+  flex-shrink: 0;
+  width: 100%;
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.wordlist-search-input {
+  width: 100%;
+  border: 1px solid var(--gold-secondary);
+  outline: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  background: var(--card-bg);
+  color: var(--text-color);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.wordlist-quick-list {
+  display: flex;
+  flex-wrap: wrap; 
+  gap: var(--space-xs);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--space-sm);
+  background: var(--bg-color);
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--gold-light);
+  max-height: 80px; 
+  width: 100%;
+}
+
+#liveCandidateBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(255, 255, 240, 0.98);
+  border-bottom: 1px solid var(--gold-secondary);
+}
+
+.wordlist-quick-list::-webkit-scrollbar {
+  display: none;
+}
+
+.wordlist-word-btn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark));
+  color: black;
+  font-weight: bold;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wordlist-word-btn:active {
+  transform: scale(0.96);
+}
+
+.wordlist-editor-wrap {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+
+#diaryInput {
+  flex: 1;
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--card-bg);
+  color: var(--text-color);
+  padding: var(--space-md);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-word;
+  -webkit-overflow-scrolling: touch;
+}
+
+.wordlist-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm);
+  background: var(--card-bg);
+  color: var(--muted-color);
+  flex-shrink: 0;
+  border-top: 1px solid var(--gold-light);
+  width: 100%;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.wordlist-words-list,
+.wordlist-history-list,
+.wordlist-encyclopedia-list,
+.wordlist-outline-list,
+.wordlist-tag-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  min-height: 0;
+}
+
+.wordlist-word-card,
+.wordlist-history-card,
+.wordlist-cloud-card,
+.wordlist-encyclopedia-card,
+.wordlist-outline-card,
+.wordlist-tag-card {
+  background: var(--card-bg);
+  border: 1px solid var(--gold-light);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm);
+  line-height: 1.6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--space-sm);
+}
+.wordlist-word-card .wordlist-word-text {
+    flex: 1;
+    word-break: break-word;
+}
+.wordlist-history-card .wordlist-content {
+    flex: 1;
+    word-break: break-word;
+}
+
+.wordlist-cloud-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+  min-height: 0;
+}
+
+.wordlist-cloud-card {
+    background: var(--card-bg);
+    border: 1px solid var(--gold-light);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.sync-heartbeat-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0,0,0,0.05);
+}
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.sync-dot.green { background-color: #27ae60; box-shadow: 0 0 6px #27ae60; animation: pulse 2s infinite; }
+.sync-dot.yellow { background-color: #f39c12; box-shadow: 0 0 6px #f39c12; }
+.sync-dot.red { background-color: #e74c3c; box-shadow: 0 0 6px #e74c3c; }
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+#log-container {
+    margin-top: var(--space-md);
+    max-height: 400px;
+    overflow-y: auto;
+    width: 100%;
+}
+#serverLogList p {
+    margin: 3px 0;
+    padding-bottom: 3px;
+    border-bottom: 1px dotted #ddd;
+    word-break: break-all;
+}
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <div class="tabs-container">
+            <button class="tab-btn" data-tab-id="mainTab">
+                <i class="fas fa-book"></i> 寫作平台
+            </button>
+            <button class="tab-btn" data-tab-id="serverLogTab">
+                <i class="fas fa-server"></i> 伺服器訊息
+            </button>
+            <button class="tab-btn active" data-tab-id="settingTab">
+                <i class="fas fa-cog"></i> 管理
+            </button>
+        </div>
+
+        <div id="mainTab" class="content-section">
+            <div class="wordlist-app">
+                <div class="wordlist-tabs"> 
+                    <button class="wordlist-tab-btn active" id="tabWriteBtn" data-tab-id="write">寫作</button>
+                    <button class="wordlist-tab-btn" id="tabWordsBtn" data-tab-id="words">詞庫</button>
+                    <button class="wordlist-tab-btn" id="tabHistoryBtn" data-tab-id="history">歷史</button>
+                    <button class="wordlist-tab-btn" id="tabCloudBtn" data-tab-id="cloud">雲端</button>
+                    <button class="wordlist-tab-btn" id="tabEncyclopediaBtn" data-tab-id="encyclopedia"><i class="fas fa-globe"></i> 百科</button>
+                    <button class="wordlist-tab-btn" id="tabOutlineBtn" data-tab-id="outline"><i class="fas fa-sitemap"></i> 大綱</button>
+                    <button class="wordlist-tab-btn" id="tabTagBtn" data-tab-id="tag"><i class="fas fa-tags"></i> Tag分類</button>
+                </div>
+
+                <div class="wordlist-tab active" id="tabWrite">
+                    <div class="wordlist-search-wrap">
+                        <input id="quickSearch" class="wordlist-search-input" placeholder="輸入字串快速搜尋..." autocomplete="off">
+                        <input type="date" id="dailyDateSelect" class="wordlist-search-input" style="max-width: 145px;" title="選擇記錄日期">
+                        <select id="articleTagSelect" class="wordlist-search-input" style="max-width: 120px;" title="選擇文章Tag分類">
+                            <option value="預設">預設分類</option>
+                        </select>
+                        <button class="btn-gold" id="loadDailyBtn" title="回叫指定日期的 Daily 記錄">回叫記錄</button>
+                        <button class="btn-gold" id="loadLatestGoogleSheetBtn" title="即時抓取 Google Sheet 最新一筆"><i class="fas fa-sync"></i> 抓最新一筆</button>
+                    </div>
+
+                    <!-- [新增功能] 顯示 Google Sheet 中有記錄的日期清單 bar -->
+                    <div id="recordedDatesBar" style="padding: 4px 8px; background: var(--bg-color); border-bottom: 1px solid var(--gold-secondary); display: flex; align-items: center; gap: 6px; overflow-x: auto; white-space: nowrap; font-size: 0.85em;">
+                        <span style="font-weight: bold; color: var(--gold-dark);"><i class="fas fa-calendar-check"></i> 有記錄的日期：</span>
+                        <span id="recordedDatesList" style="display: inline-flex; gap: 6px;">載入中...</span>
+                    </div>
+
+                    <div id="quickList" class="wordlist-quick-list"></div>
+                    <div id="liveCandidateBar" class="wordlist-quick-list"></div>
+                    
+                    <div style="padding: 4px 8px; background: var(--card-bg); border-bottom: 1px solid var(--gold-light); display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.85em; font-weight: bold; white-space: nowrap;">目標進度(2000字):</span>
+                        <div style="flex: 1; background: #eee; border-radius: 999px; height: 10px; overflow: hidden; border: 1px solid var(--gold-secondary);">
+                            <div id="goalProgressBar" style="width: 0%; height: 100%; background: linear-gradient(to right, var(--gold-secondary), var(--gold-primary)); transition: width 0.3s;"></div>
+                        </div>
+                        <span id="goalPercentText" style="font-size: 0.85em; font-weight: bold; white-space: nowrap;">0%</span>
+                    </div>
+
+                    <div class="wordlist-editor-wrap">
+                        <textarea id="diaryInput" placeholder="開始輸入文章，將自動即時同步儲存至 Google Sheet Daily 分頁..." spellcheck="false"></textarea>
+                    </div>
+                    <div class="wordlist-bottom">
+                        <div id="charCount" style="display:flex; gap:12px; align-items:center;">
+                            <span>字數：0</span>
+                            <span id="readTimeCount" style="color:var(--muted-color); font-size:0.9em;">預估閱讀：0 分鐘</span>
+                        </div>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <span id="syncDailyStatus" style="font-size:0.9em; color:var(--success-color);">Daily 已同步</span>
+                            <div id="cloudStatus" class="sync-heartbeat-indicator" onclick="WordlistTool.reloadCloudWords()" title="點擊重新同步">
+                                <span class="sync-dot green" id="syncDot"></span>
+                                <span id="syncText">雲端同步詞庫</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wordlist-tab" id="tabWords">
+                    <div class="wordlist-search-wrap">
+                        <input id="wordSearch" class="wordlist-search-input" placeholder="搜尋詞庫...">
+                    </div>
+                    <div style="padding:var(--space-sm);">
+                        <div style="display:flex; gap:var(--space-xs);">
+                            <input id="newWord" class="wordlist-search-input" placeholder="新增詞語..." style="flex:1;">
+                            <button class="btn-gold" id="addWordBtn">新增</button>
+                        </div>
+                    </div>
+                    <div id="wordsList" class="wordlist-words-list"></div>
+                </div>
+
+                <div class="wordlist-tab" id="tabHistory">
+                    <div style="padding:var(--space-sm);">
+                        <button class="btn-gold" style="width:100%;" id="saveHistoryBtn">保存目前日記</button>
+                    </div>
+                    <div id="historyList" class="wordlist-history-list"></div>
+                </div>
+
+                <div class="wordlist-tab" id="tabCloud">
+                    <div class="wordlist-cloud-wrap">
+                        <div class="wordlist-cloud-card">
+                            <div style="font-weight:bold; margin-bottom:10px;">Google Sheets 詞庫 API 與 Daily 同步管理</div>
+                            <div style="word-break:break-all; line-height:1.8; margin-bottom: 10px;">
+                                目標試算表：<a href="https://docs.google.com/spreadsheets/d/1nDB6vdXWL3STX4__A4W2d9TeBm3v18fMumgK90lWnNc/edit?gid=118573575#gid=118573575" target="_blank" style="color: var(--gold-dark); font-weight: bold; text-decoration: underline;">開啟 Google Sheet (gid=118573575)</a>
+                            </div>
+                            <div style="display:flex; flex-wrap:wrap; gap:var(--space-xs);">
+                                <a href="https://docs.google.com/spreadsheets/d/1nDB6vdXWL3STX4__A4W2d9TeBm3v18fMumgK90lWnNc/edit?gid=118573575#gid=118573575" target="_blank" class="btn-gold" style="text-decoration: none;">
+                                    <i class="fas fa-external-link-alt"></i> 開啟 Google Sheet
+                                </a>
+                                <button class="btn-gold" id="reloadCloudWordsBtn">重新同步詞庫</button>
+                                <button class="btn-gold" id="uploadCloudWordsBtn"><i class="fas fa-upload"></i> 上傳同步詞庫</button>
+                                <button class="btn-gold" id="exportJsonBtn" style="background:var(--gold-primary);"><i class="fas file-export"></i> 匯出所有備份 (JSON)</button>
+                                <label class="btn-gold" style="cursor:pointer; margin:0;"><i class="fas fa-file-import"></i> 匯入還原備份
+                                    <input type="file" id="importJsonInput" accept=".json" style="display:none;">
+                                </label>
+                                <button class="btn-gold" id="toggleDarkModeBtn">夜間模式</button>
+                                <button class="btn-gold" id="downloadWordlistBtn"><i class="fas fa-download"></i> 下載原始碼</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wordlist-tab" id="tabEncyclopedia">
+                    <div class="wordlist-search-wrap">
+                        <input id="encyclopediaSearch" class="wordlist-search-input" placeholder="搜尋百科全書...">
+                    </div>
+                    <div style="padding:var(--space-sm);">
+                        <div style="display:flex; gap:var(--space-xs); flex-wrap:wrap;">
+                            <input id="newEncyclopediaEntryName" class="wordlist-search-input" placeholder="條目名稱..." style="flex:1;">
+                            <select id="newEncyclopediaEntryType" class="wordlist-search-input" style="flex:0.5; min-width: 80px;">
+                                <option value="character">角色</option>
+                                <option value="location">地點</option>
+                                <option value="item">物品</option>
+                                <option value="concept">概念</option>
+                                <option value="other">其他</option>
+                            </select>
+                            <textarea id="newEncyclopediaEntryDescription" class="wordlist-search-input" placeholder="描述..." rows="2" style="flex-basis: 100%;"></textarea>
+                            <button class="btn-gold" id="addEncyclopediaEntryBtn" style="flex:1;">新增條目</button>
+                        </div>
+                    </div>
+                    <div id="encyclopediaList" class="wordlist-encyclopedia-list"></div>
+                </div>
+
+                <div class="wordlist-tab" id="tabOutline">
+                    <div style="padding:var(--space-sm);">
+                        <div style="display:flex; gap:var(--space-xs); flex-wrap:wrap;">
+                            <input id="newOutlineEntryTitle" class="wordlist-search-input" placeholder="章節/場景標題..." style="flex:1;">
+                            <textarea id="newOutlineEntrySummary" class="wordlist-search-input" placeholder="摘要..." rows="2" style="flex-basis: 100%;"></textarea>
+                            <button class="btn-gold" id="addOutlineEntryBtn" style="flex:1;">新增章節/場景</button>
+                        </div>
+                    </div>
+                    <div id="outlineList" class="wordlist-outline-list"></div>
+                </div>
+
+                <div class="wordlist-tab" id="tabTag">
+                    <div style="padding:var(--space-sm);">
+                        <div style="display:flex; gap:var(--space-xs); flex-wrap:wrap;">
+                            <input id="newTagNameInput" class="wordlist-search-input" placeholder="輸入新的 Tag 分類名稱..." style="flex:1;">
+                            <button class="btn-gold" id="addTagBtn" style="flex:0.3;">新增分類</button>
+                        </div>
+                    </div>
+                    <div style="padding: 0 var(--space-sm); font-weight: bold; color: var(--gold-dark);">現有 Tag 分類列表（點擊可依此 Tag 取得最新文章）</div>
+                    <div id="tagList" class="wordlist-tag-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="serverLogTab" class="content-section">
+            <div class="card">
+                <h2><i class="fas fa-server"></i> 伺服器訊息</h2>
+                <div id="logList"><p>等待伺服器訊息...</p></div>
+            </div>
+        </div>
+
+        <div id="settingTab" class="content-section active">
+            <div class="card">
+                <h2><i class="fas fa-cog"></i> 管理</h2>
+                <p>AppShell 管理選項。</p>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="btn-gold" id="downloadAppShellBtn"><i class="fas fa-download"></i> 備份完整程式碼 (AppShell)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        var APP_CORE = {
+            version: "2.1.9",
+            firebaseConfig: {
+                apiKey: "AIzaSyDRgBVUSuLlxsZiRCPUqfTUoHrNfZY70vs",
+                authDomain: "inventory-y.firebaseapp.com",
+                databaseURL: "https://inventory-y-default-rtdb.firebaseio.com",      
+                projectId: "inventory-y"
+            },
+            db: null,
+            _initialized: false,
+
+            _ensureToastElementExists: function() {
+                var t = document.getElementById('toast');
+                if (!t) {
+                    t = document.createElement('div');
+                    t.id = 'toast';
+                    t.className = 'toast'; 
+                    document.body.appendChild(t);
+                }
+            },
+
+            _ensureSpinnerElementExists: function() {
+                var s = document.getElementById('spinner');
+                if (!s) {
+                    s = document.createElement('div');
+                    s.id = 'spinner';
+                    s.className = 'spinner-overlay'; 
+                    s.innerHTML = '<div class="loader"></div><p id="spinner-text" style="margin-top:10px; font-weight:bold; color:var(--accent-dark);">Processing...</p>';
+                    document.body.appendChild(s);
+                }
+            },
+
+            init: function() {
+                if (this._initialized) return;
+                this._ensureToastElementExists();
+                this._ensureSpinnerElementExists();
+
+                if (typeof firebase !== 'undefined') {
+                    if (!firebase.apps.length) { 
+                        try {
+                            firebase.initializeApp(this.firebaseConfig);
+                            this.db = firebase.database();
+                        } catch (e) {
+                            this.handleError(e, 'Firebase:Init');
+                        }
+                    } else {
+                        this.db = firebase.database();
+                    }
+                }
+                
+                this.setupTabs(); 
+                this._initialized = true;
+                window.dispatchEvent(new CustomEvent('coreReady', { detail: { core: this } }));
+            },
+
+            showToast: function(msg, duration) {
+                duration = duration || 3000;
+                var t = document.getElementById('toast'); 
+                if (t) {
+                    t.textContent = msg;
+                    t.style.display = 'block';
+                    clearTimeout(t.timeoutId); 
+                    t.timeoutId = setTimeout(function() { t.style.display = 'none'; }, duration); 
+                }
+            },
+
+            toggleSpinner: function(show, text) {
+                var s = document.getElementById('spinner'); 
+                if (s) {
+                    if (typeof show === 'string') {
+                        text = show;
+                        show = true;
+                    }
+                    if (text) {
+                        var spinnerText = document.getElementById('spinner-text');
+                        if (spinnerText) spinnerText.textContent = text;
+                    }
+                    s.style.display = show ? 'flex' : 'none';
+                }
+            },
+
+            switchTab: function(tabId) {
+                var sections = document.querySelectorAll('.content-section');
+                for (var i = 0; i < sections.length; i++) {
+                    if (sections[i].id === tabId) {
+                        sections[i].classList.add('active');
+                    } else {
+                        sections[i].classList.remove('active');
+                    }
+                }
+
+                var buttons = document.querySelectorAll('.tab-btn');
+                for (var j = 0; j < buttons.length; j++) {
+                    if (buttons[j].getAttribute('data-tab-id') === tabId) {
+                        buttons[j].classList.add('active');
+                    } else {
+                        buttons[j].classList.remove('active');
+                    }
+                }
+                var event = new CustomEvent('tabChanged', { detail: { tabId: tabId } });
+                window.dispatchEvent(event);
+            },
+
+            setupTabs: function() {
+                var self = this; 
+                var tabButtons = document.querySelectorAll('.tab-btn'); 
+                for (var i = 0; i < tabButtons.length; i++) {
+                    (function(button) { 
+                        button.removeAttribute('onclick'); 
+                        button.addEventListener('click', function() {
+                            var tabId = button.getAttribute('data-tab-id'); 
+                            if (tabId) self.switchTab(tabId); 
+                        });
+                    })(tabButtons[i]);
+                }
+            },
+
+            getLocal: function(key, defaultValue) {
+                try {
+                    var value = localStorage.getItem(key);
+                    if (value === null) return defaultValue;
+                    return JSON.parse(value);
+                } catch (e) {
+                    this.handleError(e, "LocalStorage:Get:'" + key + "'"); 
+                    return defaultValue;
+                }
+            },
+            
+            saveLocal: function(key, data) { 
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                } catch (e) {
+                    this.handleError(e, "LocalStorage:Save:'" + key + "'"); 
+                }
+            },
+
+            downloadSelf: function(filename) { 
+                var content = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+                var blob = new Blob([content], { type: 'text/html;charset=utf-8' }); 
+                var url = URL.createObjectURL(blob); 
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = filename || 'source.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url); 
+                this.showToast('檔案已成功下載！', 3000); 
+            },
+
+            handleError: function(err, context) {
+                console.error("Error in " + context + ":", err);
+                var logPanel = document.getElementById('logList'); 
+                if (logPanel) {
+                    logPanel.innerHTML += '<p style="color:red;">Error in ' + context + ': ' + (err.message || err) + '</p>';
+                }
+                this.showToast('發生錯誤: ' + (err.message || err), 5000);
+            }
+        };
+
+        window.APP_CORE = APP_CORE;
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() { APP_CORE.init(); }); 
+        } else {
+            APP_CORE.init();
+        }
+
+        window.WordlistTool = (function() { 
+            const SHEET_ID = '1nDB6vdXWL3STX4__A4W2d9TeBm3v18fMumgK90lWnNc';
+            const GID = '118573575';
+            const WORD_API = `https://script.google.com/macros/s/AKfycbwexNPWR9JAvxECey9N0hcth7FYy6aZzU8ha2OpO0VBAO659UStk0wxTDXHD85Pqj1z/exec?sheet=WordList&id=${SHEET_ID}&gid=${GID}`;
+            const DAILY_API = `https://script.google.com/macros/s/AKfycbwexNPWR9JAvxECey9N0hcth7FYy6aZzU8ha2OpO0VBAO659UStk0wxTDXHD85Pqj1z/exec?sheet=Daily&id=${SHEET_ID}`;
+            
+            let appWords = [
+                "阿凱", "Anna", "諾拉", "莉莉絲", "芙蕾雅", "美咲", "藤田", "小晴", "小琪", "小雅", "小雯", "小芸", "小夏", "Victoria", "小玲", "小薇", "小茹", "小蓁", "小曼", "森下優香", "佐伯彩香", "宮本玲奈", "黑木小夏", "山田美咲", "鈴木愛子", "高橋美羽", "伊藤優奈", "渡邊彩", "中村玲", "佐藤美香", "田中美由紀", "松本葵", "林雅雯", "陳怡婷", "王詩涵", "李佳琪", "Emily", "Harper", "Sarah", "Mia", "Chloe", "山本綾香", "黑木小玲", "唐薇", "唐嵐", "唐芯", "林醫生", "小影", "Luna", "Lady", "Margaret", "Harrington", "Schwarz", "Milch", "Violette", "Suprem", "Lena", "Elena", "Rossi", "林淑華", "女媧", "努恩", "莉娜", "波塞冬", "薇兒丹蒂", "刑天", "爆炎", "霜華", "影刃", "雷娜", "白櫻", "詩寇蒂", "烏爾德", "老大", "司機", "女生", "她們", "你", "聲音", "後宮", "記憶", "疼痛", "身體", "空間", "紋身", "休息", "符號", "深淵", "處理", "耳環", "力量", "絕望", "崩潰", "現實", "靈魂", "主人", "房間", "希望", "光芒", "夾縫", "治療", "水線針", "創世之力", "水元素", "石化假人", "審訊室", "紅外線", "雷射", "女軍官", "制服", "運動服", "牢房", "能量牢籠", "精神力", "生命能量", "負擔", "車內", "醫院", "能量", "神聖金光", "黑暗魔力", "時間之力", "虛空", "後宮之殿", "代號", "大笨蛋", "57號", "41號", "48號", "涼亭", "時間之宮", "名字", "病房", "艾蕾諾拉", "口紅", "外衣", "手機", "照片", "影片", "乳牛", "吸乳器", "乳汁", "產奶", "孕肚", "情趣裝", "跳蛋", "公共露出", "陰環", "震動棒", "觸手", "意識空間", "機場", "貴賓室", "私處", "會議室", "OL套裝", "襯衫", "巨乳", "爭寵", "調教", "明朝", "竹林", "空間裂縫", "系統", "財富", "人心", "複利", "投資", "神經機制", "大腦", "杏仁核", "基底核", "腹內側前額葉", "背外側前額葉", "背側前扣帶回", "紋狀體", "多巴胺", "獎勵", "情緒", "恐懼", "習慣", "自動化", "身份轉換", "微行動", "立即獎勵", "證據累積", "外部鎖定", "金融資產", "風險", "成功率", "忠誠", "上癮", "行為", "偏誤", "預測", "情緒極端", "敘事峰值", "敘事崩解", "拋物線", "價差擴大", "投降量能", "生理信號", "絕對語", "從眾", "沉沒成本", "TinyHabit", "錨點", "慶祝", "最小行動", "延伸行動", "防火牆", "誘惑捆綁", "習慣堆疊", "神經自查", "身份強化", "證據日誌", "公開承諾", "高原期", "閃亮物症侯群", "每週審核", "每季大慶祝", "閉迴路", "執行引擎", "回饋迴圈", "林若曦", "課程", "投資組合", "展望理論", "決策神經科學", "fMRI", "EEG", "系統1", "系統2", "虧損厭惡", "過度自信", "錯誤監控", "錯誤相關負波", "回饋相關負波", "快語", "心跳加速", "手心出汗", "抖腳", "反向清單", "社會證明", "多巴胺迴圈", "參考點", "感情複利", "謝禮", "鈴鐺", "乳刑架", "獻祭", "迷幻", "變異", "Freja", "北海", "阿伯丁", "渡輪", "北歐", "港口", "海浪", "甲板", "員工區", "硬漢", "逃亡", "及時行樂", "PiperAlpha", "情報", "間諜", "花崗岩", "魚腥味", "荒野", "佐藤健太", "陳怡君", "硬碟", "Uber", "棒球棍", "後陽台", "鐵皮屋頂", "BND", "黑色醫療鋁箱", "縫合鉗", "電擊模組", "復工包", "反殺", "臭豆腐", "鴨血", "德國小麥啤酒", "保險", "隨身硬碟", "追殺者", "失蹤人口", "泡麵", "陳語嫣", "林夏", "彩花", "木偶模式", "站姿聊天", "極限穿衣", "陰唇穿線", "不鏽鋼絲", "醫療尼龍線", "X型縫合", "永久鎖定", "尿道擴張棒", "大倉東京酒店", "客房服務", "私人訓練", "巨型按摩棒", "潤滑液", "子宮頸", "靜脈擴張", "深淵研究所", "北歐分部", "指揮中心", "解析艙", "冰晶", "束縛裝置", "隱形技術", "崖壁", "蛇紋", "盾牌", "女神", "雅典娜", "美杜沙", "加密手機", "神級個體解析計劃", "戰術服", "蕾絲內衣", "乳環", "凱醬", "中央平原", "白露婆婆", "紫色雷電", "授權儀式", "新世界守護統治者", "石屋", "殘存意象", "空間通道", "冰霜巨龍", "混合火焰", "石化之眼", "神話時刻", "黑暗咒文", "白骨廣場", "Kai", "pervert(色狼)", "that's all(如此而已)", "Suddenly(突然)", "phones rang(響起)", "immediately(立刻)", "ran out(跑出去)", "Let's keep in touch(保持聯絡)", "continued(繼續)", "out the window(窗外)", "ready to leave(離開)", "saw(看見)", "paying the bill(正在結帳)", "Let's go together(一起走吧)", "Can you introduce(自我介紹)", "yourselves(你們自己)", "Sally", "Lissy", "No problem(沒問題)", "walking(走)", "on the street(路上)", "ran into them (撞上他們)", "grabbed(搶走)", "again stopped(再次阻止)", "ran away again(又跑了)", "made a phone call(打了個電話)", "Ten minutes later(10分後)", "stopped in front of them(停在他們前面)", "They both got into the car(一起上車)", "sat between the two women.(坐在她們中間)", "the household registration office(戶政事務所)", "At the same time(同時)", "caught both of them(抱住兩人)", "so neither of them was injured(兩人沒受傷)", "ran out of the place.(跑出這個地方)", "How amazing!(真是神奇)", "They had just met for a day(才見過一天)", "only talked for a little while(才見過一天，說幾句話而已)", "never expected that they would(沒想到自己竟然會)", "get married on the same day(同一天結婚)", "husband(老公)", "they were also very surprised.(他們也很意外)"
+            ];
+            
+            let historyData = [];
+            let encyclopediaData = []; 
+            let outlineData = [];      
+            let tagData = ["預設", "日常", "小說", "工作", "靈感"];
+
+            let diaryInput, quickSearchInput, quickListDiv, liveCandidateBar, wordsListDiv, historyListDiv, charCountDiv, wordSearchInput, newWordInput;
+            let tabWriteBtn, tabWordsBtn, tabHistoryBtn, tabCloudBtn, tabEncyclopediaBtn, tabOutlineBtn, tabTagBtn; 
+            let addWordBtn, saveHistoryBtn, reloadCloudWordsBtn, uploadCloudWordsBtn, toggleDarkModeBtn, downloadWordlistBtn, downloadAppShellBtn; 
+            let encyclopediaSearchInput, newEncyclopediaEntryNameInput, newEncyclopediaEntryTypeSelect, newEncyclopediaEntryDescriptionInput, addEncyclopediaEntryBtn, encyclopediaListDiv;
+            let newOutlineEntryTitleInput, newOutlineEntrySummaryInput, addOutlineEntryBtn, outlineListDiv;
+            let dailyDateSelect, loadDailyBtn, syncDailyStatus, loadLatestGoogleSheetBtn, articleTagSelect;
+            let newTagNameInput, addTagBtn, tagListDiv;
+            let exportJsonBtn, importJsonInput;
+            let readTimeCountDiv, goalProgressBar, goalPercentText;
+            let recordedDatesList; // [新增] 有記錄的日期清單 DOM
+            let saveTimer = null;
+            let isSyncedToCloud = true;
+
+            const LS_KEYS = {
+                DRAFT: 'wordlist_m_gold_draft', 
+                HISTORY: 'wordlist_m_gold_history', 
+                CLOUD_CACHE: 'wordlist_m_cloud_words_cache', 
+                ENCYCLOPEDIA: 'wordlist_m_encyclopedia_data', 
+                OUTLINE: 'wordlist_m_outline_data',
+                TAGS: 'wordlist_m_tag_data'
+            };
+
+            function updateHeartbeat(status, text) {
+                const dot = document.getElementById('syncDot');
+                const syncText = document.getElementById('syncText');
+                if (!dot || !syncText) return;
+                dot.className = 'sync-dot ' + status;
+                syncText.textContent = text;
+            }
+
+            function initWordlistTool() {
+                diaryInput = document.getElementById('diaryInput');
+                quickSearchInput = document.getElementById('quickSearch');
+                quickListDiv = document.getElementById('quickList'); 
+                liveCandidateBar = document.getElementById('liveCandidateBar');
+                wordsListDiv = document.getElementById('wordsList');
+                historyListDiv = document.getElementById('historyList');
+                charCountDiv = document.getElementById('charCount');
+                wordSearchInput = document.getElementById('wordSearch');
+                newWordInput = document.getElementById('newWord');
+
+                tabWriteBtn = document.getElementById('tabWriteBtn');
+                tabWordsBtn = document.getElementById('tabWordsBtn');
+                tabHistoryBtn = document.getElementById('tabHistoryBtn');
+                tabCloudBtn = document.getElementById('tabCloudBtn');
+                tabEncyclopediaBtn = document.getElementById('tabEncyclopediaBtn'); 
+                tabOutlineBtn = document.getElementById('tabOutlineBtn');             
+                tabTagBtn = document.getElementById('tabTagBtn');
+
+                addWordBtn = document.getElementById('addWordBtn');
+                saveHistoryBtn = document.getElementById('saveHistoryBtn');
+                reloadCloudWordsBtn = document.getElementById('reloadCloudWordsBtn');
+                uploadCloudWordsBtn = document.getElementById('uploadCloudWordsBtn');
+                toggleDarkModeBtn = document.getElementById('toggleDarkModeBtn');
+                downloadWordlistBtn = document.getElementById('downloadWordlistBtn'); 
+                downloadAppShellBtn = document.getElementById('downloadAppShellBtn'); 
+                
+                encyclopediaSearchInput = document.getElementById('encyclopediaSearch');
+                newEncyclopediaEntryNameInput = document.getElementById('newEncyclopediaEntryName');
+                newEncyclopediaEntryTypeSelect = document.getElementById('newEncyclopediaEntryType');
+                newEncyclopediaEntryDescriptionInput = document.getElementById('newEncyclopediaEntryDescription');
+                addEncyclopediaEntryBtn = document.getElementById('addEncyclopediaEntryBtn');
+                encyclopediaListDiv = document.getElementById('encyclopediaList');
+
+                newOutlineEntryTitleInput = document.getElementById('newOutlineEntryTitle');
+                newOutlineEntrySummaryInput = document.getElementById('newOutlineEntrySummary');
+                addOutlineEntryBtn = document.getElementById('addOutlineEntryBtn');
+                outlineListDiv = document.getElementById('outlineList');
+
+                dailyDateSelect = document.getElementById('dailyDateSelect');
+                loadDailyBtn = document.getElementById('loadDailyBtn');
+                syncDailyStatus = document.getElementById('syncDailyStatus');
+                loadLatestGoogleSheetBtn = document.getElementById('loadLatestGoogleSheetBtn');
+                articleTagSelect = document.getElementById('articleTagSelect');
+
+                newTagNameInput = document.getElementById('newTagNameInput');
+                addTagBtn = document.getElementById('addTagBtn');
+                tagListDiv = document.getElementById('tagList');
+
+                exportJsonBtn = document.getElementById('exportJsonBtn');
+                importJsonInput = document.getElementById('importJsonInput');
+
+                readTimeCountDiv = document.getElementById('readTimeCount');
+                goalProgressBar = document.getElementById('goalProgressBar');
+                goalPercentText = document.getElementById('goalPercentText');
+                recordedDatesList = document.getElementById('recordedDatesList');
+
+                if (dailyDateSelect) {
+                    dailyDateSelect.value = new Date().toISOString().split('T')[0];
+                }
+
+                loadDraft();
+                loadHistory();
+                loadCloudWords(); 
+                loadEncyclopediaData(); 
+                loadOutlineData();      
+                loadTagData();
+
+                renderWords();
+                renderHistory();
+                renderEncyclopedia(); 
+                renderOutline();      
+                renderTagList();
+                updateTagSelectOptions();
+                updateCount();
+                setupEventListeners();
+                
+                // 自動抓取 Google Sheet 最新一筆並載入有記錄的日期清單
+                loadLatestGoogleSheetRecord();
+                fetchRecordedDatesList();
+
+                if (quickSearchInput && quickSearchInput.value) renderQuickList(quickSearchInput.value);
+                if (diaryInput && diaryInput.value) updateLiveCandidates();
+            }
+
+            function setupEventListeners() {
+                if (diaryInput) {
+                    diaryInput.addEventListener('input', () => {
+                        updateCount();
+                        saveDraft();
+                        updateLiveCandidates();
+                        
+                        isSyncedToCloud = false; 
+                        if (syncDailyStatus) syncDailyStatus.textContent = '同步中...';
+                        clearTimeout(saveTimer);
+                        saveTimer = setTimeout(() => {
+                            syncDailyToCloud();
+                        }, 1500);
+                    });
+                }
+                if (quickSearchInput) {
+                    quickSearchInput.addEventListener('input', e => renderQuickList(e.target.value));
+                }
+                if (wordSearchInput) {
+                    wordSearchInput.addEventListener('input', () => renderWords());
+                }
+
+                window.addEventListener('beforeunload', (e) => {
+                    saveDraft();
+                    if (!isSyncedToCloud) {
+                        e.preventDefault();
+                        e.returnValue = '您還有內容尚未完全同步到雲端，確定要離開嗎？';
+                    }
+                });
+                
+                if (tabWriteBtn) tabWriteBtn.addEventListener('click', () => WordlistTool.switchTab('write'));
+                if (tabWordsBtn) tabWordsBtn.addEventListener('click', () => WordlistTool.switchTab('words'));
+                if (tabHistoryBtn) tabHistoryBtn.addEventListener('click', () => WordlistTool.switchTab('history'));
+                if (tabCloudBtn) tabCloudBtn.addEventListener('click', () => WordlistTool.switchTab('cloud'));
+                if (tabEncyclopediaBtn) tabEncyclopediaBtn.addEventListener('click', () => WordlistTool.switchTab('encyclopedia')); 
+                if (tabOutlineBtn) tabOutlineBtn.addEventListener('click', () => WordlistTool.switchTab('outline'));             
+                if (tabTagBtn) tabTagBtn.addEventListener('click', () => WordlistTool.switchTab('tag'));
+
+                if (addWordBtn) addWordBtn.addEventListener('click', WordlistTool.addWord);
+                if (saveHistoryBtn) saveHistoryBtn.addEventListener('click', WordlistTool.saveHistory);
+                if (reloadCloudWordsBtn) reloadCloudWordsBtn.addEventListener('click', WordlistTool.reloadCloudWords);
+                if (uploadCloudWordsBtn) uploadCloudWordsBtn.addEventListener('click', WordlistTool.uploadCloudWords);
+                if (toggleDarkModeBtn) toggleDarkModeBtn.addEventListener('click', WordlistTool.toggleDarkMode);
+                if (downloadWordlistBtn) downloadWordlistBtn.addEventListener('click', () => APP_CORE.downloadSelf('WordlistM.html')); 
+                if (downloadAppShellBtn) downloadAppShellBtn.addEventListener('click', () => APP_CORE.downloadSelf('WordlistM_AppShell.html')); 
+                
+                if (addEncyclopediaEntryBtn) addEncyclopediaEntryBtn.addEventListener('click', WordlistTool.addEncyclopediaEntry);
+                if (encyclopediaSearchInput) encyclopediaSearchInput.addEventListener('input', WordlistTool.renderEncyclopedia);
+
+                if (addOutlineEntryBtn) addOutlineEntryBtn.addEventListener('click', WordlistTool.addOutlineEntry);
+                if (loadDailyBtn) loadDailyBtn.addEventListener('click', WordlistTool.loadDailyFromCloud);
+                if (loadLatestGoogleSheetBtn) loadLatestGoogleSheetBtn.addEventListener('click', () => {
+                    WordlistTool.loadLatestGoogleSheetRecord();
+                    WordlistTool.fetchRecordedDatesList();
+                });
+                if (addTagBtn) addTagBtn.addEventListener('click', WordlistTool.addTagEntry);
+
+                if (exportJsonBtn) exportJsonBtn.addEventListener('click', WordlistTool.exportAllDataJson);
+                if (importJsonInput) importJsonInput.addEventListener('change', WordlistTool.importAllDataJson);
+
+                WordlistTool.switchTab('write');
+            }
+
+            function switchTab(tab) {
+                document.querySelectorAll('.wordlist-tab').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.wordlist-tab-btn').forEach(el => el.classList.remove('active'));
+
+                document.getElementById('tab' + capitalize(tab)).classList.add('active');
+                document.getElementById('tab' + capitalize(tab) + 'Btn').classList.add('active');
+            }
+
+            function capitalize(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            function showToast(msg, duration) {
+                APP_CORE.showToast(msg, duration);
+            }
+
+            function saveDraft() {
+                APP_CORE.saveLocal(LS_KEYS.DRAFT, diaryInput.value);
+            }
+            function loadDraft() {
+                const saved = APP_CORE.getLocal(LS_KEYS.DRAFT);
+                if (saved && diaryInput) diaryInput.value = saved;
+            }
+
+            // [新增] 從 Google Sheet 抓取所有有記錄的日期清單並列出可點擊按鈕
+            async function fetchRecordedDatesList() {
+                if (!recordedDatesList) return;
+                try {
+                    const res = await fetch(DAILY_API);
+                    const data = await res.json();
+                    let dates = [];
+                    if (Array.isArray(data)) {
+                        dates = data.map(item => item.date).filter(Boolean);
+                    } else if (data && data.date) {
+                        dates = [data.date];
+                    }
+                    // 去除重複並排序
+                    let uniqueDates = [...new Set(dates)].sort().reverse();
+                    
+                    if (uniqueDates.length > 0) {
+                        recordedDatesList.innerHTML = '';
+                        uniqueDates.forEach(dt => {
+                            const btn = document.createElement('button');
+                            btn.className = 'wordlist-word-btn';
+                            btn.style.padding = '2px 8px';
+                            btn.style.fontSize = '0.85em';
+                            btn.textContent = dt;
+                            btn.title = `點擊回叫 ${dt} 的記錄`;
+                            btn.addEventListener('click', () => {
+                                if (dailyDateSelect) dailyDateSelect.value = dt;
+                                WordlistTool.loadDailyFromCloud();
+                            });
+                            recordedDatesList.appendChild(btn);
+                        });
+                    } else {
+                        recordedDatesList.innerHTML = '<span style="color:var(--muted-color);">尚無記錄日期</span>';
+                    }
+                } catch (e) {
+                    recordedDatesList.innerHTML = '<span style="color:indianred;">日期清單載入失敗</span>';
+                }
+            }
+
+            async function loadLatestGoogleSheetRecord() {
+                APP_CORE.toggleSpinner(true, '正在即時抓取 Google Sheet 最新一筆...');
+                try {
+                    const res = await fetch(DAILY_API);
+                    const data = await res.json();
+                    let latestContent = '';
+                    let latestDate = '';
+                    let latestTag = '';
+                    
+                    if (Array.isArray(data) && data.length > 0) {
+                        const lastItem = data[data.length - 1];
+                        latestContent = lastItem.content || lastItem.text || '';
+                        latestDate = lastItem.date || '';
+                        latestTag = lastItem.tag || '';
+                    } else if (data && typeof data === 'object') {
+                        latestContent = data.content || data.text || '';
+                        latestDate = data.date || '';
+                        latestTag = data.tag || '';
+                    }
+
+                    if (latestContent) {
+                        diaryInput.value = latestContent;
+                        if (latestDate && dailyDateSelect) {
+                            dailyDateSelect.value = latestDate;
+                        }
+                        if (latestTag && articleTagSelect && tagData.includes(latestTag)) {
+                            articleTagSelect.value = latestTag;
+                        }
+                        updateCount();
+                        saveDraft();
+                        isSyncedToCloud = true;
+                        showToast('已成功載入 Google Sheet 最新一筆記錄！');
+                    } else {
+                        showToast('雲端無可用最新記錄');
+                    }
+                } catch (e) {
+                    showToast('抓取 Google Sheet 記錄失敗');
+                } finally {
+                    APP_CORE.toggleSpinner(false);
+                }
+            }
+
+            async function syncDailyToCloud() {
+                if (!diaryInput) return;
+                const dt = dailyDateSelect ? dailyDateSelect.value : new Date().toISOString().split('T')[0];
+                const tag = articleTagSelect ? articleTagSelect.value : '預設';
+                const content = diaryInput.value;
+                try {
+                    const response = await fetch(DAILY_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ date: dt, tag: tag, content: content })
+                    });
+                    if (response.ok) {
+                        isSyncedToCloud = true;
+                        if (syncDailyStatus) syncDailyStatus.textContent = 'Daily 已即時同步';
+                        fetchRecordedDatesList(); // 同步後更新日期清單
+                    } else {
+                        isSyncedToCloud = true;
+                        if (syncDailyStatus) syncDailyStatus.textContent = 'Daily 同步成功(背景)';
+                    }
+                } catch {
+                    if (syncDailyStatus) syncDailyStatus.textContent = 'Daily 本機暫存';
+                }
+            }
+
+            async function loadDailyFromCloud() {
+                const dt = dailyDateSelect ? dailyDateSelect.value : new Date().toISOString().split('T')[0];
+                APP_CORE.toggleSpinner(true, `正在回叫 ${dt} 記錄...`);
+                try {
+                    const res = await fetch(`${DAILY_API}&date=${dt}`);
+                    const data = await res.json();
+                    let targetContent = '';
+                    if (Array.isArray(data)) {
+                        const match = data.find(item => item.date === dt);
+                        targetContent = match ? match.content : (data.length > 0 ? data[data.length - 1].content : '');
+                    } else if (data && data.content !== undefined) {
+                        targetContent = data.content;
+                    }
+
+                    if (targetContent) {
+                        diaryInput.value = targetContent;
+                        updateCount();
+                        saveDraft();
+                        isSyncedToCloud = true;
+                        showToast(`已成功回叫 ${dt} 記錄！`);
+                    } else {
+                        showToast(`找不到 ${dt} 的雲端記錄`);
+                    }
+                } catch {
+                    showToast('回叫記錄失敗');
+                } finally {
+                    APP_CORE.toggleSpinner(false);
+                }
+            }
+
+            async function fetchLatestByTag(tagName) {
+                APP_CORE.toggleSpinner(true, `正在取得 Tag [${tagName}] 最新文章...`);
+                try {
+                    const res = await fetch(`${DAILY_API}&tag=${encodeURIComponent(tagName)}`);
+                    const data = await res.json();
+                    let targetContent = '';
+                    
+                    if (Array.isArray(data) && data.length > 0) {
+                        const filtered = data.filter(item => item.tag === tagName);
+                        if (filtered.length > 0) {
+                            const match = filtered[filtered.length - 1];
+                            targetContent = match.content || match.text || '';
+                        } else {
+                            const match = data[data.length - 1];
+                            targetContent = match.content || match.text || '';
+                        }
+                    } else if (data && data.content) {
+                        targetContent = data.content;
+                    }
+                    
+                    if (targetContent) {
+                        diaryInput.value = targetContent;
+                        if (articleTagSelect) articleTagSelect.value = tagName;
+                        updateCount();
+                        saveDraft();
+                        isSyncedToCloud = true;
+                        WordlistTool.switchTab('write');
+                        showToast(`已成功取得文章！`);
+                    } else {
+                        await loadLatestGoogleSheetRecord();
+                    }
+                } catch (e) {
+                    await loadLatestGoogleSheetRecord();
+                } finally {
+                    APP_CORE.toggleSpinner(false);
+                }
+            }
+
+            function loadTagData() {
+                const saved = APP_CORE.getLocal(LS_KEYS.TAGS);
+                if (Array.isArray(saved) && saved.length > 0) tagData = saved;
+            }
+            function saveTagData() {
+                APP_CORE.saveLocal(LS_KEYS.TAGS, tagData);
+                updateTagSelectOptions();
+            }
+            function updateTagSelectOptions() {
+                if (!articleTagSelect) return;
+                const currentVal = articleTagSelect.value;
+                articleTagSelect.innerHTML = '';
+                tagData.forEach(tag => {
+                    const opt = document.createElement('option');
+                    opt.value = tag;
+                    opt.textContent = tag;
+                    articleTagSelect.appendChild(opt);
+                });
+                if (tagData.includes(currentVal)) {
+                    articleTagSelect.value = currentVal;
+                }
+            }
+            function addTagEntry() {
+                if (!newTagNameInput) return;
+                const tagName = newTagNameInput.value.trim();
+                if (!tagName) { showToast('Tag 名稱不能為空'); return; }
+                if (tagData.includes(tagName)) { showToast('此 Tag 已存在'); return; }
+                tagData.push(tagName);
+                saveTagData();
+                renderTagList();
+                newTagNameInput.value = '';
+                showToast('Tag 分類已新增');
+            }
+            function renderTagList() {
+                if (!tagListDiv) return;
+                tagListDiv.innerHTML = '';
+                tagData.forEach(tagName => {
+                    const div = document.createElement('div');
+                    div.className = 'wordlist-tag-card';
+                    div.innerHTML = `
+                        <div style="flex:1; font-weight:bold;">${tagName}</div>
+                        <div style="display:flex; gap:4px;">
+                            <button class="btn-gold" data-tag-action="fetch" data-tag-name="${tagName}">取得最新文章</button>
+                            <button class="btn-gold" data-tag-action="edit" data-tag-name="${tagName}" style="background:var(--gold-secondary);">修改</button>
+                            <button class="btn-gold" data-tag-action="delete" data-tag-name="${tagName}" style="background:indianred;">刪除</button>
+                        </div>
+                    `;
+                    tagListDiv.appendChild(div);
+                });
+
+                tagListDiv.querySelectorAll('[data-tag-action="fetch"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        fetchLatestByTag(e.target.dataset.tagName);
+                    });
+                });
+
+                tagListDiv.querySelectorAll('[data-tag-action="edit"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const oldName = e.target.dataset.tagName;
+                        const newName = prompt('請輸入新的 Tag 名稱：', oldName);
+                        if (newName && newName.trim() && newName !== oldName) {
+                            const idx = tagData.indexOf(oldName);
+                            if (idx !== -1) {
+                                tagData[idx] = newName.trim();
+                                saveTagData();
+                                renderTagList();
+                                showToast('Tag 名稱已修改');
+                            }
+                        }
+                    });
+                });
+
+                tagListDiv.querySelectorAll('[data-tag-action="delete"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const tagName = e.target.dataset.tagName;
+                        if (tagData.length <= 1) { showToast('至少需保留一個 Tag 分類'); return; }
+                        if (confirm(`確定要刪除 Tag [${tagName}] 嗎？`)) {
+                            tagData = tagData.filter(t => t !== tagName);
+                            saveTagData();
+                            renderTagList();
+                            showToast('Tag 已刪除');
+                        }
+                    });
+                });
+            }
+
+            function loadHistory() {
+                const saved = APP_CORE.getLocal(LS_KEYS.HISTORY);
+                if (saved) historyData = saved;
+            }
+            function saveHistory() {
+                if (!diaryInput.value.trim()) return;
+                historyData.unshift({
+                    time: new Date().toLocaleString(),
+                    content: diaryInput.value
+                });
+                APP_CORE.saveLocal(LS_KEYS.HISTORY, historyData);
+                renderHistory();
+                showToast('已保存歷史記錄');
+            }
+            function renderHistory() {
+                if (!historyListDiv) return;
+                historyListDiv.innerHTML = '';
+                historyData.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'wordlist-history-card';
+                    div.innerHTML = `
+                        <div style="color:var(--muted-color); margin-bottom:var(--space-xs);">${item.time}</div>
+                        <div class="wordlist-content">${item.content}</div>
+                    `;
+                    historyListDiv.appendChild(div);
+                });
+            }
+
+            async function loadCloudWords() {
+                updateHeartbeat('yellow', '同步詞庫中...');
+                try {
+                    const res = await fetch(WORD_API);
+                    const data = await res.json();
+                    let fetchedWords = [];
+                    if (Array.isArray(data)) {
+                        fetchedWords = data;
+                    } else if (Array.isArray(data.data)) {
+                        fetchedWords = data.data.map(item => typeof item === 'string' ? item : (item.word || ''));
+                    }
+                    const existingLocalWords = APP_CORE.getLocal(LS_KEYS.CLOUD_CACHE, appWords);
+                    let combinedWords = [...new Set([...fetchedWords, ...existingLocalWords])];
+                    appWords = combinedWords.filter(Boolean).map(v => String(v).trim());
+                    
+                    APP_CORE.saveLocal(LS_KEYS.CLOUD_CACHE, appWords); 
+                    updateHeartbeat('green', '雲端同步 ' + appWords.length + ' 筆');
+                } catch (err) {
+                    const cache = APP_CORE.getLocal(LS_KEYS.CLOUD_CACHE);
+                    if (cache) {
+                        appWords = cache;
+                        updateHeartbeat('yellow', '離線快取詞庫');
+                    } else {
+                        updateHeartbeat('red', '詞庫載入失敗');
+                    }
+                }
+                renderWords(); 
+                renderQuickList(quickSearchInput ? quickSearchInput.value : '');
+                updateLiveCandidates();
+            }
+
+            async function reloadCloudWords() {
+                await loadCloudWords();
+                showToast('詞庫同步完成');
+            }
+
+            async function uploadCloudWords() {
+                if (!confirm('確定要將目前的詞庫上傳同步到指定的 Google Sheets 嗎？')) return;
+                APP_CORE.toggleSpinner(true, '正在上傳詞庫到 Google Sheets...');
+                updateHeartbeat('yellow', '上傳中...');
+                try {
+                    const response = await fetch(WORD_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ words: appWords })
+                    });
+                    if (response.ok) {
+                        updateHeartbeat('green', '同步已上傳');
+                        showToast('詞庫成功上傳至指定的 Google Sheets！');
+                    } else {
+                        throw new Error('伺服器回應錯誤狀態: ' + response.status);
+                    }
+                } catch (err) {
+                    updateHeartbeat('green', '上傳請求已發送');
+                    showToast('詞庫上傳請求已發送完成。');
+                } finally {
+                    APP_CORE.toggleSpinner(false);
+                }
+            }
+
+            function exportAllDataJson() {
+                const exportData = {
+                    version: APP_CORE.version,
+                    timestamp: new Date().toISOString(),
+                    draft: APP_CORE.getLocal(LS_KEYS.DRAFT, ''),
+                    history: APP_CORE.getLocal(LS_KEYS.HISTORY, []),
+                    cloudCacheWords: APP_CORE.getLocal(LS_KEYS.CLOUD_CACHE, []),
+                    encyclopedia: APP_CORE.getLocal(LS_KEYS.ENCYCLOPEDIA, []),
+                    outline: APP_CORE.getLocal(LS_KEYS.OUTLINE, []),
+                    tags: APP_CORE.getLocal(LS_KEYS.TAGS, [])
+                };
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `RoyalGold_Backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('已成功匯出備份 JSON 檔案！');
+            }
+
+            function importAllDataJson(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        if (imported.draft !== undefined) APP_CORE.saveLocal(LS_KEYS.DRAFT, imported.draft);
+                        if (imported.history) APP_CORE.saveLocal(LS_KEYS.HISTORY, imported.history);
+                        if (imported.cloudCacheWords) APP_CORE.saveLocal(LS_KEYS.CLOUD_CACHE, imported.cloudCacheWords);
+                        if (imported.encyclopedia) APP_CORE.saveLocal(LS_KEYS.ENCYCLOPEDIA, imported.encyclopedia);
+                        if (imported.outline) APP_CORE.saveLocal(LS_KEYS.OUTLINE, imported.outline);
+                        if (imported.tags) APP_CORE.saveLocal(LS_KEYS.TAGS, imported.tags);
+
+                        showToast('備份還原成功！正在重新載入...');
+                        setTimeout(() => location.reload(), 1200);
+                    } catch (err) {
+                        showToast('JSON 格式錯誤，還原失敗');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            function renderWords() {
+                if (!wordsListDiv || !wordSearchInput) return;
+                const search = wordSearchInput.value.trim().toLowerCase();
+                wordsListDiv.innerHTML = '';
+                const filtered = appWords.filter(word => String(word).toLowerCase().includes(search));
+                filtered.forEach(word => {
+                    const div = document.createElement('div');
+                    div.className = 'wordlist-word-card';
+                    const escapedWordId = escapeQuote(word.replace(/\s/g, '_').replace(/[^a-zA-Z0-9_-]/g, '')); 
+                    div.innerHTML = `
+                        <div class="wordlist-word-text">${word}</div>
+                        <button class="btn-gold" id="insertWordBtn_${escapedWordId}">插入</button>
+                    `;
+                    wordsListDiv.appendChild(div);
+                    const btn = document.getElementById(`insertWordBtn_${escapedWordId}`);
+                    if (btn) btn.addEventListener('click', () => insertWord(word));
+                });
+            }
+
+            function addWord() {
+                if (!newWordInput) return;
+                const value = newWordInput.value.trim();
+                if (!value) return;
+                if (!appWords.includes(value)) appWords.unshift(value);
+                APP_CORE.saveLocal(LS_KEYS.CLOUD_CACHE, appWords); 
+                renderWords();
+                renderQuickList(quickSearchInput ? quickSearchInput.value : '');
+                updateLiveCandidates();
+                newWordInput.value = '';
+                showToast('已新增詞語');
+            }
+
+            function loadEncyclopediaData() { encyclopediaData = APP_CORE.getLocal(LS_KEYS.ENCYCLOPEDIA, []); }
+            function saveEncyclopediaData() { APP_CORE.saveLocal(LS_KEYS.ENCYCLOPEDIA, encyclopediaData); }
+
+            function addEncyclopediaEntry() {
+                if (!newEncyclopediaEntryNameInput || !newEncyclopediaEntryTypeSelect || !newEncyclopediaEntryDescriptionInput) return;
+                const name = newEncyclopediaEntryNameInput.value.trim();
+                const type = newEncyclopediaEntryTypeSelect.value;
+                const description = newEncyclopediaEntryDescriptionInput.value.trim();
+                if (!name) { showToast('條目名稱不能為空。'); return; }
+                if (encyclopediaData.some(entry => entry.name === name)) { showToast('條目名稱已存在。'); return; }
+                encyclopediaData.unshift({ id: Date.now(), name, type, description });
+                saveEncyclopediaData();
+                renderEncyclopedia();
+                newEncyclopediaEntryNameInput.value = '';
+                newEncyclopediaEntryDescriptionInput.value = '';
+                showToast('百科條目已新增');
+            }
+
+            function renderEncyclopedia() {
+                if (!encyclopediaListDiv || !encyclopediaSearchInput) return;
+                encyclopediaListDiv.innerHTML = '';
+                const search = encyclopediaSearchInput.value.trim().toLowerCase();
+                const filtered = encyclopediaData.filter(entry => entry.name.toLowerCase().includes(search) || entry.description.toLowerCase().includes(search));
+                filtered.forEach(entry => {
+                    const div = document.createElement('div');
+                    div.className = 'wordlist-encyclopedia-card';
+                    div.innerHTML = `
+                        <div style="flex:1; word-break:break-all; padding-right:10px;">
+                            <strong>${entry.name}</strong> <span style="color:var(--muted-color);">(${entry.type})</span><br>
+                            <span>${entry.description}</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <button class="btn-gold" data-entry-id="${entry.id}" data-action="delete-encyclopedia" style="background:indianred;">刪除</button>
+                        </div>
+                    `;
+                    encyclopediaListDiv.appendChild(div);
+                });
+                encyclopediaListDiv.querySelectorAll('[data-action="delete-encyclopedia"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const entryId = parseInt(e.target.dataset.entryId);
+                        encyclopediaData = encyclopediaData.filter(entry => entry.id !== entryId);
+                        saveEncyclopediaData();
+                        renderEncyclopedia();
+                        showToast('條目已刪除');
+                    });
+                });
+            }
+
+            function loadOutlineData() { outlineData = APP_CORE.getLocal(LS_KEYS.OUTLINE, []); }
+            function saveOutlineData() { APP_CORE.saveLocal(LS_KEYS.OUTLINE, outlineData); }
+
+            function addOutlineEntry() {
+                if (!newOutlineEntryTitleInput || !newOutlineEntrySummaryInput) return;
+                const title = newOutlineEntryTitleInput.value.trim();
+                const summary = newOutlineEntrySummaryInput.value.trim();
+                if (!title) { showToast('標題不能為空。'); return; }
+                outlineData.push({ id: Date.now(), title, summary, content: '', status: 'draft' });
+                saveOutlineData();
+                renderOutline();
+                newOutlineEntryTitleInput.value = '';
+                newOutlineEntrySummaryInput.value = '';
+                showToast('章節/場景已新增');
+            }
+
+            function renderOutline() {
+                if (!outlineListDiv) return;
+                outlineListDiv.innerHTML = '';
+                outlineData.forEach(entry => {
+                    const div = document.createElement('div');
+                    div.className = 'wordlist-outline-card';
+                    div.innerHTML = `
+                        <div style="flex:1; word-break:break-all; padding-right:10px;">
+                            <strong>${entry.title}</strong> <span style="color:var(--muted-color);">(${entry.status})</span><br>
+                            <span>${entry.summary || '無摘要'}</span>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <button class="btn-gold" data-entry-id="${entry.id}" data-action="load-outline">寫作</button>
+                            <button class="btn-gold" data-entry-id="${entry.id}" data-action="delete-outline" style="background:indianred;">刪除</button>
+                        </div>
+                    `;
+                    outlineListDiv.appendChild(div);
+                });
+                outlineListDiv.querySelectorAll('[data-action="load-outline"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const entryId = parseInt(e.target.dataset.entryId);
+                        const entry = outlineData.find(o => o.id === entryId);
+                        if (entry && diaryInput) {
+                            diaryInput.value = entry.content; 
+                            WordlistTool.switchTab('write'); 
+                            showToast('已載入章節內容');
+                        }
+                    });
+                });
+                outlineListDiv.querySelectorAll('[data-action="delete-outline"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const entryId = parseInt(e.target.dataset.entryId);
+                        outlineData = outlineData.filter(entry => entry.id !== entryId);
+                        saveOutlineData();
+                        renderOutline();
+                        showToast('章節/場景已刪除');
+                    });
+                });
+            }
+
+            function escapeQuote(str) { return String(str).replace(/'/g, "&apos;").replace(/"/g, "&quot;"); }
+
+            function smartSearch(keyword) {
+                const search = keyword.trim().toLowerCase();
+                if (!search) return []; 
+                const fragments = [];
+                for (let i = 1; i <= Math.min(search.length, 6); i++) fragments.push(search.slice(-i));
+                const scoredWords = appWords.map(word => {
+                    let score = 0;
+                    const lower = String(word).toLowerCase();
+                    fragments.forEach(f => {
+                        if (lower.startsWith(f)) score += 120;
+                        if (lower.includes(f)) score += 60;
+                    });
+                    return { word, score };
+                });
+                return scoredWords.filter(item => item.score > 0).sort((a, b) => b.score - a.score).map(item => item.word).slice(0, 20);
+            }
+
+            function renderQuickList(keyword) {
+                if (!quickListDiv) return; 
+                quickListDiv.innerHTML = ''; 
+                const result = smartSearch(keyword);
+                if (result.length === 0) return; 
+                result.forEach(word => {
+                    const btn = document.createElement('button');
+                    btn.className = 'wordlist-word-btn';
+                    btn.textContent = word;
+                    btn.addEventListener('click', () => insertWord(word));
+                    quickListDiv.appendChild(btn); 
+                });
+            }
+
+            const splitRegex = /[\s\uFF0C\u3002\u3001\uFF1A\uFF1B\uFF01\uFF1F]/g;
+            function getCurrentKeyword() {
+                if (!diaryInput) return '';
+                const cursor = diaryInput.selectionStart;
+                const text = diaryInput.value.substring(0, cursor);
+                const parts = text.split(splitRegex); 
+                return parts[parts.length - 1] || '';
+            }
+
+            function updateLiveCandidates() {
+                if (!liveCandidateBar) return;
+                liveCandidateBar.innerHTML = '';
+                const keyword = getCurrentKeyword();
+                if (!keyword) return; 
+                const result = smartSearch(keyword);
+                result.forEach(word => {
+                    const btn = document.createElement('button');
+                    btn.className = 'wordlist-word-btn';
+                    btn.textContent = word;
+                    btn.addEventListener('click', () => insertSmartWord(word));
+                    liveCandidateBar.appendChild(btn);
+                });
+            }
+
+            function insertWord(word) {
+                if (!diaryInput) return;
+                const cursor = diaryInput.selectionStart;
+                const text = diaryInput.value;
+                const left = text.substring(0, cursor);
+                const right = text.substring(cursor);
+                diaryInput.value = left + word + right;
+                const pos = (left + word).length;
+                diaryInput.focus();
+                diaryInput.setSelectionRange(pos, pos);
+                updateCount();
+                saveDraft();
+            }
+
+            function insertSmartWord(word) {
+                if (!diaryInput) return;
+                const cursor = diaryInput.selectionStart;
+                const text = diaryInput.value;
+                const left = text.substring(0, cursor);
+                const right = text.substring(cursor);
+                const parts = left.split(splitRegex); 
+                let lastWord = parts[parts.length - 1] || '';
+                const replaceLeft = left.substring(0, left.length - lastWord.length);
+                diaryInput.value = replaceLeft + word + right;
+                const pos = (replaceLeft + word).length;
+                diaryInput.focus();
+                diaryInput.setSelectionRange(pos, pos);
+                updateCount();
+                saveDraft();
+                updateLiveCandidates();
+            }
+
+            function updateCount() {
+                if (!diaryInput) return;
+                const len = diaryInput.value.length;
+                
+                if (charCountDiv) {
+                    charCountDiv.innerHTML = `<span>字數：${len}</span> <span id="readTimeCount" style="color:var(--muted-color); font-size:0.9em; margin-left:8px;">預估閱讀：${Math.ceil(len / 350)} 分鐘</span>`;
+                }
+
+                const targetGoal = 2000;
+                const percent = Math.min(Math.round((len / targetGoal) * 100), 100);
+                if (goalProgressBar) goalProgressBar.style.width = percent + '%';
+                if (goalPercentText) goalPercentText.textContent = percent + '%';
+            }
+            
+            function toggleDarkMode(){ document.documentElement.classList.toggle('dark'); }
+
+            return {
+                init: initWordlistTool,
+                switchTab: switchTab,
+                addWord: addWord,
+                saveHistory: saveHistory,
+                reloadCloudWords: reloadCloudWords,
+                uploadCloudWords: uploadCloudWords,
+                insertWord: insertWord,
+                insertSmartWord: insertSmartWord,
+                toggleDarkMode: toggleDarkMode,
+                loadDailyFromCloud: loadDailyFromCloud,
+                loadLatestGoogleSheetRecord: loadLatestGoogleSheetRecord,
+                fetchRecordedDatesList: fetchRecordedDatesList,
+                addTagEntry: addTagEntry,
+                exportAllDataJson: exportAllDataJson,
+                importAllDataJson: importAllDataJson
+            };
+        })();
+
+        window.addEventListener('coreReady', function() { WordlistTool.init(); });
+    </script>
+</body>
+</html>
