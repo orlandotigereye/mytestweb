@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>皇家金 3D 互動建築平面圖 (模組匯入匯出與完整旗艦版)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js Library & OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d',
+                            400: '#fbbf24', 500: '#d97706', 600: '#b45309', 700: '#92400e',
+                            800: '#78350f', 900: '#451a03',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h6, table, td, th {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+        @media (min-width: 768px) {
+            body, button, input, select, textarea, div, span, p, h1, h2, h3, h4, h5, h6, table, td, th {
+                font-size: 0.9rem;
+            }
+        }
+        
+        body {
+            background: linear-gradient(135deg, #fef08a 0%, #fde047 25%, #eab308 50%, #ca8a04 75%, #a16207 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+            color: #451a03;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .gold-card {
+            background: linear-gradient(145deg, #fffbeb, #fef3c7);
+            border: 1px solid #f59e0b;
+            box-shadow: 0 4px 15px rgba(180, 83, 9, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .gold-btn {
+            background: linear-gradient(180deg, #fde047 0%, #eab308 50%, #ca8a04 100%);
+            border: 1px solid #b45309;
+            color: #451a03;
+            font-weight: 700;
+            text-shadow: 0 1px 0 rgba(254, 243, 199, 0.8);
+            box-shadow: 0 2px 4px rgba(120, 53, 15, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 6px 10px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .gold-btn:hover {
+            background: linear-gradient(180deg, #fef08a 0%, #fde047 50%, #eab308 100%);
+            transform: translateY(-1px);
+        }
+
+        .gold-btn-active {
+            background: linear-gradient(180deg, #b45309 0%, #78350f 100%) !important;
+            color: #fef3c7 !important;
+            border-color: #451a03 !important;
+            text-shadow: none !important;
+        }
+
+        #threeCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            outline: none;
+        }
+
+        .gold-tab {
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            padding: 8px 16px;
+            font-weight: bold;
+            color: #451a03;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .gold-tab-active {
+            border-bottom-color: #78350f;
+            background-color: rgba(253, 224, 71, 0.5);
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast" style="position:fixed; top:15px; right:15px; z-index:9999; display:none;" class="gold-card px-4 py-2 rounded-xl border-amber-600 shadow-2xl flex items-center gap-2">
+        <i class="fa-solid fa-circle-info text-amber-700 text-lg"></i>
+        <span id="toastMsg" class="font-bold text-amber-950">載入中...</span>
+    </div>
+
+    <!-- Header -->
+    <header class="gold-card m-2 p-2 rounded-xl flex flex-col md:flex-row justify-between items-center z-10 shrink-0 gap-2">
+        <div class="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start">
+            <div class="flex items-center gap-2">
+                <div class="p-2 rounded-lg bg-amber-500 text-amber-950 font-bold border border-amber-700 shadow">
+                    <i class="fa-solid fa-cubes text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold tracking-wider text-amber-950 text-base md:text-lg">皇家金 3D 互動平面圖 (模組匯入匯出與完整旗艦版)</h1>
+                    <p class="text-amber-800 text-xs md:text-sm">具備磁吸貼牆・日夜採光・自訂家具與房間模組 JSON 匯入匯出 | 38.0 坪</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 flex-wrap justify-center md:justify-end w-full md:w-auto">
+            <button id="btnView3D" class="gold-btn gold-btn-active"><i class="fa-solid fa-eye"></i> 3D 透視</button>
+            <button id="btnViewTop" class="gold-btn"><i class="fa-solid fa-arrows-up-to-line"></i> 2D 俯視</button>
+            <button id="btnViewFirst" class="gold-btn"><i class="fa-solid fa-street-view"></i> 第一人稱</button>
+            <button id="btnResetView" class="gold-btn"><i class="fa-solid fa-arrows-to-dot"></i> 重置</button>
+            <div class="h-5 w-px bg-amber-600 mx-1 hidden md:block"></div>
+            <button id="btnStyleGold" class="gold-btn gold-btn-active"><i class="fa-solid fa-coins"></i> 奢華金</button>
+            <button id="btnStyleWood" class="gold-btn"><i class="fa-solid fa-tree"></i> 溫馨木</button>
+            <button id="btnStyleMarble" class="gold-btn"><i class="fa-solid fa-gem"></i> 大理石</button>
+            <div class="h-5 w-px bg-amber-600 mx-1 hidden md:block"></div>
+            <button id="btnDownloadPNG" class="gold-btn"><i class="fa-solid fa-camera"></i> 截圖</button>
+            <button id="btnDownloadCode" class="gold-btn"><i class="fa-solid fa-code"></i> 下載程式碼</button>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex gold-card mx-2 rounded-t-xl overflow-x-auto shrink-0 border-b-0">
+        <button id="tab1" class="gold-tab gold-tab-active"><i class="fa-solid fa-couch"></i> 3D 空間與模組配置</button>
+        <button id="tab2" class="gold-tab"><i class="fa-solid fa-vector-square"></i> 牆面結構透視</button>
+        <button id="tab3" class="gold-tab"><i class="fa-solid fa-chart-pie"></i> 38坪詳細坪數對照表</button>
+    </nav>
+
+    <!-- Main Viewport -->
+    <div class="flex-1 flex relative overflow-hidden mx-2 mb-2 rounded-b-xl border border-amber-500 gold-card" style="flex:1;">
+        
+        <div id="canvasContainer" class="flex-1 h-full w-full relative flex items-center justify-center overflow-hidden">
+            <canvas id="threeCanvas"></canvas>
+
+            <!-- 綜合控制面板 (含日夜採光 + 家具尺寸 + 模組匯入匯出) -->
+            <div id="furnitureControlPanel" class="absolute top-3 right-3 gold-card p-3 rounded-xl border border-amber-600 shadow-2xl text-amber-950 flex flex-col gap-2 z-10 w-72 backdrop-blur-md bg-[#fffbeb]/90 max-h-[90%] overflow-y-auto">
+                <div class="font-extrabold flex items-center justify-between border-b border-amber-400 pb-1">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-sun text-amber-700"></i> 日夜採光模擬</span>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-bold text-amber-900 flex justify-between">
+                        <span>☀️ 太陽角度 / 時間:</span> <span id="valSunTime">14:00 (午後光影)</span>
+                    </label>
+                    <input type="range" id="rangeSunTime" min="6" max="22" step="0.5" value="14" class="accent-amber-600 cursor-pointer">
+                </div>
+
+                <div class="font-extrabold flex items-center justify-between border-b border-amber-400 pb-1 mt-2">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-cubes text-amber-700"></i> 家具模組與房間套組 (JSON)</span>
+                </div>
+
+                <div class="flex gap-1">
+                    <button id="btnExportJSON" class="gold-btn py-1 text-xs flex-1 justify-center"><i class="fa-solid fa-file-export"></i> 匯出專案 JSON</button>
+                    <button id="btnImportJSON" class="gold-btn py-1 text-xs flex-1 justify-center"><i class="fa-solid fa-file-import"></i> 匯入 JSON</button>
+                    <input type="file" id="fileInput" accept=".json" class="hidden">
+                </div>
+
+                <div class="font-extrabold flex items-center justify-between border-b border-amber-400 pb-1 mt-2">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-ruler-arrows text-amber-700"></i> 選定家具調整與磁吸</span>
+                </div>
+                
+                <div id="selectedItemInfo" class="text-xs text-amber-800 bg-amber-100 p-2 rounded-lg border border-amber-300">
+                    💡 點選任一家具即可拖曳移動、設定尺寸與磁吸！
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-amber-900">🧲 牆面磁吸貼齊:</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="chkSnap" class="sr-only peer" checked>
+                        <div class="w-9 h-5 bg-amber-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-amber-800 after:border-amber-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600"></div>
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-3 gap-1.5 mt-1">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-bold text-amber-900">長 X (m):</label>
+                        <input type="number" id="numDimX" step="0.1" min="0.2" class="border border-amber-400 rounded px-1 py-0.5 text-xs bg-amber-50" value="1.8">
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-bold text-amber-900">高 Y (m):</label>
+                        <input type="number" id="numDimY" step="0.1" min="0.2" class="border border-amber-400 rounded px-1 py-0.5 text-xs bg-amber-50" value="0.5">
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-bold text-amber-900">深 Z (m):</label>
+                        <input type="number" id="numDimZ" step="0.1" min="0.2" class="border border-amber-400 rounded px-1 py-0.5 text-xs bg-amber-50" value="1.9">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mt-1">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-bold text-amber-900">座標 X (m):</label>
+                        <input type="number" id="numPosX" step="0.1" class="border border-amber-400 rounded px-1.5 py-0.5 text-xs bg-amber-50" value="0.0">
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-bold text-amber-900">座標 Z (m):</label>
+                        <input type="number" id="numPosZ" step="0.1" class="border border-amber-400 rounded px-1.5 py-0.5 text-xs bg-amber-50" value="0.0">
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-bold text-amber-900 flex justify-between">
+                        <span>旋轉角度:</span> <span id="valRot">0°</span>
+                    </label>
+                    <input type="range" id="rangeRot" min="0" max="360" step="5" value="0" class="accent-amber-600 cursor-pointer">
+                </div>
+
+                <button id="btnResetFurniture" class="gold-btn py-1 text-xs justify-center mt-1">
+                    <i class="fa-solid fa-rotate-left"></i> 重置所有家具配置
+                </button>
+            </div>
+
+            <!-- Floating Legend -->
+            <div class="absolute bottom-3 left-3 gold-card p-3 rounded-xl border border-amber-500 shadow-xl text-amber-950 flex flex-col gap-1 pointer-events-none hidden sm:flex z-10">
+                <div class="font-extrabold flex items-center gap-1.5 border-b border-amber-300 pb-1">
+                    <i class="fa-solid fa-book-open text-amber-700"></i> 旗艦功能總覽：
+                </div>
+                <div>• 支援 38 坪完整室內外格局與 3 種材質風格切換</div>
+                <div>• 具備滑鼠拖曳、牆面磁吸貼齊與日夜日光模擬</div>
+                <div>• 新增自訂家具與房間模組 JSON 匯入/匯出功能</div>
+            </div>
+
+            <!-- 38坪精密數據分析面板 -->
+            <div id="analysisPanel" class="absolute inset-3 gold-card p-4 rounded-xl border border-amber-600 shadow-2xl overflow-y-auto hidden z-20 bg-[#fffbeb]/95 backdrop-blur-md">
+                <div class="flex justify-between items-center border-b border-amber-400 pb-2 mb-3">
+                    <h2 class="font-extrabold text-amber-950 text-base md:text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-amber-700"></i> 4房2廳2衛 實景 38 坪 (125.6 m²) 與規格對照表
+                    </h2>
+                    <span class="bg-amber-400 text-amber-950 font-black px-3 py-1 rounded-lg border border-amber-700 shadow-sm">
+                        主建物總計實坪：38.0 坪
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div class="p-3 bg-amber-100/90 rounded-xl border border-amber-400 shadow-sm">
+                        <div class="font-bold text-amber-900 border-b border-amber-300 pb-1 mb-1.5 flex justify-between">
+                            <span>客餐廳 (公共區)</span> <span class="text-amber-700 font-black">約 12.6 坪</span>
+                        </div>
+                        <p>尺寸：5,800 × 7,200 mm | 配置 L型沙發、茶几與 8人餐桌。</p>
+                    </div>
+                    <div class="p-3 bg-amber-100/90 rounded-xl border border-amber-400 shadow-sm">
+                        <div class="font-bold text-amber-900 border-b border-amber-300 pb-1 mb-1.5 flex justify-between">
+                            <span>主臥室 (含更衣間)</span> <span class="text-amber-700 font-black">約 5.7 坪</span>
+                        </div>
+                        <p>尺寸：4,200 × 4,500 mm | 配置加大雙人床與更衣間。</p>
+                    </div>
+                    <div class="p-3 bg-amber-100/90 rounded-xl border border-amber-400 shadow-sm">
+                        <div class="font-bold text-amber-900 border-b border-amber-300 pb-1 mb-1.5 flex justify-between">
+                            <span>主臥四件式衛浴</span> <span class="text-amber-700 font-black">約 2.0 坪</span>
+                        </div>
+                        <p>尺寸：2,400 × 2,800 mm | 獨立浴缸與乾濕分離。</p>
+                    </div>
+                    <div class="p-3 bg-amber-100/90 rounded-xl border border-amber-400 shadow-sm">
+                        <div class="font-bold text-amber-900 border-b border-amber-300 pb-1 mb-1.5 flex justify-between">
+                            <span>次臥 A (長輩房)</span> <span class="text-amber-700 font-black">約 4.0 坪</span>
+                        </div>
+                        <p>尺寸：3,800 × 3,500 mm | 雙人床與完整書桌。</p>
+                    </div>
+                    <div class="p-3 bg-amber-100/90 rounded-xl border border-amber-400 shadow-sm">
+                        <div class="font-bold text-amber-900 border-b border-amber-300 pb-1 mb-1.5 flex justify-between">
+                            <span>次臥 B (小孩房)</span> <span class="text-amber-700 font-black">約 3.4 坪</span>
+                        </div>
+                        <p>尺寸：3,500 × 3,200 mm | 雙人床與對外窗。</p>
+                    </div>
+                    <div class="p-3 bg-amber-100/90 rounded-xl border border-amber-400 shadow-sm">
+                        <div class="font-bold text-amber-900 border-b border-amber-300 pb-1 mb-1.5 flex justify-between">
+                            <span>獨立書房</span> <span class="text-amber-700 font-black">約 2.7 坪</span>
+                        </div>
+                        <p>尺寸：3,200 × 2,800 mm | 多功能書房與榻榻米。</p>
+                    </div>
+                    <div class="p-3 bg-amber-100/90 rounded-xl border border-amber-400 shadow-sm">
+                        <div class="font-bold text-amber-900 border-b border-amber-300 pb-1 mb-1.5 flex justify-between">
+                            <span>L 型獨立廚房</span> <span class="text-amber-700 font-black">約 2.4 坪</span>
+                        </div>
+                        <p>尺寸：3,000 × 2,600 mm | 60cm 檯面與 LG 洗碗機。</p>
+                    </div>
+                    <div class="p-3 bg-amber-100/90 rounded-xl border border-amber-400 shadow-sm">
+                        <div class="font-bold text-amber-900 border-b border-amber-300 pb-1 mb-1.5 flex justify-between">
+                            <span>客用衛生間</span> <span class="text-amber-700 font-black">約 1.2 坪</span>
+                        </div>
+                        <p>尺寸：2,200 × 1,800 mm | 乾濕分離。</p>
+                    </div>
+                    <div class="p-3 bg-amber-100/90 rounded-xl border border-amber-400 shadow-sm">
+                        <div class="font-bold text-amber-900 border-b border-amber-300 pb-1 mb-1.5 flex justify-between">
+                            <span>景觀大陽台與工作陽台</span> <span class="text-amber-700 font-black">約 4.0 坪</span>
+                        </div>
+                        <p>前後陽台連通，具備洗滌與晾衣機能。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scene, camera, renderer, controls;
+        let wallGroup, furnitureGroup, wireframeGroup;
+        let floorMesh, sunLight, ambientLight;
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let selectedObject = null;
+        let isDragging = false;
+        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        const intersectPoint = new THREE.Vector3();
+
+        let interactiveItems = [];
+        let wallPlanes = [
+            { axis: 'x', val: -16 }, { axis: 'x', val: 16 },
+            { axis: 'z', val: -12 }, { axis: 'z', val: 12 },
+            { axis: 'x', val: -4 },  { axis: 'x', val: 4 }
+        ];
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.innerText = message;
+            toast.style.display = 'flex';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function initThree() {
+            const container = document.getElementById('canvasContainer');
+            if (!container) return;
+            if (typeof THREE === 'undefined' || typeof THREE.OrbitControls === 'undefined') {
+                showToast('3D 元件載入失敗，請確認網路可連線後重新整理。');
+                console.error('Three.js 或 OrbitControls 載入失敗。請檢查 CDN 網路連線。');
+                return;
+            }
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xfef3c7);
+
+            const initialWidth = Math.max(container.clientWidth, 1);
+            const initialHeight = Math.max(container.clientHeight, 1);
+            camera = new THREE.PerspectiveCamera(45, initialWidth / initialHeight, 0.1, 1000);
+            camera.position.set(22, 28, 35);
+
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('threeCanvas'), antialias: true, preserveDrawingBuffer: true });
+            renderer.setSize(initialWidth, initialHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 - 0.05;
+
+            ambientLight = new THREE.AmbientLight(0xfffbeb, 0.75);
+            scene.add(ambientLight);
+
+            sunLight = new THREE.DirectionalLight(0xfff08a, 0.95);
+            sunLight.position.set(30, 45, 25);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            scene.add(sunLight);
+
+            scene.add(new THREE.PointLight(0xfde047, 0.6, 50));
+            scene.add(new THREE.HemisphereLight(0xfffbeb, 0xb45309, 0.5));
+
+            wallGroup = new THREE.Group();
+            furnitureGroup = new THREE.Group();
+            wireframeGroup = new THREE.Group();
+
+            scene.add(wallGroup);
+            scene.add(furnitureGroup);
+            scene.add(wireframeGroup);
+
+            buildFloorAndWalls();
+            buildFurniture();
+            initInteractiveListeners();
+            initUIControls();
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
+            showToast("模組化旗艦版載入完成！");
+        }
+
+        const wallH = 2.8, wt = 0.3;
+        const sharedWallMat = new THREE.MeshStandardMaterial({ color: 0xdca85a, roughness: 0.6, metalness: 0.12 });
+        const sharedGlassMat = new THREE.MeshPhysicalMaterial({ color: 0xaed6ff, transparent: true, opacity: 0.35, roughness: 0.05, metalness: 0.25 });
+        const sharedFrameMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4, metalness: 0.35 });
+        const sharedDoorMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.45, metalness: 0.1 });
+        const sharedWireMat = new THREE.MeshBasicMaterial({ color: 0x78350f, wireframe: true });
+
+        function addEdges(mesh, color) {
+            const edges = new THREE.EdgesGeometry(mesh.geometry);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: color || 0x713f12 }));
+            mesh.add(line);
+            return mesh;
+        }
+
+        function createLabel(text, x, y, z) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'rgba(254, 243, 199, 0.95)';
+            ctx.fillRect(0, 0, 512, 128);
+            ctx.strokeStyle = '#92400e'; ctx.lineWidth = 10; ctx.strokeRect(5, 5, 502, 118);
+            ctx.fillStyle = '#451a03';
+            ctx.font = 'bold 50px "Noto Sans TC", sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(text, 256, 68);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
+            sprite.scale.set(4.5, 1.1, 1);
+            sprite.position.set(x, y, z);
+            scene.add(sprite);
+        }
+
+        function wallMesh(x, y, z, w, h, d, mat) {
+            const geo = new THREE.BoxGeometry(w, h, d);
+            const m = new THREE.Mesh(geo, mat || sharedWallMat);
+            m.position.set(x, y, z);
+            m.castShadow = true; m.receiveShadow = true;
+            addEdges(m);
+            wallGroup.add(m);
+            const wire = new THREE.Mesh(geo, sharedWireMat);
+            wire.position.set(x, y, z);
+            wireframeGroup.add(wire);
+            return m;
+        }
+
+        function createWall(x, z, w, h, d) { return wallMesh(x, h / 2, z, w, h, d); }
+
+        function addWindowH(cx, z, len, a, w, sillH, winH) {
+            const x0 = cx - len / 2, x1 = cx + len / 2;
+            const segL = a - x0, segR = x1 - (a + w);
+            if (segL > 0.05) createWall(x0 + segL / 2, z, segL, wallH, wt);
+            if (segR > 0.05) createWall(a + w + segR / 2, z, segR, wallH, wt);
+            if (sillH > 0.05) createWall(a + w / 2, z, w, sillH, wt);
+            const lintelH = wallH - sillH - winH;
+            if (lintelH > 0.05) wallMesh(a + w / 2, sillH + winH + lintelH / 2, z, w, lintelH, wt);
+            const glass = new THREE.Mesh(new THREE.BoxGeometry(w - 0.08, winH - 0.08, 0.08), sharedGlassMat);
+            glass.position.set(a + w / 2, sillH + winH / 2, z);
+            wallGroup.add(glass);
+        }
+
+        function addWindowV(x, cz, len, a, w, sillH, winH) {
+            const z0 = cz - len / 2, z1 = cz + len / 2;
+            const segL = a - z0, segR = z1 - (a + w);
+            if (segL > 0.05) createWall(x, z0 + segL / 2, wt, wallH, segL);
+            if (segR > 0.05) createWall(x, a + w + segR / 2, wt, wallH, segR);
+            if (sillH > 0.05) createWall(x, a + w / 2, wt, sillH, w);
+            const lintelH = wallH - sillH - winH;
+            if (lintelH > 0.05) wallMesh(x, sillH + winH + lintelH / 2, a + w / 2, wt, lintelH, w);
+            const glass = new THREE.Mesh(new THREE.BoxGeometry(0.08, winH - 0.08, w - 0.08), sharedGlassMat);
+            glass.position.set(x, sillH + winH / 2, a + w / 2);
+            wallGroup.add(glass);
+        }
+
+        function createDoor(x, z, orient, openAngle) {
+            const dw = 1.05, dh = 2.1;
+            if (orient === 'h') {
+                wallMesh(x - dw / 2 - 0.06, dh / 2, z, 0.12, dh, wt + 0.06, sharedFrameMat);
+                wallMesh(x + dw / 2 + 0.06, dh / 2, z, 0.12, dh, wt + 0.06, sharedFrameMat);
+                wallMesh(x, dh + 0.07, z, dw + 0.24, 0.14, wt + 0.06, sharedFrameMat);
+                const hinge = new THREE.Group();
+                hinge.position.set(x - dw / 2, 0, z);
+                const leaf = new THREE.Mesh(new THREE.BoxGeometry(dw, dh, 0.08), sharedDoorMat);
+                leaf.position.set(dw / 2, dh / 2, 0);
+                leaf.castShadow = true;
+                addEdges(leaf, 0x582103);
+                hinge.add(leaf);
+                hinge.rotation.y = openAngle;
+                wallGroup.add(hinge);
+            } else {
+                wallMesh(x, dh / 2, z - dw / 2 - 0.06, wt + 0.06, dh, 0.12, sharedFrameMat);
+                wallMesh(x, dh / 2, z + dw / 2 + 0.06, wt + 0.06, dh, 0.12, sharedFrameMat);
+                wallMesh(x, dh + 0.07, z, wt + 0.06, 0.14, dw + 0.24, sharedFrameMat);
+                const hinge = new THREE.Group();
+                hinge.position.set(x, 0, z - dw / 2);
+                const leaf = new THREE.Mesh(new THREE.BoxGeometry(0.08, dh, dw), sharedDoorMat);
+                leaf.position.set(0, dh / 2, dw / 2);
+                leaf.castShadow = true;
+                addEdges(leaf, 0x582103);
+                hinge.add(leaf);
+                hinge.rotation.y = -openAngle;
+                wallGroup.add(hinge);
+            }
+        }
+
+        function buildFloorAndWalls() {
+            floorMesh = new THREE.Mesh(new THREE.BoxGeometry(32, 0.2, 24),
+                new THREE.MeshStandardMaterial({ color: 0xf3d489, roughness: 0.55, metalness: 0.05 }));
+            floorMesh.position.set(0, -0.1, 0);
+            floorMesh.receiveShadow = true;
+            addEdges(floorMesh, 0xb45309);
+            scene.add(floorMesh);
+
+            const grid = new THREE.GridHelper(48, 48, 0xb45309, 0xd97706);
+            grid.position.y = 0.012;
+            grid.material.transparent = true;
+            grid.material.opacity = 0.18;
+            scene.add(grid);
+
+            addWindowH(0, -12, 32, 4.8, 2.4, 0.9, 1.5);
+            addWindowH(0, 12, 32, 13, 4, 1.0, 1.5);
+            createWall((-16 + 11.45) / 2, 12, 27.45, wallH, wt);
+            createWall((12.55 + 16) / 2, 12, 3.45, wallH, wt);
+            wallMesh(12, 2.1 + (wallH - 2.1) / 2, 12, 1.1, wallH - 2.1, wt);
+            createDoor(12, 12, 'h', 0.7);
+            addWindowV(16, 0, 24, 2, 8, 0.05, 2.65);
+            addWindowV(16, 0, 24, 14, 4, 0.9, 1.5);
+            addWindowV(-16, 0, 24, 18.5, 3, 0.9, 1.5);
+
+            createWall(-4, -4, wt, wallH, 16);
+            createWall(4, 2, wt, wallH, 20);
+            createWall(-10, -2, 12, wallH, wt);
+            createWall(-10, 4, 12, wallH, wt);
+            createWall(0, 6, 8, wallH, wt);
+
+            createDoor(-4, -7, 'v', 0.9);
+            createDoor(-4, 1.2, 'v', -0.9);
+            createDoor(-7, 4, 'h', 0.8);
+            createDoor(4, 9.2, 'v', -0.9);
+            createDoor(4, 4, 'v', 0.9);
+            createDoor(-2, 6, 'h', 0.9);
+
+            createLabel('客餐廳 (12.6坪)', 10, 3.6, -3);
+            createLabel('主臥+更衣 (5.7坪)', -10, 3.6, -7);
+            createLabel('次臥 A (4.0坪)', -10, 3.6, 1);
+            createLabel('次臥 B (3.4坪)', -10, 3.6, 8);
+            createLabel('廚房 (2.4坪)', 0, 3.6, 9);
+            createLabel('衛浴 (2.0/1.2坪)', 0, 3.6, 4);
+            createLabel('景觀大陽台 (2.6坪)', 11, 3.6, -8);
+            createLabel('工作陽台 (1.4坪)', 12.5, 3.6, 10);
+        }
+
+        function createBox(x, y, z, w, h, d, color, opts) {
+            const o = opts || {};
+            const mat = new THREE.MeshStandardMaterial({
+                color: color,
+                roughness: o.roughness !== undefined ? o.roughness : 0.5,
+                metalness: o.metalness !== undefined ? o.metalness : 0.1,
+                transparent: !!o.transparent,
+                opacity: o.opacity !== undefined ? o.opacity : 1
+            });
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+            mesh.position.set(x, y + h / 2, z);
+            mesh.castShadow = true; mesh.receiveShadow = true;
+            if (o.edges !== false) addEdges(mesh);
+            
+            if (o.interactive) {
+                mesh.userData = { isInteractive: true, name: o.name || '自訂模組家具', origW: w, origH: h, origD: d, color: color };
+                interactiveItems.push(mesh);
+            }
+            
+            furnitureGroup.add(mesh);
+            return mesh;
+        }
+
+        function buildFurniture() {
+            createBox(9.5, 0, -6, 2.6, 0.85, 1.8, 0xd97706, { interactive: true, name: 'L型客廳沙發' });
+            createBox(7.2, 0, -6, 1.3, 0.40, 0.7, 0xbfdbfe, { interactive: true, name: '客廳茶几' });
+            createBox(7.5, 0, 7, 2.0, 0.75, 0.9, 0xffe3a3, { interactive: true, name: '8人餐桌' });
+            createBox(-10, 0, -8, 1.82, 0.5, 1.88, 0x92400e, { interactive: true, name: '主臥加大床' });
+            createBox(-12.0, 0, -8.8, 0.4, 0.5, 0.4, 0xb45309, { interactive: true, name: '主臥邊桌' });
+            createBox(-14, 0, 0.5, 1.52, 0.5, 1.88, 0x92400e, { interactive: true, name: '次臥雙人床' });
+            createBox(-5.8, 0, 2.5, 1.2, 0.75, 0.6, 0xffe3a3, { interactive: true, name: '化妝書桌' });
+
+            createBox(9.5, 0.42, -6.85, 2.6, 0.7, 0.25, 0xb45309);
+            createBox(4.8, 0, -6, 0.4, 0.45, 1.8, 0x92400e);
+            createBox(4.75, 0.45, -6, 0.06, 1.0, 1.6, 0x111827, { edges: false, roughness: 0.2 });
+            
+            createBox(-1, 0, 11.2, 4.2, 0.85, 0.65, 0xfffbeb);
+            createBox(-1, 0.85, 11.2, 4.3, 0.05, 0.7, 0xd97706);
+            createBox(-2.2, 0.9, 11.2, 0.8, 0.03, 0.5, 0x9ca3af, { metalness: 0.8, roughness: 0.3 });
+            createBox(-2.9, 0, 9.4, 0.65, 0.85, 2.8, 0xfffbeb);
+            createBox(-2.9, 0.85, 9.4, 0.7, 0.05, 2.9, 0xd97706);
+            createBox(2.2, 0, 11.0, 0.9, 2.2, 0.8, 0xb45309);
+            createBox(3.0, 0, 8.5, 0.9, 1.8, 0.8, 0xe5e7eb, { metalness: 0.5, roughness: 0.3 });
+            createBox(0.4, 0, 11.15, 0.6, 0.85, 0.65, 0x78350f, { metalness: 0.8, roughness: 0.2 });
+        }
+
+        // 互動拖曳與磁吸
+        function initInteractiveListeners() {
+            const canvas = renderer.domElement;
+
+            canvas.addEventListener('pointerdown', (e) => {
+                if (e.button !== 0) return;
+                const rect = canvas.getBoundingClientRect();
+                mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(interactiveItems);
+
+                if (intersects.length > 0) {
+                    selectedObject = intersects[0].object;
+                    controls.enabled = false;
+                    isDragging = true;
+                    
+                    selectedObject.material.emissive.setHex(0x664400);
+                    document.getElementById('selectedItemInfo').innerHTML = `✅ 已選取：<b>${selectedObject.userData.name}</b><br>🧲 拖曳中將自動磁吸貼牆！`;
+                    
+                    syncUIControls();
+                }
+            });
+
+            canvas.addEventListener('pointermove', (e) => {
+                if (!isDragging || !selectedObject) return;
+                const rect = canvas.getBoundingClientRect();
+                mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                if (raycaster.ray.intersectPlane(plane, intersectPoint)) {
+                    let posX = intersectPoint.x;
+                    let posZ = intersectPoint.z;
+
+                    const enableSnap = document.getElementById('chkSnap').checked;
+                    if (enableSnap) {
+                        const snapDist = 0.8;
+                        const halfW = (selectedObject.userData.origW * selectedObject.scale.x) / 2;
+                        const halfD = (selectedObject.userData.origD * selectedObject.scale.z) / 2;
+
+                        wallPlanes.forEach(w => {
+                            if (w.axis === 'x' && Math.abs(posX - w.val) < snapDist + halfW) {
+                                posX = (posX > w.val) ? w.val + halfW + 0.15 : w.val - halfW - 0.15;
+                            }
+                            if (w.axis === 'z' && Math.abs(posZ - w.val) < snapDist + halfD) {
+                                posZ = (posZ > w.val) ? w.val + halfD + 0.15 : w.val - halfD - 0.15;
+                            }
+                        });
+                    }
+
+                    selectedObject.position.x = posX;
+                    selectedObject.position.z = posZ;
+                    syncUIControls();
+                }
+            });
+
+            const finishDrag = () => {
+                if (selectedObject && selectedObject.material && selectedObject.material.emissive) {
+                    selectedObject.material.emissive.setHex(0x000000);
+                }
+                isDragging = false;
+                if (controls) controls.enabled = true;
+            };
+            canvas.addEventListener('pointerup', finishDrag);
+            canvas.addEventListener('pointercancel', finishDrag);
+            canvas.addEventListener('lostpointercapture', finishDrag);
+        }
+
+        function syncUIControls() {
+            if (!selectedObject) return;
+            const w = (selectedObject.userData.origW * selectedObject.scale.x).toFixed(2);
+            const h = (selectedObject.userData.origH * selectedObject.scale.y).toFixed(2);
+            const d = (selectedObject.userData.origD * selectedObject.scale.z).toFixed(2);
+
+            document.getElementById('numDimX').value = w;
+            document.getElementById('numDimY').value = h;
+            document.getElementById('numDimZ').value = d;
+
+            document.getElementById('numPosX').value = selectedObject.position.x.toFixed(1);
+            document.getElementById('numPosZ').value = selectedObject.position.z.toFixed(1);
+            
+            let deg = Math.round(selectedObject.rotation.y * (180 / Math.PI)) % 360;
+            if (deg < 0) deg += 360;
+            document.getElementById('rangeRot').value = deg;
+            document.getElementById('valRot').innerText = deg + '°';
+        }
+
+        function initUIControls() {
+            const rangeSun = document.getElementById('rangeSunTime');
+            rangeSun.addEventListener('input', (e) => {
+                const hour = parseFloat(e.target.value);
+                const hourLabel = Number.isInteger(hour) ? String(hour).padStart(2, '0') : String(Math.floor(hour)).padStart(2, '0') + ':30';
+                let timeText = Number.isInteger(hour) ? hourLabel + ':00' : hourLabel;
+                if (hour < 8) timeText += ' (清晨陽光)';
+                else if (hour < 12) timeText += ' (上午採光)';
+                else if (hour < 16) timeText += ' (午後光影)';
+                else if (hour < 19) timeText += ' (黃昏夕陽)';
+                else timeText += ' (深夜照明)';
+                
+                document.getElementById('valSunTime').innerText = timeText;
+
+                const angle = ((hour - 6) / 16) * Math.PI;
+                sunLight.position.x = 40 * Math.cos(angle);
+                sunLight.position.y = 50 * Math.sin(angle);
+                
+                if (hour >= 18 || hour <= 6) {
+                    sunLight.intensity = 0.1;
+                    ambientLight.color.setHex(0x223355);
+                    scene.background.setHex(0x1a202c);
+                } else {
+                    sunLight.intensity = Math.sin(angle) * 1.1;
+                    ambientLight.color.setHex(0xfffbeb);
+                    scene.background.setHex(0xfef3c7);
+                }
+            });
+
+            document.getElementById('numDimX').addEventListener('change', (e) => {
+                if (selectedObject) {
+                    const newW = parseFloat(e.target.value);
+                    selectedObject.scale.x = newW / selectedObject.userData.origW;
+                }
+            });
+            document.getElementById('numDimY').addEventListener('change', (e) => {
+                if (selectedObject) {
+                    const newH = parseFloat(e.target.value);
+                    selectedObject.scale.y = newH / selectedObject.userData.origH;
+                    selectedObject.position.y = newH / 2;
+                }
+            });
+            document.getElementById('numDimZ').addEventListener('change', (e) => {
+                if (selectedObject) {
+                    const newD = parseFloat(e.target.value);
+                    selectedObject.scale.z = newD / selectedObject.userData.origD;
+                }
+            });
+            document.getElementById('numPosX').addEventListener('change', (e) => {
+                if (selectedObject) selectedObject.position.x = parseFloat(e.target.value);
+            });
+            document.getElementById('numPosZ').addEventListener('change', (e) => {
+                if (selectedObject) selectedObject.position.z = parseFloat(e.target.value);
+            });
+            document.getElementById('rangeRot').addEventListener('input', (e) => {
+                const deg = parseFloat(e.target.value);
+                document.getElementById('valRot').innerText = deg + '°';
+                if (selectedObject) selectedObject.rotation.y = deg * (Math.PI / 180);
+            });
+
+            // JSON 匯出與匯入功能
+            document.getElementById('btnExportJSON').addEventListener('click', () => {
+                const data = interactiveItems.map(item => ({
+                    name: item.userData.name,
+                    x: item.position.x,
+                    y: item.position.y,
+                    z: item.position.z,
+                    rotY: item.rotation.y,
+                    scaleX: item.scale.x,
+                    scaleY: item.scale.y,
+                    scaleZ: item.scale.z,
+                    w: item.userData.origW,
+                    h: item.userData.origH,
+                    d: item.userData.origD,
+                    color: item.userData.color
+                }));
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'Room_Furniture_Modules.json';
+                link.click();
+                showToast("已成功匯出家具與房間模組 JSON！");
+            });
+
+            document.getElementById('btnImportJSON').addEventListener('click', () => {
+                document.getElementById('fileInput').click();
+            });
+
+            document.getElementById('fileInput').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    try {
+                        const importedData = JSON.parse(evt.target.result);
+                        if (!Array.isArray(importedData)) {
+                            throw new Error('JSON 最外層必須是家具資料陣列');
+                        }
+                        importedData.forEach((d, index) => {
+                            if (!d || !Number.isFinite(Number(d.x)) || !Number.isFinite(Number(d.z)) ||
+                                !Number.isFinite(Number(d.w)) || !Number.isFinite(Number(d.h)) ||
+                                !Number.isFinite(Number(d.d)) || Number(d.w) <= 0 ||
+                                Number(d.h) <= 0 || Number(d.d) <= 0) {
+                                throw new Error('第 ' + (index + 1) + ' 筆家具資料缺少有效座標或尺寸');
+                            }
+                        });
+                        importedData.forEach(d => {
+                            const width = Number(d.w), height = Number(d.h), depth = Number(d.d);
+                            const mesh = createBox(
+                                Number(d.x), Number(d.y) - (height * (Number(d.scaleY) || 1)) / 2,
+                                Number(d.z), width, height, depth,
+                                Number.isFinite(Number(d.color)) ? Number(d.color) : 0xd97706,
+                                { interactive: true, name: d.name || '匯入模組家具' }
+                            );
+                            mesh.scale.set(
+                                Number(d.scaleX) || 1,
+                                Number(d.scaleY) || 1,
+                                Number(d.scaleZ) || 1
+                            );
+                            mesh.rotation.y = Number(d.rotY) || 0;
+                        });
+                        showToast('成功匯入 ' + importedData.length + ' 件家具模組！');
+                    } catch(err) {
+                        showToast("JSON 格式錯誤，匯入失敗！");
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+            document.getElementById('btnResetFurniture').addEventListener('click', () => {
+                while (furnitureGroup.children.length) {
+                    const child = furnitureGroup.children[0];
+                    furnitureGroup.remove(child);
+                    child.traverse(node => {
+                        if (node.geometry) node.geometry.dispose();
+                        if (node.material) {
+                            const materials = Array.isArray(node.material) ? node.material : [node.material];
+                            materials.forEach(material => material.dispose());
+                        }
+                    });
+                }
+                interactiveItems = [];
+                selectedObject = null;
+                buildFurniture();
+                document.getElementById('selectedItemInfo').textContent =
+                    '💡 點選任一家具即可拖曳移動、設定尺寸與磁吸！';
+                showToast("已重置所有家具配置");
+            });
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvasContainer');
+            if (!container || !renderer) return;
+            const width = Math.max(container.clientWidth, 1);
+            const height = Math.max(container.clientHeight, 1);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (controls) controls.update();
+            if (renderer && scene && camera) renderer.render(scene, camera);
+        }
+
+        function switchTab(tabNum) {
+            document.querySelectorAll('.gold-tab').forEach((t, i) => {
+                if (i + 1 === tabNum) t.classList.add('gold-tab-active');
+                else t.classList.remove('gold-tab-active');
+            });
+
+            const panel = document.getElementById('analysisPanel');
+            const controlPanel = document.getElementById('furnitureControlPanel');
+
+            if (tabNum === 3) {
+                panel.style.display = 'block';
+                controlPanel.style.display = 'none';
+                if (wallGroup) wallGroup.visible = false;
+                if (furnitureGroup) furnitureGroup.visible = false;
+                if (wireframeGroup) wireframeGroup.visible = false;
+            } else {
+                panel.style.display = 'none';
+                controlPanel.style.display = 'flex';
+                if (wallGroup) wallGroup.visible = (tabNum === 1);
+                if (furnitureGroup) furnitureGroup.visible = true;
+                if (wireframeGroup) wireframeGroup.visible = (tabNum === 2);
+            }
+        }
+
+        document.getElementById('tab1').addEventListener('click', () => switchTab(1));
+        document.getElementById('tab2').addEventListener('click', () => switchTab(2));
+        document.getElementById('tab3').addEventListener('click', () => switchTab(3));
+
+        document.getElementById('btnView3D').addEventListener('click', () => {
+            camera.position.set(22, 28, 35);
+            controls.target.set(0, 0, 0);
+            document.getElementById('btnView3D').classList.add('gold-btn-active');
+            document.getElementById('btnViewTop').classList.remove('gold-btn-active');
+            document.getElementById('btnViewFirst').classList.remove('gold-btn-active');
+            showToast("已切換至 3D 透視視角");
+        });
+
+        document.getElementById('btnViewTop').addEventListener('click', () => {
+            camera.position.set(0, 42, 0.01);
+            controls.target.set(0, 0, 0);
+            document.getElementById('btnViewTop').classList.add('gold-btn-active');
+            document.getElementById('btnView3D').classList.remove('gold-btn-active');
+            document.getElementById('btnViewFirst').classList.remove('gold-btn-active');
+            showToast("已切換至正俯視 2D 視角");
+        });
+
+        document.getElementById('btnViewFirst').addEventListener('click', () => {
+            camera.position.set(8, 1.6, -3);
+            controls.target.set(12, 1.6, -6);
+            document.getElementById('btnViewFirst').classList.add('gold-btn-active');
+            document.getElementById('btnView3D').classList.remove('gold-btn-active');
+            document.getElementById('btnViewTop').classList.remove('gold-btn-active');
+            showToast("已進入第一人稱漫遊視角！");
+        });
+
+        document.getElementById('btnResetView').addEventListener('click', () => {
+            camera.position.set(22, 28, 35);
+            controls.target.set(0, 0, 0);
+            showToast("已重置視角");
+        });
+
+        document.getElementById('btnStyleGold').addEventListener('click', () => {
+            if (floorMesh) floorMesh.material.color.setHex(0xf3d489);
+            document.getElementById('btnStyleGold').classList.add('gold-btn-active');
+            document.getElementById('btnStyleWood').classList.remove('gold-btn-active');
+            document.getElementById('btnStyleMarble').classList.remove('gold-btn-active');
+            showToast("已切換風格：奢華金磚地板");
+        });
+
+        document.getElementById('btnStyleWood').addEventListener('click', () => {
+            if (floorMesh) floorMesh.material.color.setHex(0x854d0e);
+            document.getElementById('btnStyleWood').classList.add('gold-btn-active');
+            document.getElementById('btnStyleGold').classList.remove('gold-btn-active');
+            document.getElementById('btnStyleMarble').classList.remove('gold-btn-active');
+            showToast("已切換風格：溫馨實木地板");
+        });
+
+        document.getElementById('btnStyleMarble').addEventListener('click', () => {
+            if (floorMesh) floorMesh.material.color.setHex(0xe2e8f0);
+            document.getElementById('btnStyleMarble').classList.add('gold-btn-active');
+            document.getElementById('btnStyleGold').classList.remove('gold-btn-active');
+            document.getElementById('btnStyleWood').classList.remove('gold-btn-active');
+            showToast("已切換風格：白金高級大理石");
+        });
+
+        document.getElementById('btnDownloadPNG').addEventListener('click', () => {
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+                const link = document.createElement('a');
+                link.download = '皇家金_38坪室內平面圖.png';
+                link.href = renderer.domElement.toDataURL('image/png');
+                link.click();
+                showToast("已成功下載 3D 快照 PNG！");
+            }
+        });
+
+        document.getElementById('btnDownloadCode').addEventListener('click', () => {
+            const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'photo_based_3d_interactive_floorplan_38p.html';
+            link.click();
+            showToast("已執行 downloadSelf，成功下載網頁原始碼！");
+        });
+
+        window.onload = function() {
+            initThree();
+        };
+    </script>
+</body>
+</html>
