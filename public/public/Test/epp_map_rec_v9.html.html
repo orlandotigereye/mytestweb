@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金光閃閃 ERP 專案全代號動態參數、主管報告與績效智慧管理系統</title>
+    <!-- 引用 Google Noto Sans TC 繁體中文標準字型 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gold-light: #fffdf0;
+            --bg-gold-grad: linear-gradient(135deg, #fff9c4, #ffe082, #ffca28);
+            --fg: #3e2723;
+            --fg-dark: #2c1d11;
+            --panel-bg: #fffde7;
+            --border-gold: #ffca28;
+            --border-strong: #ff8f00;
+            --gold-dark: #b78103;
+            --gold-gradient-btn: linear-gradient(to bottom, #ffe57f, #ffc107);
+            --gold-gradient-btn-hover: linear-gradient(to bottom, #ffd54f, #ffb300);
+            --gold-gradient-tab: linear-gradient(to bottom, #ffb300, #ff8f00);
+            --font-size-base: 0.85rem;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        }
+
+        body {
+            margin: 0;
+            padding: 10px;
+            background: var(--bg-gold-grad);
+            background-attachment: fixed;
+            color: var(--fg);
+            font-size: var(--font-size-base);
+            line-height: 1.5;
+        }
+
+        .wrap {
+            max-width: 100%;
+            margin: 0 auto;
+            background: var(--panel-bg);
+            border: 2px solid var(--border-strong);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(255, 143, 0, 0.4);
+            padding: 12px;
+        }
+
+        h1.sys-title {
+            text-align: center;
+            color: var(--gold-dark);
+            margin: 5px 0 12px 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 2px solid var(--border-gold);
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .topbar input[type=text], .topbar select {
+            flex: 1;
+            min-width: 140px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-strong);
+            background: #ffffff;
+            color: var(--fg);
+            font-size: var(--font-size-base);
+        }
+
+        .btn {
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-strong);
+            background: var(--gold-gradient-btn);
+            color: var(--fg);
+            font-weight: 700;
+            cursor: pointer;
+            font-size: var(--font-size-base);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .btn:hover {
+            background: var(--gold-gradient-btn-hover);
+            box-shadow: 0 2px 6px rgba(255, 143, 0, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(to bottom, #ef9a9a, #e57373);
+            color: #ffffff;
+            border-color: #c62828;
+        }
+        .btn-danger:hover {
+            background: linear-gradient(to bottom, #e57373, #d32f2f);
+        }
+
+        .btn-success {
+            background: linear-gradient(to bottom, #a5d6a7, #66bb6a);
+            color: #ffffff;
+            border-color: #2e7d32;
+        }
+        .btn-success:hover {
+            background: linear-gradient(to bottom, #81c784, #388e3c);
+        }
+
+        .nav-tabs-bar {
+            display: flex;
+            gap: 6px;
+            margin: 8px 0;
+            border-bottom: 2px solid var(--border-gold);
+            padding-bottom: 8px;
+            overflow-x: auto;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab-item {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #ffa000;
+            background: #ffecb3;
+            cursor: pointer;
+            font-weight: 700;
+            color: #4e342e;
+            white-space: nowrap;
+            font-size: var(--font-size-base);
+            transition: all 0.2s ease;
+        }
+
+        .nav-tab-item.active {
+            background: var(--gold-gradient-tab);
+            color: #ffffff;
+            border-color: #e65100;
+            box-shadow: 0 2px 8px rgba(230, 81, 0, 0.3);
+        }
+
+        .module-content-section {
+            display: none;
+        }
+        .module-content-section.active {
+            display: block;
+        }
+
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .kpi-card {
+            background: #ffffff;
+            border: 1px solid var(--border-strong);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(255, 143, 0, 0.2);
+        }
+
+        .kpi-card h3 {
+            margin: 0 0 4px 0;
+            font-size: var(--font-size-base);
+            color: var(--gold-dark);
+        }
+
+        .kpi-card .val {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #d84315;
+        }
+
+        .stage {
+            position: relative;
+            width: 100%;
+            height: 480px;
+            background: #fff9c4;
+            border: 1px solid var(--border-gold);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: grab;
+        }
+
+        .hub-label {
+            font-size: 12px;
+            font-weight: 700;
+            fill: #ffffff;
+            pointer-events: none;
+        }
+
+        .leaf-code {
+            font-size: 10px;
+            font-weight: 700;
+            fill: var(--fg);
+            pointer-events: none;
+        }
+
+        .link-hub {
+            stroke: #ff8f00;
+            stroke-width: 2.5;
+            fill: none;
+        }
+
+        .link-leaf {
+            stroke: #ffe082;
+            stroke-width: 1.2;
+            fill: none;
+        }
+
+        .panel {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            max-width: 300px;
+            background: #ffffff;
+            border: 1px solid var(--border-strong);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: var(--font-size-base);
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            z-index: 20;
+        }
+
+        .panel b {
+            display: block;
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            color: #d84315;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            max-height: 480px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        th, td {
+            border: 1px solid #ffe0b2;
+            padding: 6px 8px;
+            text-align: left;
+            vertical-align: middle;
+            font-size: var(--font-size-base);
+        }
+
+        th {
+            background: linear-gradient(to bottom, #ffe082, #ffd54f);
+            color: #5d4037;
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fff8e1;
+        }
+
+        tr:hover {
+            background-color: #ffecb3;
+        }
+
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 5px 8px;
+            border: 1px solid #ffb300;
+            border-radius: 4px;
+            background: #ffffff;
+            color: var(--fg);
+            font-size: var(--font-size-base);
+        }
+
+        textarea {
+            resize: vertical;
+            height: 48px;
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        .footer-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            font-weight: 700;
+            color: var(--fg2);
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: var(--font-size-base);
+            padding: 6px 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 6px;
+        }
+
+        .msg-toast {
+            color: #2e7d32;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid var(--border-gold);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 6px rgba(255, 202, 40, 0.2);
+        }
+
+        /* 內建非阻塞式對話框模組 Style */
+        .inline-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .inline-modal-overlay.active {
+            display: flex;
+        }
+        .inline-modal-card {
+            background: #fffdf0;
+            border: 2px solid var(--border-strong);
+            border-radius: 8px;
+            padding: 16px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .inline-modal-card h3 {
+            margin: 0 0 10px 0;
+            color: var(--gold-dark);
+            font-size: 1rem;
+        }
+        .inline-modal-card .form-group {
+            margin-bottom: 10px;
+        }
+        .inline-modal-card label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #5d4037;
+        }
+
+        /* 手機 RWD 自動轉卡片與佈局調整 (max-width: 768px) */
+        @media screen and (max-width: 768px) {
+            body { padding: 4px; font-size: 0.85rem; }
+            .wrap { padding: 6px; }
+            .grid-2col { grid-template-columns: 1fr !important; }
+            .topbar { flex-direction: column; align-items: stretch; }
+            .topbar input[type=text], .topbar select, .topbar .btn { width: 100%; min-width: 100%; }
+
+            .table-responsive table, .table-responsive thead, .table-responsive tbody, .table-responsive th, .table-responsive td, .table-responsive tr {
+                display: block;
+            }
+            .table-responsive thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            .table-responsive tr {
+                margin-bottom: 10px;
+                border: 1px solid var(--border-strong);
+                border-radius: 6px;
+                background: #ffffff;
+                padding: 8px;
+                box-shadow: 0 2px 5px rgba(255, 143, 0, 0.15);
+            }
+            .table-responsive td {
+                border: none;
+                position: relative;
+                padding: 6px 6px 6px 38%;
+                text-align: left;
+                min-height: 32px;
+            }
+            .table-responsive td::before {
+                position: absolute;
+                left: 6px;
+                top: 6px;
+                width: 32%;
+                padding-right: 8px;
+                white-space: nowrap;
+                font-weight: 700;
+                color: #b78103;
+            }
+            #processTable td:nth-of-type(1)::before { content: "勾選"; }
+            #processTable td:nth-of-type(2)::before { content: "代號"; }
+            #processTable td:nth-of-type(3)::before { content: "名稱與注意事項"; }
+            #processTable td:nth-of-type(4)::before { content: "狀態標記"; }
+            #processTable td:nth-of-type(5)::before { content: "進度%"; }
+            #processTable td:nth-of-type(6)::before { content: "負責人員"; }
+            #processTable td:nth-of-type(7)::before { content: "目前進度"; }
+            #processTable td:nth-of-type(8)::before { content: "延誤原因"; }
+            #processTable td:nth-of-type(9)::before { content: "每日記錄"; }
+            #processTable td:nth-of-type(10)::before { content: "備註說明"; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h1 class="sys-title">✨ 金光閃閃 ERP 專案全代號動態參數、主管報告與績效智慧管理系統 ✨</h1>
+
+    <div class="nav-tabs-bar">
+        <button class="nav-tab-item" onclick="switchModuleTab(0)">🗺️ 總覽圖譜與連鎖影響</button>
+        <button class="nav-tab-item active" onclick="switchModuleTab(1)">📋 進度明細管理板</button>
+        <button class="nav-tab-item" onclick="switchModuleTab(2)">👔 主管報告與部門績效儀表板</button>
+        <button class="nav-tab-item" onclick="switchModuleTab(3)">⚙️ 參數與部門人員設定</button>
+        <button class="nav-tab-item" onclick="switchModuleTab(4)">📊 個人與綜合 KPI 統計圖表</button>
+        <button class="nav-tab-item" onclick="switchModuleTab(5)">📜 歷史記錄與還原</button>
+    </div>
+
+    <!-- 模組 0: 總覽圖譜與連鎖影響 -->
+    <div id="moduleSec0" class="module-content-section">
+        <div class="topbar">
+            <input type="text" id="mapSearch" placeholder="🔍 輸入全代號 (如 COP001, PUR003) 進行 Depth-2 連鎖影響模擬...">
+            <select id="mapQuickSelect" onchange="focusGraphNode(this.value)" style="flex:0 0 180px;">
+                <option value="">🎯 快速定位節點...</option>
+            </select>
+            <button class="btn" onclick="zoomIn()">放大 +</button>
+            <button class="btn" onclick="zoomOut()">縮小 −</button>
+            <button class="btn" onclick="resetZoom()">重置視圖</button>
+        </div>
+        <div class="stage">
+            <svg id="svg" viewBox="0,0,900,450"></svg>
+            <div class="panel" id="panel"></div>
+        </div>
+    </div>
+
+    <!-- 模組 1: 進度明細管理板 -->
+    <div id="moduleSec1" class="module-content-section active">
+        <div class="topbar">
+            <select id="moduleFilterSelect" onchange="currentModule=this.value; renderTable();" style="flex:0 0 160px;"></select>
+            <input type="text" id="tableSearchKey" placeholder="🔍 搜尋關鍵字 (代號/名稱/負責人)..." oninput="renderTable()" style="flex:1; min-width:140px;">
+            <button class="btn" onclick="filterMyTasks()" id="myTaskBtn">👤 我的待辦</button>
+            <button class="btn btn-success" onclick="batchComplete()">✔️ 批次完成</button>
+            <button class="btn" onclick="saveData(true)">💾 立即儲存</button>
+            <button class="btn" onclick="downloadSelfCode()">📥 下載程式碼</button>
+        </div>
+        <div class="table-responsive">
+            <table id="processTable">
+                <thead>
+                    <tr>
+                        <th style="width:35px; text-align:center;"><input type="checkbox" id="selectAllBox" onchange="toggleSelectAll(this)"></th>
+                        <th style="width:75px;">代號</th>
+                        <th style="width:160px;">中文名稱與注意事項</th>
+                        <th style="width:80px;">標記</th>
+                        <th style="width:65px;">百分比</th>
+                        <th style="width:120px;">負責人</th>
+                        <th style="width:90px;">目前進度</th>
+                        <th style="width:90px;">延誤原因</th>
+                        <th style="width:90px;">每日記錄</th>
+                        <th style="width:90px;">備註</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 模組 2: 主管報告與部門績效儀表板 -->
+    <div id="moduleSec2" class="module-content-section">
+        <div class="topbar">
+            <b>👔 主管報告與部門績效檢核中心：</b>
+            <select id="reportDeptSelect" onchange="renderManagerReportView()" style="flex:0 0 160px;"></select>
+            <button class="btn btn-success" onclick="openNewReportModal()">📝 新增主管報告</button>
+            <button class="btn" onclick="exportManagerReportJSON()">📤 匯出報告 JSON</button>
+        </div>
+        <div class="grid-2col">
+            <div class="card">
+                <div style="font-weight:700; margin-bottom:6px; color:var(--border-strong);">📊 各部門績效達成率統計：</div>
+                <div class="table-responsive" style="max-height:220px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>部門名稱</th>
+                                <th style="width:50px;">總數</th>
+                                <th style="width:50px;">完成</th>
+                                <th style="width:90px;">達成率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deptPerfTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div style="font-weight:700; margin-bottom:6px; color:var(--border-strong);">👥 個人績效與進度追蹤：</div>
+                <div class="table-responsive" style="max-height:220px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>負責人</th>
+                                <th style="width:50px;">負責</th>
+                                <th style="width:50px;">完成</th>
+                                <th style="width:90px;">達成率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staffPerfTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div style="font-weight:700; margin-bottom:6px; color:var(--border-strong);">📜 歷次主管報告記錄、延誤原因彙整與主管意見回查：</div>
+            <div class="table-responsive" style="max-height:260px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:130px;">時間</th>
+                            <th style="width:90px;">部門</th>
+                            <th style="width:80px;">報告人</th>
+                            <th>摘要與延誤原因</th>
+                            <th style="width:160px;">主管意見與指示</th>
+                            <th style="width:65px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="managerReportTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模組 3: 參數與部門人員設定 -->
+    <div id="moduleSec3" class="module-content-section">
+        <div class="topbar">
+            <b>⚙️ 動態調整流程參數與部門人員對應：</b>
+            <input type="text" id="paramSearchKey" placeholder="🔍 搜尋參數代號/名稱..." oninput="renderParamTable()" style="flex:1; min-width:140px;">
+            <button class="btn" onclick="openAddParamModal()">➕ 新增流程</button>
+            <button class="btn" onclick="openAddStaffModal()">➕ 新增人員</button>
+            <button class="btn btn-danger" onclick="resetParamsToDefault()">🔄 恢復預設值</button>
+        </div>
+        <div class="grid-2col">
+            <div class="card">
+                <div style="font-weight:700; margin-bottom:6px; color:var(--border-strong);">各流程參數設定清單：</div>
+                <div class="table-responsive" style="max-height:380px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">模組</th>
+                                <th style="width:75px;">代號</th>
+                                <th style="width:110px;">名稱</th>
+                                <th>注意事項與檢核點</th>
+                                <th style="width:65px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paramTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div style="font-weight:700; margin-bottom:6px; color:var(--border-strong);">部門與可指派人員設定：</div>
+                <div class="table-responsive" style="max-height:380px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>部門</th>
+                                <th>姓名</th>
+                                <th style="width:60px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staffParamTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模組 4: KPI 統計圖表 -->
+    <div id="moduleSec4" class="module-content-section">
+        <div class="kpi-container">
+            <div class="kpi-card"><h3>總作業流程數</h3><div class="val" id="kpiTotal">0</div></div>
+            <div class="kpi-card"><h3>已完成作業數</h3><div class="val" id="kpiDone">0</div></div>
+            <div class="kpi-card"><h3>整體達成率</h3><div class="val" id="kpiRate">0.0%</div></div>
+            <div class="kpi-card"><h3>進行/測試中</h3><div class="val" id="kpiActive">0</div></div>
+        </div>
+        
+        <div class="card" style="margin-bottom:8px;">
+            <div style="font-weight:700; margin-bottom:6px; color:var(--border-strong);">📈 各模組達成率動態視覺柱狀圖：</div>
+            <div id="kpiChartContainer" style="width:100%; height:190px; background:#fff9c4; border:1px solid var(--border-gold); border-radius:6px; padding:8px; display:flex; align-items:flex-end; gap:8px; overflow-x:auto;"></div>
+        </div>
+
+        <div class="grid-2col">
+            <div class="card">
+                <div style="font-weight:700; margin-bottom:6px; color:var(--border-strong);">各模組執行進度詳細統計：</div>
+                <div class="table-responsive" style="max-height:220px;">
+                    <table>
+                        <thead>
+                            <tr><th>模組名稱</th><th style="width:60px;">總數</th><th style="width:60px;">完成</th><th style="width:90px;">達成率</th></tr>
+                        </thead>
+                        <tbody id="moduleKpiBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div style="font-weight:700; margin-bottom:6px; color:var(--border-strong);">依人員績效與每日記錄回查：</div>
+                <div class="table-responsive" style="max-height:220px;">
+                    <table>
+                        <thead>
+                            <tr><th>負責人員</th><th style="width:60px;">負責</th><th style="width:60px;">完成</th><th style="width:90px;">達成率</th><th style="width:75px;">回查</th></tr>
+                        </thead>
+                        <tbody id="staffKpiBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模組 5: 歷史記錄與還原 -->
+    <div id="moduleSec5" class="module-content-section">
+        <div class="topbar">
+            <b>📜 系統自動記錄的操作與修改歷程：</b>
+            <button class="btn btn-danger" onclick="clearHistory()">🗑️ 清空歷史記錄</button>
+        </div>
+        <div class="table-responsive" style="max-height:440px;">
+            <table>
+                <thead>
+                    <tr><th style="width:140px;">異動時間</th><th style="width:110px;">動作類型</th><th>詳細異動說明</th><th style="width:85px;">還原操作</th></tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer-bar">
+        <div id="lineCountDisplay">目前計算實際行數：計算中...</div>
+        <div class="msg-toast" id="msgBox">系統狀態：運作正常</div>
+    </div>
+</div>
+
+<!-- 內建對話框 Modal 容器 (完全無阻塞 alert) -->
+<div class="inline-modal-overlay" id="reportModal">
+    <div class="inline-modal-card">
+        <h3>📝 新增主管報告</h3>
+        <div class="form-group">
+            <label>報告部門：</label>
+            <select id="modalRptDept"></select>
+        </div>
+        <div class="form-group">
+            <label>報告人姓名：</label>
+            <input type="text" id="modalRptReporter" placeholder="請輸入報告人姓名">
+        </div>
+        <div class="form-group">
+            <label>績效與工作摘要：</label>
+            <textarea id="modalRptSummary" placeholder="請輸入工作與績效摘要..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>延誤原因分析：</label>
+            <textarea id="modalRptDelay" placeholder="請輸入延誤原因分析 (若無填無)..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>主管意見與指示：</label>
+            <textarea id="modalRptOpinion" placeholder="請輸入主管意見..."></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px;">
+            <button class="btn" onclick="closeModal('reportModal')">取消</button>
+            <button class="btn btn-success" onclick="submitNewReportModal()">確認提交</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+// 完整無省略的原始全套 ERP 流程資料庫
+const defaultRaw = [
+    ["COP","COP001","客戶資料建立流程","注意事項：1. 需嚴格核對統一編號與抬頭。2. 信用額度與付款條件必須依據主管授權等級設定。"],
+    ["COP","COP002","客戶資料變更流程","注意事項：重要欄位變更須保留變更前記錄並經財務主管簽核。"],
+    ["COP","COP003","費用預估管理流程","注意事項：確實評估專案潛在成本與報價利潤率。"],
+    ["COP","COP004","報價流程","注意事項：報價單需有有效期限，且特殊折扣須有主管審批紀錄。"],
+    ["COP","COP005","計價變更流程","注意事項：確認變更原因並通知相關業務與財務單位。"],
+    ["COP","COP006","合約訂單流程","注意事項：合約條款必須與法務或主管確認用印後始可生效。"],
+    ["COP","COP007","銷售預測流程","注意事項：結合產能與歷史銷售數據進行合理預測。"],
+    ["COP","COP008","信用額度控管流程","注意事項：當客戶逾期未收款或超額時，系統應自動阻絕新訂單出貨。"],
+    ["COP","COP009","接單流程","注意事項：確認庫存及交期承諾，避免延遲交貨罰款。"],
+    ["COP","COP010","訂單變更流程","注意事項：需即時與客戶端確認交期異動影響。"],
+    ["PUR","PUR001","新廠商資料建立作業流程","注意事項：必須核實廠商銀行帳戶及合法登記證明。"],
+    ["PUR","PUR002","廠商資料變更作業流程","注意事項：銀行帳號變更需進行二階段電話或主管覆核。"],
+    ["PUR","PUR003","請購作業流程","注意事項：必須符合各部門預算與權責核決層級。"],
+    ["PUR","PUR004","請購變更作業流程","注意事項：追蹤請購取消或變更對後續採購之影響。"],
+    ["PUR","PUR005","詢價作業流程","注意事項：保持多家供應商詢價比價紀錄。"],
+    ["PUR","PUR006","比價作業流程","注意事項：詳細記錄各家價格差異與交期承諾。"],
+    ["PUR","PUR007","議價作業流程","注意事項：議價記錄需核實主管授權範圍。"],
+    ["PUR","PUR008","採購作業流程","注意事項：比議價過程需公開透明，確保採購成本合理。"],
+    ["PUR","PUR009","採購變更作業流程","注意事項：確認變更採購數量與金額之審批紀錄。"],
+    ["PUR","PUR010","採購異常處理流程","注意事項：異常原因分析與責任歸屬記錄。"],
+    ["PUR","PUR011","交期催促作業流程","注意事項：維護交期追蹤清單，降低停工待料風險。"],
+    ["PUR","PUR012","進貨驗收作業流程","注意事項：品管人員必須落實數量與品質點收。"],
+    ["PUR","PUR013","退貨作業流程","注意事項：辦理不良品退貨與扣款作業。"],
+    ["PUR","PUR014","折讓作業流程","注意事項：開立折讓單並送交財務部門核算。"],
+    ["BOM","BOM001","產品結構建立流程","注意事項：確保元件料號與用量單位無誤。"],
+    ["BOM","BOM002","產品結構變更ECN流程","注意事項：執行工程變更通知，維護版本更新號。"],
+    ["BOM","BOM003","替代料件設定流程","注意事項：設置合規主替代料設定及優先順序。"],
+    ["MOC","MOC001","廠內製令開立及發放作業流程","注意事項：BOM表版本必須正確，避免領錯料。"],
+    ["MOC","MOC002","領料作業流程","注意事項：依照發料單嚴格比對發料數量。"],
+    ["MOC","MOC003","退料作業流程","注意事項：剩餘物料清點並辦理辦退入庫。"],
+    ["MOC","MOC004","補料作業流程","注意事項：查明損耗過高原因並申請補料簽核。"],
+    ["MOC","MOC005","委外加工發包流程","注意事項：外協廠商產能與單價核定。"],
+    ["MOC","MOC006","委外領料流程","注意事項：追蹤外協加工之原料提供數量。"],
+    ["MOC","MOC007","委外進貨驗收流程","注意事項：委外加工品品質驗收記錄。"],
+    ["MOC","MOC008","委外退料流程","注意事項：核算委外加工剩餘料件返還。"],
+    ["MOC","MOC009","委外補料流程","注意事項：外協損耗補件申請。"],
+    ["MOC","MOC010","製程移轉作業流程","注意事項：站別間轉移數量點交確認。"],
+    ["MOC","MOC011","報廢作業流程","注意事項：確認報廢原因並執行現場報廢簽核。"],
+    ["MOC","MOC012","拆卸作業流程","注意事項：不良拆解件回收入庫分類。"],
+    ["MOC","MOC013","製令變更作業流程","注意事項：開工後製令數量與預定完工日變更。"],
+    ["MOC","MOC014","生產入庫作業流程","注意事項：完工數量需與實際產出相符，並即時過帳。"],
+    ["LRP","LRP001","批次需求計劃計算流程","注意事項：確保銷售與預測需求時段輸入準確。"],
+    ["LRP","LRP002","採購計劃發放流程","注意事項：檢查採購前置時間與最小訂購量設定。"],
+    ["LRP","LRP003","製造計劃發放流程","注意事項：檢視車間產線產能瓶頸。"],
+    ["INV","INV001","入庫作業流程","注意事項：點清採購或生產產出數量無誤後入庫。"],
+    ["INV","INV002","出貨作業流程","注意事項：嚴格按銷貨單料號與批號發貨。"],
+    ["INV","INV003","領用作業流程","注意事項：各部門領用備品申請單審核。"],
+    ["INV","INV004","料件調撥流程","注意事項：庫存異動雙方倉庫必須同時確認點交。"],
+    ["INV","INV005","報廢處理流程","注意事項：呆滯與損壞料件清算報廢。"],
+    ["INV","INV006","盤點流程","注意事項：盤點差異需查明原因並編製盤點損益表。"],
+    ["INV","INV007","庫存調整流程","注意事項：差異數量過帳前需專案簽核。"],
+    ["ACP","ACP001","應付憑證建立流程","注意事項：核對發票、進貨單與採購單一致性。"],
+    ["ACP","ACP002","付款申請與發放流程","注意事項：付款方式與出納作業點交。"],
+    ["ACP","ACP003","應付預付對沖流程","注意事項：預付款項沖銷作業。"],
+    ["ACR","ACR001","應收憑證建立流程","注意事項：根據銷貨單開立發票與應收款。"],
+    ["ACR","ACR002","收款沖銷作業流程","注意事項：客戶款項核對並點收沖銷。"],
+    ["ACR","ACR003","呆帳提列與沖銷流程","注意事項：評估逾期帳款並依法提列。"],
+    ["ACT","ACT001","會計傳票開立流程","注意事項：借貸平衡及憑證附件是否齊全合法。"],
+    ["ACT","ACT002","月結過帳與關帳流程","注意事項：確認各子系統皆已完成關帳。"],
+    ["ACT","ACT003","財務報表產生流程","注意事項：資產負債表與損益表比對正確。"]
+];
+
+const defaultStaffList = [
+    { name: "張三", dept: "業務部" },
+    { name: "李四", dept: "業務部" },
+    { name: "王五", dept: "採購部" },
+    { name: "趙六", dept: "生管部" },
+    { name: "陳七", dept: "倉管部" },
+    { name: "林八", dept: "財務部" },
+    { name: "管理員", dept: "管理部" }
+];
+
+const moduleInfo = {
+    COP: { name: "訂單管理", dept: "業務部", color: "#1976d2" },
+    PUR: { name: "採購管理", dept: "採購部", color: "#0288d1" },
+    BOM: { name: "產品結構", dept: "研發部", color: "#00897b" },
+    MOC: { name: "製令管理", dept: "生管部", color: "#00695c" },
+    LRP: { name: "批次計劃", dept: "生管部", color: "#2e7d32" },
+    INV: { name: "庫存管理", dept: "倉管部", color: "#f57c00" },
+    ACP: { name: "應付帳款", dept: "財務部", color: "#512da8" },
+    ACR: { name: "應收帳款", dept: "財務部", color: "#303f9f" },
+    ACT: { name: "會計總帳", dept: "財務部", color: "#4527a0" }
+};
+
+const typeColor = {
+    "主檔": "#0d47a1", "正常": "#616161", "變更": "#e65100", "例外": "#c62828",
+    "特殊": "#d84315", "週期": "#880e4f", "管理": "#33691e"
+};
+
+const hubLinks = [
+    ["COP", "INV"], ["PUR", "INV"], ["MOC", "INV"],
+    ["BOM", "MOC"], ["LRP", "MOC"], ["LRP", "PUR"],
+    ["COP", "ACR"], ["PUR", "ACP"],
+    ["ACP", "ACT"], ["ACR", "ACT"], ["INV", "ACT"]
+];
+
+let raw = JSON.parse(localStorage.getItem("erp_dynamic_raw_v5")) || defaultRaw;
+let staffList = JSON.parse(localStorage.getItem("erp_staff_list_v5")) || defaultStaffList;
+let projectData = JSON.parse(localStorage.getItem("erp_full_progress_data_v5")) || {};
+let managerReports = JSON.parse(localStorage.getItem("erp_manager_reports_v5")) || [
+    {
+        id: "RPT-2026-001",
+        time: "2026-06-01 10:00",
+        dept: "業務部",
+        reporter: "張三",
+        summary: "業務部近期接單與客戶資料建立進度正常，但 COP008 信用額度控管因財務覆核程序較繁雜導致部分延誤。",
+        delayReason: "財務覆核跨部門溝通時間較長，客戶信用授權文件補件不及。",
+        managerOpinion: "請財務部與業務部建立聯合快速審查通道，並於 3 日內完成積壓案件。"
+    }
+];
+let historyLogs = JSON.parse(localStorage.getItem("erp_history_logs_v5")) || [];
+let currentModule = "COP";
+let isMyTaskFilter = false;
+
+function showToast(msg) {
+    const box = document.getElementById("msgBox");
+    if(box) {
+        box.textContent = "🔔 " + msg;
+        setTimeout(() => { box.textContent = "系統狀態：運作正常"; }, 3000);
+    }
+}
+
+function classify(name) {
+    if (name.includes("建立")) return "主檔";
+    if (name.includes("變更")) return "變更";
+    if (name.includes("退") || name.includes("折讓") || name.includes("異常") || name.includes("報廢")) return "例外";
+    if (name.includes("月結") || name.includes("結帳") || name.includes("盤點")) return "週期";
+    if (name.includes("分析") || name.includes("預測") || name.includes("額度") || name.includes("管理") || name.includes("計算")) return "管理";
+    return "正常";
+}
+
+function switchModuleTab(index) {
+    document.querySelectorAll('.module-content-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.nav-tab-item').forEach(el => el.classList.remove('active'));
+    document.getElementById(`moduleSec${index}`).classList.add('active');
+    document.querySelectorAll('.nav-tab-item')[index].classList.add('active');
+
+    if (index === 0) {
+        setTimeout(() => { window.dispatchEvent(new Event('resize')); updateGraph(); initGraphQuickSelect(); }, 100);
+    } else if (index === 1) {
+        initModuleSelect();
+        renderTable();
+    } else if (index === 2) {
+        initManagerReportSelects();
+        renderManagerReportView();
+    } else if (index === 3) {
+        renderParamTable();
+        renderStaffParamTable();
+    } else if (index === 4) {
+        renderKpiDashboard();
+    } else if (index === 5) {
+        renderHistoryTable();
+    }
+}
+
+function initModuleSelect() {
+    const sel = document.getElementById("moduleFilterSelect");
+    if (!sel) return;
+    sel.innerHTML = "";
+    Object.keys(moduleInfo).forEach(mod => {
+        const opt = document.createElement("option");
+        opt.value = mod;
+        opt.textContent = `${mod} ${moduleInfo[mod].name}`;
+        if (mod === currentModule) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+function initManagerReportSelects() {
+    const sel = document.getElementById("reportDeptSelect");
+    if (!sel) return;
+    sel.innerHTML = `<option value="全部">全部部門</option>`;
+    const depts = [...new Set(staffList.map(s => s.dept))];
+    depts.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d;
+        opt.textContent = d;
+        sel.appendChild(opt);
+    });
+}
+
+function renderTable() {
+    const tbody = document.getElementById("tableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    let items = raw.filter(r => r[0] === currentModule);
+
+    const searchKey = (document.getElementById("tableSearchKey")?.value || "").trim().toLowerCase();
+    if (searchKey) {
+        items = items.filter(r => {
+            const codeMatch = r[1].toLowerCase().includes(searchKey);
+            const nameMatch = r[2].toLowerCase().includes(searchKey);
+            const item = projectData[r[1]];
+            const ownerMatch = item && item.owners && item.owners.toLowerCase().includes(searchKey);
+            return codeMatch || nameMatch || ownerMatch;
+        });
+    }
+
+    if (isMyTaskFilter) {
+        const targetStaff = staffList[0]?.name || "張三";
+        items = items.filter(r => {
+            const item = projectData[r[1]];
+            return item && item.owners && item.owners.includes(targetStaff);
+        });
+    }
+
+    if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#8d6e63; padding:15px;">尚無符合該模組或搜尋條件的流程資料</td></tr>`;
+        return;
+    }
+
+    items.forEach(([mod, code, name, note]) => {
+        if (!projectData[code]) {
+            projectData[code] = { checked: false, status: "未開始", progress: "0%", owners: staffList[0]?.name || "", currentStep: "", delayReason: "", dailyLog: "", remark: "" };
+        }
+        const item = projectData[code];
+        const currentOwnerVal = item.owners || staffList[0]?.name || "";
+        let ownerSelectHtml = `<select onchange="updateVal('${code}', 'owners', this.value)">`;
+        staffList.forEach(st => {
+            const selected = (currentOwnerVal === st.name) ? "selected" : "";
+            ownerSelectHtml += `<option value="${st.name}" ${selected}>${st.name} (${st.dept})</option>`;
+        });
+        ownerSelectHtml += `</select>`;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td style="text-align:center;"><input type="checkbox" class="row-checkbox" data-code="${code}" ${item.checked ? "checked" : ""} onchange="updateVal('${code}', 'checked', this.checked)"></td>
+            <td><b>${code}</b></td>
+            <td>
+                <b>${name}</b>
+                <details style="margin-top:2px;">
+                    <summary style="cursor:pointer; color:#b78103; font-weight:bold;">💡 注意事項</summary>
+                    <p style="margin:2px 0 0 0; color:#5d4037; background:#fffde7; padding:4px; border-radius:3px;">${note || '無特別注意事項'}</p>
+                </details>
+            </td>
+            <td>
+                <select onchange="updateVal('${code}', 'status', this.value)">
+                    <option value="未開始" ${item.status === "未開始" ? "selected" : ""}>未開始</option>
+                    <option value="進行中" ${item.status === "進行中" ? "selected" : ""}>進行中</option>
+                    <option value="測試中" ${item.status === "測試中" ? "selected" : ""}>測試中</option>
+                    <option value="已完成" ${item.status === "已完成" ? "selected" : ""}>已完成</option>
+                </select>
+            </td>
+            <td>
+                <select onchange="updateVal('${code}', 'progress', this.value)">
+                    <option value="0%" ${item.progress === "0%" ? "selected" : ""}>0%</option>
+                    <option value="25%" ${item.progress === "25%" ? "selected" : ""}>25%</option>
+                    <option value="50%" ${item.progress === "50%" ? "selected" : ""}>50%</option>
+                    <option value="75%" ${item.progress === "75%" ? "selected" : ""}>75%</option>
+                    <option value="100%" ${item.progress === "100%" ? "selected" : ""}>100%</option>
+                </select>
+            </td>
+            <td>${ownerSelectHtml}</td>
+            <td><input type="text" value="${item.currentStep || ""}" placeholder="目前進度..." oninput="updateVal('${code}', 'currentStep', this.value)"></td>
+            <td><input type="text" value="${item.delayReason || ""}" placeholder="延誤原因..." oninput="updateVal('${code}', 'delayReason', this.value)" style="border-color:#e57373;"></td>
+            <td><input type="text" value="${item.dailyLog || ""}" placeholder="工作記錄..." oninput="updateVal('${code}', 'dailyLog', this.value)"></td>
+            <td><input type="text" value="${item.remark || ""}" placeholder="備註..." oninput="updateVal('${code}', 'remark', this.value)"></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function filterMyTasks() {
+    isMyTaskFilter = !isMyTaskFilter;
+    const btn = document.getElementById("myTaskBtn");
+    if (isMyTaskFilter) {
+        btn.style.background = "linear-gradient(to bottom, #ffb300, #ff8f00)";
+        btn.style.color = "#ffffff";
+    } else {
+        btn.style.background = "";
+        btn.style.color = "";
+    }
+    renderTable();
+}
+
+function toggleSelectAll(master) {
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.checked = master.checked;
+        updateVal(cb.getAttribute('data-code'), 'checked', master.checked);
+    });
+}
+
+function batchComplete() {
+    const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+        showToast("⚠️ 請先勾選要批次完成的流程項目！");
+        return;
+    }
+    checkedBoxes.forEach(cb => {
+        const code = cb.getAttribute('data-code');
+        if (!projectData[code]) projectData[code] = {};
+        projectData[code].checked = true;
+        projectData[code].status = "已完成";
+        projectData[code].progress = "100%";
+    });
+    saveData();
+    renderTable();
+    showToast(`✅ 成功將 ${checkedBoxes.length} 個項目更新為已完成！`);
+}
+
+function updateVal(code, field, val) {
+    if (!projectData[code]) projectData[code] = { checked: false, status: "未開始", progress: "0%", owners: staffList[0]?.name || "", currentStep: "", delayReason: "", dailyLog: "", remark: "" };
+    projectData[code][field] = val;
+    // 即時自動儲存 (Silent Save)
+    saveData(false);
+}
+
+function addHistoryLog(actionType, detail) {
+    const timeStr = new Date().toLocaleString();
+    historyLogs.unshift({ time: timeStr, type: actionType, detail: detail, snapshot: JSON.parse(JSON.stringify({ raw, projectData, staffList, managerReports })) });
+    if (historyLogs.length > 50) historyLogs.pop();
+    localStorage.setItem("erp_history_logs_v5", JSON.stringify(historyLogs));
+}
+
+function saveData(manualPrompt = false) {
+    localStorage.setItem("erp_full_progress_data_v5", JSON.stringify(projectData));
+    addHistoryLog("自動儲存", "同步進度資料庫");
+    if (manualPrompt) {
+        showToast("✅ 所有進度與設定已成功儲存至 LocalStorage！");
+    } else {
+        const box = document.getElementById("msgBox");
+        if(box) box.textContent = "⚡ 資料變更已自動儲存 (" + new Date().toLocaleTimeString() + ")";
+    }
+}
+
+function renderManagerReportView() {
+    const selectedDept = document.getElementById("reportDeptSelect")?.value || "全部";
+    const deptMap = {};
+    staffList.forEach(s => { deptMap[s.dept] = { total: 0, done: 0 }; });
+
+    raw.forEach(([mod, code]) => {
+        const item = projectData[code];
+        const ownerName = item?.owners || staffList[0]?.name;
+        const ownerObj = staffList.find(s => s.name === ownerName);
+        const dept = ownerObj ? ownerObj.dept : "綜合管理";
+        if (!deptMap[dept]) deptMap[dept] = { total: 0, done: 0 };
+        deptMap[dept].total++;
+        if (item && (item.status === "已完成" || item.progress === "100%")) {
+            deptMap[dept].done++;
+        }
+    });
+
+    const deptPerfTbody = document.getElementById("deptPerfTableBody");
+    if (deptPerfTbody) {
+        deptPerfTbody.innerHTML = "";
+        Object.keys(deptMap).forEach(dept => {
+            const d = deptMap[dept];
+            const rate = d.total > 0 ? ((d.done / d.total) * 100).toFixed(0) + "%" : "0%";
+            deptPerfTbody.innerHTML += `
+                <tr>
+                    <td><b>${dept}</b></td>
+                    <td>${d.total}</td>
+                    <td>${d.done}</td>
+                    <td><div style="background:#ffe0b2; border-radius:4px; overflow:hidden; border:1px solid #ffb300;"><div style="background:linear-gradient(to right, #ffb300, #ff8f00); width:${rate}; height:14px; text-align:center; color:#fff; font-size:9px; line-height:14px; font-weight:bold;">${rate}</div></div></td>
+                </tr>
+            `;
+        });
+    }
+
+    const staffPerfTbody = document.getElementById("staffPerfTableBody");
+    if (staffPerfTbody) {
+        staffPerfTbody.innerHTML = "";
+        staffList.forEach(st => {
+            let total = 0, done = 0;
+            raw.forEach(([mod, code]) => {
+                const item = projectData[code];
+                if (item && item.owners === st.name) {
+                    total++;
+                    if (item.status === "已完成" || item.progress === "100%") done++;
+                }
+            });
+            const rate = total > 0 ? ((done / total) * 100).toFixed(0) + "%" : "0%";
+            staffPerfTbody.innerHTML += `
+                <tr>
+                    <td><b>${st.name}</b> (${st.dept})</td>
+                    <td>${total}</td>
+                    <td>${done}</td>
+                    <td><div style="background:#ffe0b2; border-radius:4px; overflow:hidden; border:1px solid #ffb300;"><div style="background:linear-gradient(to right, #4caf50, #81c784); width:${rate}; height:14px; text-align:center; color:#fff; font-size:9px; line-height:14px; font-weight:bold;">${rate}</div></div></td>
+                </tr>
+            `;
+        });
+    }
+
+    const reportTbody = document.getElementById("managerReportTableBody");
+    if (reportTbody) {
+        reportTbody.innerHTML = "";
+        const filteredReports = managerReports.filter(r => selectedDept === "全部" || r.dept === selectedDept);
+
+        if (filteredReports.length === 0) {
+            reportTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#8d6e63; padding:12px;">尚無符合條件的主管報告記錄</td></tr>`;
+            return;
+        }
+
+        filteredReports.forEach((rpt) => {
+            reportTbody.innerHTML += `
+                <tr>
+                    <td>${rpt.time}</td>
+                    <td><b>${rpt.dept}</b></td>
+                    <td>${rpt.reporter}</td>
+                    <td>
+                        <b>摘要：</b>${rpt.summary}<br>
+                        <span style="color:#c62828;"><b>⚠️ 延誤原因：</b>${rpt.delayReason || "無特別延誤"}</span>
+                    </td>
+                    <td><textarea onchange="updateManagerOpinion('${rpt.id}', this.value)" placeholder="輸入主管意見與指示...">${rpt.managerOpinion || ""}</textarea></td>
+                    <td style="text-align:center;"><button class="btn btn-danger" style="padding:2px 6px;" onclick="deleteManagerReport('${rpt.id}')">刪除</button></td>
+                </tr>
+            `;
+        });
+    }
+}
+
+function updateManagerOpinion(id, val) {
+    const rpt = managerReports.find(r => r.id === id);
+    if (rpt) {
+        rpt.managerOpinion = val;
+        localStorage.setItem("erp_manager_reports_v5", JSON.stringify(managerReports));
+        addHistoryLog("主管意見更新", `更新報告 ${id} 之指示`);
+        showToast("主管意見已自動更新儲存！");
+    }
+}
+
+function openModal(id) { document.getElementById(id)?.classList.add("active"); }
+function closeModal(id) { document.getElementById(id)?.classList.remove("active"); }
+
+function openNewReportModal() {
+    const sel = document.getElementById("modalRptDept");
+    if (sel) {
+        sel.innerHTML = "";
+        const depts = [...new Set(staffList.map(s => s.dept))];
+        depts.forEach(d => {
+            const opt = document.createElement("option");
+            opt.value = d; opt.textContent = d;
+            sel.appendChild(opt);
+        });
+    }
+    document.getElementById("modalRptReporter").value = staffList[0]?.name || "張三";
+    document.getElementById("modalRptSummary").value = "";
+    document.getElementById("modalRptDelay").value = "";
+    document.getElementById("modalRptOpinion").value = "";
+    openModal("reportModal");
+}
+
+function submitNewReportModal() {
+    const dept = document.getElementById("modalRptDept").value;
+    const reporter = document.getElementById("modalRptReporter").value.trim() || "匿名";
+    const summary = document.getElementById("modalRptSummary").value.trim() || "例行工作報告";
+    const delayReason = document.getElementById("modalRptDelay").value.trim() || "無";
+    const managerOpinion = document.getElementById("modalRptOpinion").value.trim() || "無";
+
+    const newRpt = {
+        id: "RPT-" + Date.now(),
+        time: new Date().toLocaleString(),
+        dept: dept,
+        reporter: reporter,
+        summary: summary,
+        delayReason: delayReason,
+        managerOpinion: managerOpinion
+    };
+
+    managerReports.unshift(newRpt);
+    localStorage.setItem("erp_manager_reports_v5", JSON.stringify(managerReports));
+    addHistoryLog("新增主管報告", `新增 ${dept} 主管報告記錄`);
+    closeModal("reportModal");
+    renderManagerReportView();
+    showToast("✅ 主管報告建立成功！");
+}
+
+function deleteManagerReport(id) {
+    managerReports = managerReports.filter(r => r.id !== id);
+    localStorage.setItem("erp_manager_reports_v5", JSON.stringify(managerReports));
+    addHistoryLog("刪除主管報告", `刪除報告 ID: ${id}`);
+    renderManagerReportView();
+    showToast("已刪除主管報告。");
+}
+
+function exportManagerReportJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(managerReports, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", "Manager_Reports_And_Performance.json");
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+}
+
+function renderParamTable() {
+    const tbody = document.getElementById("paramTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    const searchKey = (document.getElementById("paramSearchKey")?.value || "").trim().toLowerCase();
+
+    raw.forEach((r, idx) => {
+        if (searchKey) {
+            const modMatch = r[0].toLowerCase().includes(searchKey);
+            const codeMatch = r[1].toLowerCase().includes(searchKey);
+            const nameMatch = r[2].toLowerCase().includes(searchKey);
+            if (!modMatch && !codeMatch && !nameMatch) return;
+        }
+
+        tbody.innerHTML += `
+            <tr>
+                <td><input type="text" value="${r[0]}" id="p_mod_${idx}"></td>
+                <td><input type="text" value="${r[1]}" id="p_code_${idx}"></td>
+                <td><input type="text" value="${r[2]}" id="p_name_${idx}"></td>
+                <td><textarea id="p_note_${idx}">${r[3] || ""}</textarea></td>
+                <td>
+                    <button class="btn" style="padding:2px 6px;" onclick="updateParam(${idx})">更新</button>
+                    <button class="btn btn-danger" style="padding:2px 6px;" onclick="deleteParam(${idx})">刪</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function renderStaffParamTable() {
+    const tbody = document.getElementById("staffParamTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    staffList.forEach((st, idx) => {
+        tbody.innerHTML += `
+            <tr>
+                <td><input type="text" value="${st.dept}" id="s_dept_${idx}"></td>
+                <td><input type="text" value="${st.name}" id="s_name_${idx}"></td>
+                <td>
+                    <button class="btn" style="padding:2px 6px;" onclick="updateStaff(${idx})">改</button>
+                    <button class="btn btn-danger" style="padding:2px 6px;" onclick="deleteStaff(${idx})">刪</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function updateStaff(idx) {
+    const dept = document.getElementById(`s_dept_${idx}`).value.trim();
+    const name = document.getElementById(`s_name_${idx}`).value.trim();
+    if (!name || !dept) { showToast("⚠️ 部門與姓名不可空白！"); return; }
+    staffList[idx] = { name, dept };
+    localStorage.setItem("erp_staff_list_v5", JSON.stringify(staffList));
+    addHistoryLog("人員參數修改", `修改成員 ${name} (${dept})`);
+    showToast("人員設定更新成功！");
+    renderStaffParamTable();
+}
+
+function deleteStaff(idx) {
+    if (staffList.length <= 1) { showToast("⚠️ 至少需保留一位人員！"); return; }
+    const removed = staffList.splice(idx, 1);
+    localStorage.setItem("erp_staff_list_v5", JSON.stringify(staffList));
+    addHistoryLog("人員參數刪除", `刪除成員 ${removed[0].name}`);
+    renderStaffParamTable();
+    showToast("已刪除該人員。");
+}
+
+function openAddStaffModal() {
+    const dept = prompt("請輸入部門名稱 (例如 業務部, 採購部):", "業務部");
+    if (!dept) return;
+    const name = prompt("請輸入人員姓名:", "新成員");
+    if (!name) return;
+    staffList.push({ name, dept });
+    localStorage.setItem("erp_staff_list_v5", JSON.stringify(staffList));
+    addHistoryLog("人員參數新增", `新增成員 ${name} (${dept})`);
+    renderStaffParamTable();
+    showToast("已成功新增人員！");
+}
+
+function updateParam(idx) {
+    const m = document.getElementById(`p_mod_${idx}`).value.trim();
+    const c = document.getElementById(`p_code_${idx}`).value.trim();
+    const n = document.getElementById(`p_name_${idx}`).value.trim();
+    const note = document.getElementById(`p_note_${idx}`).value.trim();
+    raw[idx] = [m, c, n, note];
+    localStorage.setItem("erp_dynamic_raw_v5", JSON.stringify(raw));
+    addHistoryLog("參數修改", `修改流程參數 [${c}]`);
+    showToast("流程參數更新成功！");
+    renderParamTable();
+}
+
+function deleteParam(idx) {
+    raw.splice(idx, 1);
+    localStorage.setItem("erp_dynamic_raw_v5", JSON.stringify(raw));
+    renderParamTable();
+    showToast("已刪除該流程參數。");
+}
+
+function openAddParamModal() {
+    const mod = prompt("請輸入模組代號 (例如 COP, PUR, MOC):", "COP");
+    if (!mod) return;
+    const code = prompt("請輸入流程代號 (例如 COP999):", "COP999");
+    if (!code) return;
+    const name = prompt("請輸入流程中文名稱:", "自訂作業流程");
+    if (!name) return;
+    const note = prompt("請輸入注意事項與檢核點:", "注意事項...");
+    raw.push([mod.toUpperCase(), code.toUpperCase(), name, note || ""]);
+    localStorage.setItem("erp_dynamic_raw_v5", JSON.stringify(raw));
+    renderParamTable();
+    showToast("成功新增流程參數！");
+}
+
+function resetParamsToDefault() {
+    raw = JSON.parse(JSON.stringify(defaultRaw));
+    staffList = JSON.parse(JSON.stringify(defaultStaffList));
+    localStorage.setItem("erp_dynamic_raw_v5", JSON.stringify(raw));
+    localStorage.setItem("erp_staff_list_v5", JSON.stringify(staffList));
+    renderParamTable();
+    renderStaffParamTable();
+    showToast("已將所有參數恢復為系統預設值。");
+}
+
+function renderKpiDashboard() {
+    const total = raw.length;
+    let done = 0, active = 0;
+    raw.forEach(([mod, code]) => {
+        const item = projectData[code];
+        if (item) {
+            if (item.status === "已完成" || item.progress === "100%") done++;
+            if (item.status === "進行中" || item.status === "測試中") active++;
+        }
+    });
+    document.getElementById("kpiTotal").textContent = total;
+    document.getElementById("kpiDone").textContent = done;
+    document.getElementById("kpiRate").textContent = total > 0 ? ((done / total) * 100).toFixed(1) + "%" : "0%";
+    document.getElementById("kpiActive").textContent = active;
+
+    const chartContainer = document.getElementById("kpiChartContainer");
+    if (chartContainer) {
+        chartContainer.innerHTML = "";
+        Object.keys(moduleInfo).forEach(modKey => {
+            const modItems = raw.filter(r => r[0] === modKey);
+            if (modItems.length === 0) return;
+            let modDone = 0;
+            modItems.forEach(r => {
+                const item = projectData[r[1]];
+                if (item && (item.status === "已完成" || item.progress === "100%")) modDone++;
+            });
+            const rateVal = Math.round((modDone / modItems.length) * 100);
+
+            const barWrapper = document.createElement("div");
+            barWrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; height:100%; justify-content:flex-end; flex:1; min-width:40px;";
+            barWrapper.innerHTML = `
+                <div style="font-size:9px; font-weight:bold; color:#b78103; margin-bottom:2px;">${rateVal}%</div>
+                <div style="width:100%; background:#ffe0b2; border-radius:4px 4px 0 0; height:130px; display:flex; align-items:flex-end; border:1px solid #ffb300; overflow:hidden;">
+                    <div style="width:100%; background:linear-gradient(to top, #ff8f00, #ffc107); height:${rateVal}%; transition: height 0.5s;"></div>
+                </div>
+                <div style="font-size:10px; font-weight:bold; margin-top:4px; color:var(--fg);">${modKey}</div>
+            `;
+            chartContainer.appendChild(barWrapper);
+        });
+    }
+
+    const modTbody = document.getElementById("moduleKpiBody");
+    if (modTbody) {
+        modTbody.innerHTML = "";
+        Object.keys(moduleInfo).forEach(modKey => {
+            const modItems = raw.filter(r => r[0] === modKey);
+            if (modItems.length === 0) return;
+            let modDone = 0;
+            modItems.forEach(r => {
+                const item = projectData[r[1]];
+                if (item && (item.status === "已完成" || item.progress === "100%")) modDone++;
+            });
+            const rate = ((modDone / modItems.length) * 100).toFixed(0) + "%";
+            modTbody.innerHTML += `<tr><td><b>${modKey}</b> ${moduleInfo[modKey].name}</td><td>${modItems.length}</td><td>${modDone}</td><td>${rate}</td></tr>`;
+        });
+    }
+
+    const staffTbody = document.getElementById("staffKpiBody");
+    if (staffTbody) {
+        staffTbody.innerHTML = "";
+        staffList.forEach(st => {
+            let total = 0, done = 0;
+            raw.forEach(([mod, code]) => {
+                const item = projectData[code];
+                if (item && item.owners === st.name) {
+                    total++;
+                    if (item.status === "已完成" || item.progress === "100%") done++;
+                }
+            });
+            const rate = total > 0 ? ((done / total) * 100).toFixed(0) + "%" : "0%";
+            staffTbody.innerHTML += `<tr><td><b>${st.name}</b> (${st.dept})</td><td>${total}</td><td>${done}</td><td>${rate}</td><td><button class="btn" style="padding:2px 6px;" onclick="viewStaffLogs('${st.name}')">回查</button></td></tr>`;
+        });
+    }
+}
+
+function viewStaffLogs(staffName) {
+    let logTxt = `【${staffName}】個人負責流程進度摘要：\n`;
+    raw.forEach(([mod, code, name]) => {
+        const item = projectData[code];
+        if (item && item.owners === staffName) {
+            logTxt += `• [${code}] ${name} -> 狀態: ${item.status} (${item.progress})\n`;
+        }
+    });
+    showToast(logTxt.replace(/\n/g, ' | '));
+}
+
+function renderHistoryTable() {
+    const tbody = document.getElementById("historyTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    if (historyLogs.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:12px;">尚無變更歷史記錄</td></tr>`; return; }
+    historyLogs.forEach((log, idx) => {
+        tbody.innerHTML += `<tr><td>${log.time}</td><td><b>${log.type}</b></td><td>${log.detail}</td><td><button class="btn" style="padding:2px 6px;" onclick="restoreHistory(${idx})">還原</button></td></tr>`;
+    });
+}
+
+function restoreHistory(idx) {
+    const snap = historyLogs[idx].snapshot;
+    raw = JSON.parse(JSON.stringify(snap.raw));
+    projectData = JSON.parse(JSON.stringify(snap.projectData));
+    staffList = JSON.parse(JSON.stringify(snap.staffList));
+    managerReports = JSON.parse(JSON.stringify(snap.managerReports));
+    localStorage.setItem("erp_dynamic_raw_v5", JSON.stringify(raw));
+    localStorage.setItem("erp_full_progress_data_v5", JSON.stringify(projectData));
+    localStorage.setItem("erp_staff_list_v5", JSON.stringify(staffList));
+    localStorage.setItem("erp_manager_reports_v5", JSON.stringify(managerReports));
+    showToast("已還原至指定的歷史快照！");
+    renderHistoryTable();
+}
+
+function clearHistory() {
+    historyLogs = [];
+    localStorage.removeItem("erp_history_logs_v5");
+    renderHistoryTable();
+    showToast("已清空歷史記錄。");
+}
+
+function downloadSelfCode() {
+    const htmlContent = document.documentElement.outerHTML;
+    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ERP_Golden_Manager_System.html";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function calcLines() {
+    const lines = document.documentElement.outerHTML.split("\n").length;
+    document.getElementById("lineCountDisplay").textContent = `目前計算實際行數：${lines} 行 (完整全功能版)`;
+}
+
+let svg, g, simulation, currentZoomTransform = d3.zoomIdentity, graphNodesData = [];
+
+function initGraphQuickSelect() {
+    const sel = document.getElementById("mapQuickSelect");
+    if (!sel) return;
+    sel.innerHTML = `<option value="">🎯 快速定位節點...</option>`;
+
+    Object.keys(moduleInfo).forEach(mod => {
+        const opt = document.createElement("option");
+        opt.value = mod;
+        opt.textContent = `模組: ${mod} (${moduleInfo[mod].name})`;
+        sel.appendChild(opt);
+    });
+
+    raw.forEach(([mod, code, name]) => {
+        const opt = document.createElement("option");
+        opt.value = code;
+        opt.textContent = `流程: ${code} ${name}`;
+        sel.appendChild(opt);
+    });
+}
+
+function focusGraphNode(nodeId) {
+    if (!nodeId || !graphNodesData.length || !svg) return;
+    const matched = graphNodesData.find(n => (n.hub ? n.id : n.code).toLowerCase() === nodeId.toLowerCase());
+    if (matched) {
+        const width = 900, height = 450;
+        const scale = 2.5;
+        const x = width / 2 - matched.x * scale;
+        const y = height / 2 - matched.y * scale;
+        const zoom = d3.zoom().scaleExtent([0.3, 6]).on("zoom", (ev) => { currentZoomTransform = ev.transform; g.attr("transform", ev.transform); });
+        svg.transition().duration(700).call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+
+        const panel = document.getElementById('panel');
+        if (panel) {
+            panel.style.display = "block";
+            if (matched.hub) {
+                panel.innerHTML = `<b>${matched.id} ${matched.name}</b><br>部門：${moduleInfo[matched.id]?.dept}`;
+            } else {
+                const info = projectData[matched.code] || { status: "未開始", progress: "0%", owners: staffList[0]?.name || "未指派", delayReason: "無" };
+                panel.innerHTML = `<b>${matched.code} ${matched.name}</b><br>狀態：${info.status} (${info.progress})<br>負責人：${info.owners}<br>延誤原因：${info.delayReason || "無"}<br><span style="color:#b78103;"><b>💡 注意事項：</b>${matched.note}</span>`;
+            }
+        }
+    }
+}
+
+function updateGraph() {
+    d3.select("#svg").selectAll("*").remove();
+    const hubNodes = Object.keys(moduleInfo).map(k => ({ id: k, hub: true, name: moduleInfo[k].name, color: moduleInfo[k].color }));
+    const leafNodes = raw.map(r => {
+        const type = classify(r[2]);
+        return { id: r[1], hub: false, module: r[0], code: r[1], name: r[2], note: r[3] || "無", type: type, color: typeColor[type] || "#616161" };
+    });
+    graphNodesData = [...hubNodes, ...leafNodes];
+    const links = [];
+    hubLinks.forEach(([a, b]) => links.push({ source: a, target: b, hub: true }));
+    leafNodes.forEach(n => links.push({ source: n.module, target: n.id, hub: false }));
+
+    svg = d3.select("#svg");
+    g = svg.append("g");
+    const width = 900, height = 450;
+    svg.attr("viewBox", [0, 0, width, height]);
+
+    const zoom = d3.zoom().scaleExtent([0.3, 6]).on("zoom", (ev) => { currentZoomTransform = ev.transform; g.attr("transform", ev.transform); });
+    svg.call(zoom);
+
+    const linkSel = g.append("g").selectAll("path").data(links).join("path").attr("class", d => d.hub ? "link-hub" : "link-leaf");
+    const nodeSel = g.append("g").selectAll("g").data(graphNodesData).join("g").style("cursor", "pointer")
+        .call(d3.drag()
+            .on("start", (ev, d) => { if (!ev.active) simulation.alphaTarget(0.2).restart(); d.fx = d.x; d.fy = d.y; })
+            .on("drag", (ev, d) => { d.fx = ev.x; d.fy = ev.y; })
+            .on("end", (ev, d) => { if (!ev.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
+
+    nodeSel.filter(d => d.hub).append("circle").attr("r", 24).attr("fill", d => d.color).attr("stroke", "#ffffff").attr("stroke-width", 2.5);
+    nodeSel.filter(d => d.hub).append("text").attr("class", "hub-label").attr("text-anchor", "middle").attr("dy", 4).text(d => d.id);
+    nodeSel.filter(d => !d.hub).append("circle").attr("r", 6).attr("fill", d => d.color).attr("stroke", "#ffffff").attr("stroke-width", 1.2);
+    nodeSel.filter(d => !d.hub).append("text").attr("class", "leaf-code").attr("x", 8).attr("y", -2).text(d => d.code);
+
+    const panel = document.getElementById('panel');
+    nodeSel.on("click", (ev, d) => {
+        ev.stopPropagation();
+        if (panel) {
+            panel.style.display = "block";
+            if (d.hub) {
+                panel.innerHTML = `<b>${d.id} ${d.name}</b><br>部門：${moduleInfo[d.id]?.dept}`;
+            } else {
+                const info = projectData[d.code] || { status: "未開始", progress: "0%", owners: staffList[0]?.name || "未指派", delayReason: "無" };
+                panel.innerHTML = `<b>${d.code} ${d.name}</b><br>狀態：${info.status} (${info.progress})<br>負責人：${info.owners}<br>延誤原因：${info.delayReason || "無"}<br><span style="color:#b78103;"><b>💡 注意事項：</b>${d.note}</span>`;
+            }
+        }
+    });
+    svg.on("click", () => { if (panel) panel.style.display = "none"; });
+
+    simulation = d3.forceSimulation(graphNodesData)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.hub ? 140 : 25).strength(d => d.hub ? 0.4 : 0.85))
+        .force("charge", d3.forceManyBody().strength(d => d.hub ? -300 : -12))
+        .force("x", d3.forceX(width / 2).strength(0.04))
+        .force("y", d3.forceY(height / 2).strength(0.04))
+        .on("tick", () => {
+            linkSel.attr("d", d => `M${d.source.x},${d.source.y}L${d.target.x},${d.target.y}`);
+            nodeSel.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+    const searchInput = document.getElementById('mapSearch');
+    if (searchInput) {
+        searchInput.oninput = function (e) {
+            const q = e.target.value.trim().toLowerCase();
+            if (!q) return;
+            const matched = graphNodesData.find(n => (n.hub ? n.id : n.code).toLowerCase().includes(q));
+            if (matched) {
+                const scale = 2.5;
+                const x = width / 2 - matched.x * scale;
+                const y = height / 2 - matched.y * scale;
+                svg.transition().duration(700).call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(scale));
+            }
+        };
+    }
+}
+
+function zoomIn() { if (svg) svg.transition().call(d3.zoom().scaleBy, 1.4); }
+function zoomOut() { if (svg) svg.transition().call(d3.zoom().scaleBy, 0.7); }
+function resetZoom() { if (svg) svg.transition().call(d3.zoom().transform, d3.zoomIdentity); const p = document.getElementById('panel'); if (p) p.style.display = "none"; }
+
+window.onload = () => {
+    initModuleSelect();
+    renderTable();
+    updateGraph();
+    initGraphQuickSelect();
+    calcLines();
+};
+</script>
+</body>
+</html>
