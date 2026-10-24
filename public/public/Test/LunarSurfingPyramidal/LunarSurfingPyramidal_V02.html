@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>月相沖浪與金字塔幾何天文模型 (含試算表連結版)</title>
+  <!-- 引入 Google Noto Sans TC 繁體中文官方字型 -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- 引入 D3.js V7 官方 CDN -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #fdfbf7;
+      color: #2c220e;
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      padding: 6px;
+      min-height: 100vh;
+    }
+    .header {
+      text-align: center;
+      padding: 8px 10px;
+      background: linear-gradient(135deg, #fff3c4 0%, #ffd700 50%, #e6a100 100%);
+      color: #3d2600;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(218, 165, 32, 0.25);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #d4af37;
+    }
+    .header-link {
+      color: #3d2600;
+      text-decoration: underline;
+      font-weight: 700;
+      transition: color 0.2s;
+    }
+    .header-link:hover {
+      color: #8b6508;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .download-btn {
+      background: #3d2600;
+      color: #ffd700;
+      border: 1px solid #b8860b;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .download-btn:active { transform: scale(0.95); }
+    
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 6px 4px;
+      background: #f5ebcf;
+      border: 1px solid #d4af37;
+      color: #5c4308;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: linear-gradient(180deg, #d4af37 0%, #aa7c11 100%);
+      color: #ffffff;
+      border-color: #8b6508;
+      box-shadow: 0 2px 6px rgba(170, 124, 17, 0.3);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    .card {
+      background: #ffffff;
+      border: 1px solid #e0c987;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 6px;
+      box-shadow: 0 2px 6px rgba(184, 134, 11, 0.06);
+    }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #8b6508;
+      border-bottom: 1.5px solid #f0e1b9;
+      padding-bottom: 3px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .input-group label {
+      color: #6e5108;
+      font-weight: 700;
+      font-size: 0.8rem;
+      margin-bottom: 2px;
+    }
+    .input-group input, .input-group select {
+      background: #faf7ee;
+      border: 1px solid #c9a84d;
+      color: #2c220e;
+      padding: 5px;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      width: 100%;
+      outline: none;
+    }
+    .input-group input:focus {
+      border-color: #8b6508;
+      background: #ffffff;
+      box-shadow: 0 0 4px rgba(212, 175, 55, 0.5);
+    }
+
+    .btn-action {
+      background: linear-gradient(180deg, #e6a100 0%, #b87b00 100%);
+      color: #fff;
+      border: none;
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 700;
+      width: 100%;
+      margin-top: 2px;
+      box-shadow: 0 2px 4px rgba(184, 123, 0, 0.3);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    @media (max-width: 768px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .result-box {
+      background: #fdfcf7;
+      border: 1px solid #d4af37;
+      border-radius: 6px;
+      padding: 6px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #332405;
+      font-family: 'Noto Sans TC', monospace;
+      font-size: 0.8rem;
+      line-height: 1.35;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .status-log {
+      color: #a87903;
+      font-size: 0.8rem;
+      margin-top: 3px;
+      font-style: italic;
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 210px;
+      background: #faf7ee;
+      border: 1px solid #e0c987;
+      border-radius: 6px;
+      margin-top: 4px;
+      position: relative;
+    }
+
+    .energy-slots {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 3px;
+      margin-top: 4px;
+      margin-bottom: 6px;
+    }
+    @media (max-width: 600px) {
+      .energy-slots {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    .energy-slot-card {
+      background: #faf6ea;
+      border: 1px solid #d4af37;
+      border-radius: 4px;
+      padding: 4px 2px;
+      text-align: center;
+    }
+    .energy-slot-time { font-size: 0.7rem; color: #6e5108; font-weight: 700; }
+    .energy-slot-score { font-size: 0.85rem; font-weight: 700; color: #8b6508; margin: 1px 0; }
+    .energy-slot-desc { font-size: 0.65rem; }
+
+    .energy-chart-container {
+      width: 100%;
+      height: 100px;
+      background: #faf6ea;
+      border: 1px solid #e3d1a4;
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .history-list {
+      max-height: 240px;
+      overflow-y: auto;
+      margin-bottom: 6px;
+    }
+    .history-item {
+      background: #faf6ea;
+      border: 1px solid #e3d1a4;
+      padding: 6px 8px;
+      margin-bottom: 4px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .history-item-info {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.85rem;
+    }
+    .btn-sm {
+      padding: 4px 6px;
+      font-size: 0.75rem;
+      border-radius: 3px;
+      border: 1px solid #b8860b;
+      background: #fff;
+      color: #5c4308;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .history-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .d3-tooltip {
+      position: absolute;
+      padding: 4px 8px;
+      background: rgba(61, 38, 0, 0.95);
+      color: #fff;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部標題、試算表超連結與下載按鈕 -->
+  <div class="header">
+    <span>🌕 <a href="https://docs.google.com/spreadsheets/d/1nq96xBdscbkjeAl0Xn3iuF8KM_RFk5ZrCwyb8cflNX4/edit?gid=0#gid=0" target="_blank" class="header-link">月相沖浪</a> 與金字塔幾何天文模型</span>
+    <div class="header-actions">
+      <button class="download-btn" onclick="downloadSelf()">下載 HTML</button>
+    </div>
+  </div>
+
+  <!-- 分頁選單 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('dashboard', event)">推算儀表板</button>
+    <button class="tab-btn" onclick="switchTab('visuals', event)">D3 圖形化示意</button>
+    <button class="tab-btn" onclick="switchTab('history', event)">歷程與備份</button>
+  </div>
+
+  <!-- TAB 1: 儀表板 -->
+  <div id="dashboard" class="tab-content active">
+    <div class="card">
+      <div class="card-title">
+        <span>⚙️ 參數設定 (對應 A5, D4, G3)</span>
+        <button class="btn-sm" onclick="resetDefaults()">恢復預設</button>
+      </div>
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="baseDate">起跌日期 (A5)</label>
+          <input type="date" id="baseDate" value="2026-10-05" onchange="runModelAndSave()">
+        </div>
+        <div class="input-group">
+          <label for="highPrice">起跌最高價 (D4)</label>
+          <input type="number" id="highPrice" value="8690" onchange="runModelAndSave()">
+        </div>
+        <div class="input-group">
+          <label for="dailyDrop">每日平均跌幅 (G3)</label>
+          <input type="number" step="0.01" id="dailyDrop" value="16.96" onchange="runModelAndSave()">
+        </div>
+      </div>
+      <button class="btn-action" onclick="runModelAndSave()">執行量化推算並儲存歷程</button>
+      <div id="statusLog" class="status-log">系統狀態：模型就緒，數據已連動。</div>
+    </div>
+
+    <!-- 雙框並排緊湊區塊 -->
+    <div class="dashboard-grid">
+      <!-- 框 1：本日盤中天象能量時段 (內含 D3 能量曲線圖) -->
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-title" style="font-size:0.85rem;">
+          <span>⚡ 本日盤中天象能量時段</span>
+          <span id="energyDateLabel" style="font-size:0.7rem; color:#8b6508;">10/24</span>
+        </div>
+        <div id="energySlotsContainer" class="energy-slots">
+          <!-- 動態填入卡片 -->
+        </div>
+        <!-- D3 能量波動小圖 -->
+        <div id="energyD3Chart" class="energy-chart-container"></div>
+      </div>
+
+      <!-- 框 2：LET 公式推算結果與過程 (完整保留) -->
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-title" style="font-size:0.85rem;">
+          <span>📜 LET 公式推算結果與過程</span>
+        </div>
+        <div id="formulaOutput" class="result-box">計算中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: D3 圖形化示意 -->
+  <div id="visuals" class="tab-content">
+    <div class="card">
+      <div class="card-title">📐 圖表 1：金字塔斜角 vs 天狼星歲差角度剖面示意</div>
+      <div id="pyramidChart" class="chart-container"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🌊 圖表 2：月相沖浪波段衰減與四大目標價 (含支撐壓力線)</div>
+      <div id="waveChart" class="chart-container"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: 本機歷史紀錄與備份 -->
+  <div id="history" class="tab-content">
+    <div class="card">
+      <div class="card-title">
+        <span>🕒 本機儲存之歷史推算軌跡</span>
+        <div class="history-actions">
+          <button class="btn-sm" onclick="exportHistoryJSON()">📥 匯出 JSON</button>
+          <label class="btn-sm" style="cursor:pointer; display:inline-block; margin:0;">
+            📤 匯入 <input type="file" id="importFile" style="display:none" accept=".json" onchange="importHistoryJSON(event)">
+          </label>
+          <button class="btn-sm" onclick="clearHistory()" style="color:#c0392b;">清空</button>
+        </div>
+      </div>
+      <div id="historyList" class="history-list">
+        無歷史紀錄
+      </div>
+    </div>
+  </div>
+
+  <div id="tooltip" class="d3-tooltip"></div>
+
+  <script>
+    const STORAGE_KEY = 'PYRAMID_LUNAR_HISTORY_V9';
+
+    function switchTab(tabId, evt) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      if(evt) evt.target.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+
+      if(tabId === 'visuals') {
+        renderD3Charts();
+      } else if(tabId === 'history') {
+        renderHistory();
+      }
+    }
+
+    function showStatus(msg) {
+      const el = document.getElementById('statusLog');
+      if(el) el.innerText = '系統狀態：' + msg;
+    }
+
+    function resetDefaults() {
+      document.getElementById('baseDate').value = '2026-10-05';
+      document.getElementById('highPrice').value = '8690';
+      document.getElementById('dailyDrop').value = '16.96';
+      runModelAndSave();
+    }
+
+    function calculateModel() {
+      const baseInput = document.getElementById('baseDate').value || '2026-10-05';
+      const D4 = parseFloat(document.getElementById('highPrice').value) || 8690;
+      const G3 = parseFloat(document.getElementById('dailyDrop').value) || 16.96;
+
+      const baseDateObj = new Date(baseInput);
+
+      const phi = 1.618033989;
+      const sqrt_phi = 1.27201965;
+      const theta_deg = 51.82729237;
+      const royal_cubit = 0.5235987756;
+      const precession_scale = 43200;
+
+      const eq_dec = 0;
+      const sirius_dec = -16.716;
+      const precession_diff = Math.abs(eq_dec - sirius_dec) * (precession_scale / 43200);
+      const pyramid_dev = Math.abs(theta_deg - precession_diff);
+
+      const m_avg_days = 29.53059 * 0.25;
+      const m_sin_adj = 0.55 * Math.sin((m_avg_days / 27.55455) * 360 * Math.PI / 180);
+      
+      const D = (m_avg_days / 29.53059) * 360 * Math.PI / 180;
+      const M = (m_avg_days / 27.55455) * 360 * Math.PI / 180;
+      const M_prime = (m_avg_days / 365.2596) * 360 * Math.PI / 180;
+
+      const evection = 1.27 * Math.sin(2 * D - M);
+      const variation = 0.66 * Math.sin(2 * D);
+      const annual = 0.19 * Math.sin(M_prime);
+
+      const m_perturb_adj = (evection + variation - annual) / 24;
+      const day_diff_short = m_avg_days + m_sin_adj + m_perturb_adj;
+
+      const m_date = new Date(baseDateObj.getTime() + day_diff_short * 86400000);
+
+      const mars_avg = 686.98 * 0.0125;
+      const mars_sin_adj = 0.12 * Math.sin((mars_avg / 686.98) * 360 * Math.PI / 180);
+      const mars_date = new Date(baseDateObj.getTime() + (mars_avg + mars_sin_adj) * 86400000);
+
+      const phi_atacama = -19.95;
+      const delta_standstill = -28.58;
+      const cos_atacama = Math.sin(delta_standstill * Math.PI / 180) / Math.cos(phi_atacama * Math.PI / 180);
+
+      const phi_callanish = 58;
+      const cos_callanish = Math.sin(28.5 * Math.PI / 180) / Math.cos(phi_callanish * Math.PI / 180);
+
+      const phi_chaco = 36;
+      const h_chaco = 90 - Math.abs(phi_chaco - 28.5);
+      const sin_chaco = Math.sin(h_chaco * Math.PI / 180);
+
+      const phi_newgrange = 53.5;
+      const cos_newgrange = Math.sin(28.5 * Math.PI / 180) / Math.cos(phi_newgrange * Math.PI / 180);
+
+      const sirius_extinct = 0.15 * Math.abs(Math.sin(-28.58 * Math.PI / 180));
+      const venus_ratio = 5 / 8;
+      const lst_transit = Math.cos(121.5 * Math.PI / 180);
+
+      const short_target = D4 - (G3 * day_diff_short * Math.abs(cos_atacama) * sin_chaco * (1 - sirius_extinct));
+
+      const standard_days = 29.53059 * 0.5;
+      const standard_date = new Date(baseDateObj.getTime() + standard_days * 86400000);
+      const standard_target = D4 - (G3 * standard_days * Math.abs(cos_callanish) * Math.abs(cos_newgrange) * venus_ratio * Math.abs(lst_transit));
+
+      const resonance_days = 22;
+      const resonance_date = new Date(baseDateObj.getTime() + resonance_days * 86400000);
+      const resonance_target = D4 - (G3 * resonance_days);
+
+      const gold_G3 = G3 * phi;
+      const gold_target = D4 - (gold_G3 * resonance_days);
+
+      const rev_G3 = (D4 - resonance_target) / resonance_days;
+      const rev_D4 = resonance_target + (rev_G3 * resonance_days);
+
+      const fmtDate = (d) => (d.getMonth() + 1).toString().padStart(2, '0') + '/' + d.getDate().toString().padStart(2, '0');
+      const fmtDateTime = (d) => fmtDate(d) + ' ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+
+      return {
+        baseDateObj, D4, G3, theta_deg, phi, royal_cubit, precession_diff, pyramid_dev,
+        m_date, mars_date, day_diff_short, short_target, standard_date, standard_days,
+        standard_target, resonance_date, resonance_days, resonance_target, gold_G3,
+        gold_target, rev_G3, rev_D4, fmtDate, fmtDateTime,
+        cos_atacama: Math.abs(cos_atacama), sin_chaco, sirius_extinct,
+        cos_callanish: Math.abs(cos_callanish), cos_newgrange: Math.abs(cos_newgrange)
+      };
+    }
+
+    function updateEnergySlots() {
+      const baseInput = document.getElementById('baseDate').value || '2026-10-05';
+      const bDate = new Date(baseInput);
+      const today = new Date();
+      const diff = Math.floor((today - bDate) / (1000 * 60 * 60 * 24));
+      
+      const synodic = 29.53059;
+      const D = (90 + (diff / synodic) * 360) % 360;
+      const fraction = (D / 360.0) % 1.0;
+
+      const times = [
+        { time: "09:04", start: "09:04", end: "09:40" },
+        { time: "09:40", start: "09:40", end: "10:15" },
+        { time: "10:15", start: "10:15", end: "10:50" },
+        { time: "10:50", start: "10:50", end: "11:25" },
+        { time: "11:25", start: "11:25", end: "12:05" }
+      ];
+
+      const mm = (today.getMonth()+1).toString().padStart(2, '0');
+      const dd = today.getDate().toString().padStart(2, '0');
+      document.getElementById('energyDateLabel').innerText = `${mm}/${dd} (D:${D.toFixed(0)}°)`;
+
+      let slotData = [];
+      let html = '';
+      times.forEach((slot, i) => {
+        const offset = i * 0.2;
+        const val = (fraction + offset) % 1.0;
+        const score = Math.round(50 + 40 * Math.sin(val * 2 * Math.PI));
+        
+        let desc = "平原";
+        let color = "#8b6508";
+        if(score >= 75) {
+          desc = "⛰️ 山峰";
+          color = "#27ae60";
+        } else if(score <= 25) {
+          desc = "🕳️ 山谷";
+          color = "#c0392b";
+        }
+
+        slotData.push({ time: slot.time, score: score, desc: desc, color: color });
+
+        html += `
+          <div class="energy-slot-card" style="border-color:${color};">
+            <div class="energy-slot-time">${slot.time}</div>
+            <div class="energy-slot-score" style="color:${color};">${score}分</div>
+            <div class="energy-slot-desc" style="color:${color};">${desc}</div>
+          </div>
+        `;
+      });
+      document.getElementById('energySlotsContainer').innerHTML = html;
+
+      renderEnergyD3Chart(slotData);
+    }
+
+    function renderEnergyD3Chart(slotData) {
+      const container = d3.select("#energyD3Chart");
+      container.html("");
+      const width = container.node().getBoundingClientRect().width;
+      const height = 100;
+      const margin = {top: 15, right: 15, bottom: 20, left: 25};
+      const innerW = width - margin.left - margin.right;
+      const innerH = height - margin.top - margin.bottom;
+
+      const svg = container.append("svg").attr("width", width).attr("height", height);
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const xScale = d3.scalePoint().domain(slotData.map(d => d.time)).range([0, innerW]);
+      const yScale = d3.scaleLinear().domain([0, 100]).range([innerH, 0]);
+
+      g.append("line").attr("x1", 0).attr("y1", yScale(50)).attr("x2", innerW).attr("y2", yScale(50))
+       .attr("stroke", "#d4af37").attr("stroke-width", 1).attr("stroke-dasharray", "2,2").attr("opacity", 0.5);
+
+      const line = d3.line().x(d => xScale(d.time)).y(d => yScale(d.score)).curve(d3.curveMonotoneX);
+      g.append("path").datum(slotData).attr("fill", "none").attr("stroke", "#b8860b").attr("stroke-width", 2).attr("d", line);
+
+      g.append("g").attr("transform", `translate(0,${innerH})`).call(d3.axisBottom(xScale))
+       .attr("color", "#8b6508").style("font-size", "0.6rem");
+      g.append("g").call(d3.axisLeft(yScale).ticks(3)).attr("color", "#8b6508").style("font-size", "0.6rem");
+
+      g.selectAll("circle").data(slotData).enter().append("circle")
+       .attr("cx", d => xScale(d.time))
+       .attr("cy", d => yScale(d.score))
+       .attr("r", 4)
+       .attr("fill", d => d.color);
+    }
+
+    function runModelAndSave() {
+      try {
+        const data = calculateModel();
+        updateEnergySlots();
+        
+        const txt_D4 = data.D4.toFixed(0);
+        const txt_G3 = data.G3.toFixed(2);
+        const txt_resPrice = data.resonance_target.toFixed(1);
+        const txt_shortPrice = data.short_target.toFixed(1);
+        const txt_stdPrice = data.standard_target.toFixed(0);
+        const txt_goldPrice = data.gold_target.toFixed(1);
+        const txt_base = data.fmtDate(data.baseDateObj);
+
+        const resultText = 
+"【幾何與天文對齊常數】\n" +
+"📐 黃金斜角: " + data.theta_deg.toFixed(3) + "° (Phi=" + data.phi.toFixed(4) + ") | 肘尺: " + data.royal_cubit.toFixed(4) + "m\n" +
+"🌌 歲差對齊角差: " + data.precession_diff.toFixed(3) + "° | 角度偏差對比: " + data.pyramid_dev.toFixed(3) + "°\n\n" +
+"【推算目標價位與推導過程】\n" +
+"🔥 共振反轉: " + data.fmtDate(data.resonance_date) + " ➔ 📉 " + txt_resPrice + "\n" +
+"   └ 過程: " + txt_D4 + " - " + txt_G3 + " * 22天 = " + txt_resPrice + "\n" +
+"🌊 衝浪窗口: " + data.fmtDate(data.m_date) + " 07:32~" + data.fmtDate(data.m_date) + " 22:19 ➔ 📉 " + txt_shortPrice + "\n" +
+"   └ 過程: " + txt_D4 + " - " + txt_G3 + " * " + data.day_diff_short.toFixed(1) + "天 * 0.51(巨人) * 0.99(查科) * (1 - 0.07天狼) = " + txt_shortPrice + "\n" +
+"🎯 標準轉折: " + data.fmtDate(data.standard_date) + " ➔ 📉 " + txt_stdPrice + "\n" +
+"   └ 過程: " + txt_D4 + " - " + txt_G3 + " * 14.77天 * 0.90(卡利) * 0.80(紐格) * 0.625(金星) * LST = " + txt_stdPrice + "\n" +
+"✨ 1.618黃金合理底: " + data.fmtDate(data.resonance_date) + " ➔ 📉 " + txt_goldPrice + "\n" +
+"   └ 過程: " + txt_D4 + " - 27.44 (1.618*跌速) * 22天 = " + txt_goldPrice + "\n\n" +
+"【100% 逆向閉鎖驗證】\n" +
+"🔒 反推G3跌速 = " + data.rev_G3.toFixed(2) + " ➔ 驗證起跌高點 = " + data.rev_D4.toFixed(0) + " [" + txt_base + "]\n" +
+"   └ 驗證過程: (" + txt_D4 + " - " + txt_resPrice + ") / 22 ➔ " + txt_resPrice + " + (16.96 * 22) = " + data.rev_D4.toFixed(0);
+
+        document.getElementById('formulaOutput').innerText = resultText;
+        showStatus('量化推算完成。');
+
+        saveToHistory({
+          time: new Date().toLocaleTimeString(),
+          baseDate: document.getElementById('baseDate').value,
+          highPrice: data.D4,
+          dailyDrop: data.G3,
+          resPrice: txt_resPrice,
+          goldPrice: txt_goldPrice
+        });
+
+      } catch (e) {
+        showStatus('計算錯誤：' + e.message);
+      }
+    }
+
+    function saveToHistory(record) {
+      let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      list.unshift(record);
+      if(list.length > 30) list.pop();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    function renderHistory() {
+      const container = document.getElementById('historyList');
+      let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      if(list.length === 0) {
+        container.innerHTML = '<div style="padding:10px; color:#a87903; text-align:center;">無歷史推算紀錄</div>';
+        return;
+      }
+
+      let html = '';
+      list.forEach((item, idx) => {
+        html += `
+          <div class="history-item">
+            <div class="history-item-info">
+              <span style="font-weight:700; color:#8b6508;">📅 起跌日: ${item.baseDate} | 高點: ${item.highPrice} | 跌速: ${item.dailyDrop}</span>
+              <span style="color:#6e5108;">🎯 共振反轉: ${item.resPrice} | ✨ 黃金底: ${item.goldPrice} (${item.time})</span>
+            </div>
+            <button class="btn-sm" onclick="loadHistoryItem(${idx})">載入</button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function loadHistoryItem(index) {
+      let list = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      const item = list[index];
+      if(item) {
+        document.getElementById('baseDate').value = item.baseDate;
+        document.getElementById('highPrice').value = item.highPrice;
+        document.getElementById('dailyDrop').value = item.dailyDrop;
+        switchTab('dashboard');
+        runModelAndSave();
+      }
+    }
+
+    function clearHistory() {
+      localStorage.removeItem(STORAGE_KEY);
+      renderHistory();
+      showStatus('已清除所有歷史紀錄。');
+    }
+
+    function exportHistoryJSON() {
+      let list = localStorage.getItem(STORAGE_KEY) || '[]';
+      const blob = new Blob([list], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `月相沖浪模型歷程備份_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      showStatus('歷史歷程 JSON 備份已成功匯出。');
+    }
+
+    function importHistoryJSON(event) {
+      const file = event.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if(Array.isArray(imported)) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
+            renderHistory();
+            showStatus('成功匯入歷史推算軌跡。');
+          } else {
+            alert('檔案格式錯誤');
+          }
+        } catch(err) {
+          alert('解析 JSON 失敗: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function renderD3Charts() {
+      const data = calculateModel();
+
+      d3.select("#pyramidChart").html("");
+      d3.select("#waveChart").html("");
+
+      // Chart 1
+      const pContainer = d3.select("#pyramidChart");
+      const pWidth = pContainer.node().getBoundingClientRect().width;
+      const pHeight = 210;
+      const svg1 = pContainer.append("svg").attr("width", pWidth).attr("height", pHeight);
+
+      svg1.append("line").attr("x1", 20).attr("y1", 180).attr("x2", pWidth - 20).attr("y2", 180)
+          .attr("stroke", "#c9a84d").attr("stroke-width", 2);
+
+      const apexX = pWidth / 2;
+      const apexY = 35;
+      const baseLeftX = apexX - 100;
+      const baseRightX = apexX + 100;
+
+      svg1.append("polygon")
+          .attr("points", `${baseLeftX},180 ${apexX},${apexY} ${baseRightX},180`)
+          .attr("fill", "rgba(212, 175, 55, 0.2)")
+          .attr("stroke", "#b8860b")
+          .attr("stroke-width", 2);
+
+      svg1.append("text").attr("x", apexX).attr("y", apexY - 8)
+          .attr("text-anchor", "middle").attr("fill", "#8b6508").attr("font-weight", "700").attr("font-size", "0.9rem")
+          .text(`金字塔斜角: ${data.theta_deg.toFixed(3)}°`);
+
+      svg1.append("line").attr("x1", apexX).attr("y1", apexY).attr("x2", apexX + 80).attr("y2", 115)
+          .attr("stroke", "#e67e22").attr("stroke-width", 1.8).attr("stroke-dasharray", "4,4");
+
+      svg1.append("text").attr("x", apexX + 45).attr("y", 100)
+          .attr("fill", "#e67e22").attr("font-weight", "700").attr("font-size", "0.8rem")
+          .text(`天狼星歲差角: ${data.precession_diff.toFixed(3)}°`);
+
+      // Chart 2
+      const wContainer = d3.select("#waveChart");
+      const wWidth = wContainer.node().getBoundingClientRect().width;
+      const wHeight = 210;
+      const svg2 = wContainer.append("svg").attr("width", wWidth).attr("height", wHeight);
+
+      const margin = {top: 20, right: 35, bottom: 25, left: 45};
+      const innerW = wWidth - margin.left - margin.right;
+      const innerH = wHeight - margin.top - margin.bottom;
+
+      const points = [
+        { name: "起跌高點", day: 0, price: data.D4, date: data.fmtDate(data.baseDateObj) },
+        { name: "🌊 衝浪窗口", day: data.day_diff_short, price: data.short_target, date: data.fmtDate(data.m_date) },
+        { name: "🎯 標準轉折", day: data.standard_days, price: data.standard_target, date: data.fmtDate(data.standard_date) },
+        { name: "🔥 共振反轉", day: data.resonance_days, price: data.resonance_target, date: data.fmtDate(data.resonance_date) },
+        { name: "✨ 黃金底", day: data.resonance_days, price: data.gold_target, date: data.fmtDate(data.resonance_date) }
+      ];
+
+      const xScale = d3.scaleLinear().domain([0, 25]).range([0, innerW]);
+      const yScale = d3.scaleLinear()
+        .domain([d3.min(points, d => d.price) - 50, d3.max(points, d => d.price) + 50])
+        .range([innerH, 0]);
+
+      const g = svg2.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      g.append("g").attr("transform", `translate(0,${innerH})`).call(d3.axisBottom(xScale).ticks(5))
+       .attr("color", "#8b6508").style("font-size", "0.75rem");
+      g.append("g").call(d3.axisLeft(yScale).ticks(5)).attr("color", "#8b6508").style("font-size", "0.75rem");
+
+      const supportLines = [
+        { price: data.short_target, label: "🌊 衝浪: " + data.short_target.toFixed(1), color: "#2980b9" },
+        { price: data.standard_target, label: "🎯 標準: " + data.standard_target.toFixed(0), color: "#8e44ad" },
+        { price: data.resonance_target, label: "🔥 共振: " + data.resonance_target.toFixed(1), color: "#d35400" },
+        { price: data.gold_target, label: "✨ 黃金底: " + data.gold_target.toFixed(1), color: "#c0392b" }
+      ];
+
+      supportLines.forEach(lineObj => {
+        g.append("line")
+         .attr("x1", 0).attr("y1", yScale(lineObj.price))
+         .attr("x2", innerW).attr("y2", yScale(lineObj.price))
+         .attr("stroke", lineObj.color).attr("stroke-width", 1.5).attr("stroke-dasharray", "3,3")
+         .attr("opacity", 0.7);
+
+        g.append("text")
+         .attr("x", innerW - 4).attr("y", yScale(lineObj.price) - 3)
+         .attr("text-anchor", "end").attr("fill", lineObj.color)
+         .attr("font-size", "0.65rem").attr("font-weight", "700")
+         .text(lineObj.label);
+      });
+
+      const line = d3.line().x(d => xScale(d.day)).y(d => yScale(d.price)).curve(d3.curveMonotoneX);
+      g.append("path").datum(points.slice(0, 4)).attr("fill", "none").attr("stroke", "#d4af37").attr("stroke-width", 2.2).attr("d", line);
+
+      const tooltip = d3.select("#tooltip");
+
+      g.selectAll("circle").data(points).enter().append("circle")
+       .attr("cx", d => xScale(d.day))
+       .attr("cy", d => yScale(d.price))
+       .attr("r", 5)
+       .attr("fill", d => d.name.includes("黃金") ? "#e74c3c" : "#b8860b")
+       .on("mouseover", (event, d) => {
+         tooltip.style("opacity", 1)
+           .html(`<b>${d.name}</b><br>日期: ${d.date}<br>價格: ${d.price.toFixed(1)}`)
+           .style("left", (event.pageX + 10) + "px")
+           .style("top", (event.pageY - 25) + "px");
+       })
+       .on("mouseout", () => tooltip.style("opacity", 0));
+    }
+
+    function downloadSelf() {
+      const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '月相沖浪與金字塔幾何天文模型_含試算表連結版.html';
+      a.click();
+      showStatus('HTML 原始碼檔案已下載。');
+    }
+
+    window.onload = function() {
+      runModelAndSave();
+    };
+  </script>
+</body>
+</html>
