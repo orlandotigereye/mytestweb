@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><script data-bard-client-injected="true">(function(firebaseConfig, initialAuthToken, appId) {
+        window.__firebase_config = firebaseConfig;
+        window.__initial_auth_token = initialAuthToken;
+        window.__app_id = appId;
+            })("\n{\n  \"apiKey\": \"AIzaSyCqyCcs2R2e7AegGjvFAwG98wlamtbHvZY\",\n  \"authDomain\": \"bard-frontend.firebaseapp.com\",\n  \"projectId\": \"bard-frontend\",\n  \"storageBucket\": \"bard-frontend.firebasestorage.app\",\n  \"messagingSenderId\": \"175205271074\",\n  \"appId\": \"1:175205271074:web:2b7bd4d34d33bf38e6ec7b\"\n}\n","eyJhbGciOiJSUzI1NiIsImtpZCI6IjExNjRiNzdiNDMzZDdhMDAyMWI4NjE4YjhjYTU3ZTMyZGI5MWUxMTMiLCJ0eXAiOiJKV1QifQ.eyJzdWIiOiJmaXJlYmFzZS1hZG1pbnNkay1mYnN2Y0BiYXJkLWZyb250ZW5kLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiYXVkIjoiaHR0cHM6Ly9pZGVudGl0eXRvb2xraXQuZ29vZ2xlYXBpcy5jb20vZ29vZ2xlLmlkZW50aXR5LmlkZW50aXR5dG9vbGtpdC52MS5JZGVudGl0eVRvb2xraXQiLCJ1aWQiOiIwOTc1NjE1MTUwODc5MDAzODYxMCIsImlzcyI6ImZpcmViYXNlLWFkbWluc2RrLWZic3ZjQGJhcmQtZnJvbnRlbmQuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJjbGFpbXMiOnsiYXBwSWQiOiJjX2QwZWNkZjc4Nzc2MzBjYmNfaW5kZXguaHRtbC0xODYifSwiZXhwIjoxNzk1NTA4MDAwLCJpYXQiOjE3OTU1MDQ0MDAsImFsZyI6IlJTMjU2In0.XVcWJUilBU0PqS8PKz_1tt-j-kwE5zaQn_A-6n3aPME5oeTB8xNPUjZ421ZblwNprplIv-lgj3JENxRgpe1fKEIRY4HZAcioqJFSPquqOi1fnAyUKK2IUfck8KeUDwpmw3Q1aBoWFetBY-pQfDqOPquEkTYHz6iLbICw9-YGEZe1BCvVfPQgsrJgrcOi4AKsAkVTHTsoztJv1TfRUFgFqlyHDuJJsGPBXJsgYQH4I8SziK_SrF3AQSWjQbmrUHn8RDxZ7fpz6aVwHfSFu24tYfBvSSEPKIf72TlQgTpiC_T98SxsQYEVckJf6CR9tg6NXTUctyjPCxGeqmuoTtnx0g","c_d0ecdf7877630cbc_index.html-186")</script><script data-bard-client-injected="true">
+  document.addEventListener('input', (event) => {
+    if (event.target && (event.target.isContentEditable || event.target.hasAttribute('contenteditable'))) {
+      const clonedDoc = document.cloneNode(true);
+      const injectedScripts = clonedDoc.querySelectorAll('[data-bard-client-injected="true"]');
+      injectedScripts.forEach(el => el.remove());
+      window.parent.postMessage({
+        type: 'inlineEdit',
+        html: '<!DOCTYPE html>\n' + clonedDoc.documentElement.outerHTML
+      }, '*');
+    }
+  });
+</script><script data-bard-client-injected="true">(function(){'use strict';window.addEventListener("message",a=>{a.data&&a.data.type==="SUPPLEMENTAL_DATA_UPDATE"&&window.dispatchEvent(new CustomEvent("supplementaldataupdate",{detail:a.data.data}))});}).call(this);
+</script><script data-bard-client-injected="true">(function() {
+  const SCROLL_KEYS = new Set([
+    'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+    ' ', 'Spacebar', 'PageUp', 'PageDown', 'Home', 'End',
+  ]);
+  const HORIZONTAL_KEYS = new Set(['ArrowLeft', 'ArrowRight']);
+
+  function isTextEntryTarget(target) {
+    if (!target) return false;
+    const tagName = target.tagName;
+    return tagName === 'INPUT' || tagName === 'TEXTAREA' ||
+        tagName === 'SELECT' || target.isContentEditable === true;
+  }
+
+  // An element absorbs the key only if it both overflows on the axis being
+  // scrolled and is configured to scroll on that axis. The cheap dimension
+  // test runs first because getComputedStyle forces a style recalc, and this
+  // runs on every keypress. Each axis is read from its own longhand: the
+  // 'overflow' shorthand serializes as two values when the axes differ, which
+  // is the common 'overflow-x: hidden; overflow-y: auto' pane.
+  function canScroll(node, horizontal) {
+    const overflows = horizontal ? node.scrollWidth > node.clientWidth
+                                 : node.scrollHeight > node.clientHeight;
+    if (!overflows) return false;
+    const style = window.getComputedStyle(node);
+    const overflow = horizontal ? style.overflowX : style.overflowY;
+    return overflow === 'auto' || overflow === 'scroll';
+  }
+
+  // Walks up from the event target so nested scrollers keep their behavior.
+  // <body> is included because pages that pin the root height make it the
+  // scroll container.
+  function hasScrollableAncestor(target, horizontal) {
+    let node = target;
+    while (node && node !== document.documentElement) {
+      if (canScroll(node, horizontal)) return true;
+      node = node.parentElement;
+    }
+    return false;
+  }
+
+  function rootCanScroll(horizontal) {
+    const scroller = document.scrollingElement || document.documentElement;
+    if (!scroller) return false;
+    // Tolerate a pixel of rounding so subpixel layouts do not look scrollable.
+    return horizontal ? scroller.scrollWidth > window.innerWidth + 1
+                      : scroller.scrollHeight > window.innerHeight + 1;
+  }
+
+  window.addEventListener('keydown', function(event) {
+    if (!SCROLL_KEYS.has(event.key)) return;
+    if (event.defaultPrevented) return;
+    // Alt and Meta turn arrows into browser history navigation, and Ctrl is
+    // reserved for shortcuts, so none of them are scroll intent.
+    if (event.altKey || event.metaKey || event.ctrlKey) return;
+
+    const target = event.target;
+    if (isTextEntryTarget(target)) return;
+
+    // Anything that can still absorb the scroll gets to keep it.
+    const horizontal = HORIZONTAL_KEYS.has(event.key);
+    if (rootCanScroll(horizontal)) return;
+    if (hasScrollableAncestor(target, horizontal)) return;
+
+    event.preventDefault();
+  }, {capture: true, passive: false});
+})();</script><script data-bard-client-injected="true">(function() {
+  // Ensure this script is executed only once
+  if (window.firebaseAuthBridgeScriptLoaded) {
+    return;
+  }
+  window.firebaseAuthBridgeScriptLoaded = true;
+
+  let nextTokenPromiseId = 0;
+
+  // Stores { resolve, reject } for ongoing token requests
+  const pendingTokenPromises = {};
+
+  // Listen for messages from the Host Application
+  window.addEventListener('message', function(event) {
+
+    const messageData = event.data;
+
+  if (messageData && messageData.type === 'RESOLVE_NEW_FIREBASE_TOKEN') {
+      const { success, token, error, promiseId } = messageData ?? {};
+      if (pendingTokenPromises[promiseId]) {
+        if (success) {
+          pendingTokenPromises[promiseId].resolve(token);
+        } else {
+          pendingTokenPromises[promiseId].reject(new Error(error || 'Token refresh failed from host.'));
+        }
+        delete pendingTokenPromises[promiseId];
+      }
+    }
+  });
+
+  // Expose a function for the Generated App to request a new Firebase token
+  window.requestNewFirebaseToken = function() {
+    const currentPromiseId = nextTokenPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingTokenPromises[currentPromiseId] = { resolve, reject };
+    });
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'REQUEST_NEW_FIREBASE_TOKEN',
+        promiseId: currentPromiseId
+      }, '*');
+    } else {
+      pendingTokenPromises[currentPromiseId].reject(new Error('No parent window to request token from.'));
+      delete pendingTokenPromises[currentPromiseId];
+    }
+    return promise;
+  };
+})();</script><script data-bard-client-injected="true">
+let realOriginalGetUserMedia = null;
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  realOriginalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+}
+
+(function() {
+  if (navigator.mediaDevices && navigator.mediaDevices.__proto__) {
+    try {
+      Object.defineProperty(navigator.mediaDevices.__proto__, 'getUserMedia', {
+        get: function() {
+          return undefined; // Or throw an error
+        },
+        configurable: false
+      });
+    } catch (error) {
+      console.error("Error defining prototype getter:", error);
+    }
+  }
+})();
+
+(function() {
+  const pendingMediaResolvers = {};
+  let nextMediaPromiseId = 0;
+
+  function requestMediaPermissions(constraints) {
+    const mediaPromiseId = nextMediaPromiseId++;
+    const promise = new Promise((resolve, reject) => {
+      pendingMediaResolvers[mediaPromiseId] = (granted) => {
+        delete pendingMediaResolvers[mediaPromiseId];
+        resolve(granted);
+      };
+    });
+
+    window.parent.postMessage({
+      type: 'requestMediaPermission',
+      constraints: constraints,
+      promiseId: mediaPromiseId,
+    }, '*');
+
+    return promise;
+  }
+
+  let originalGetUserMedia = realOriginalGetUserMedia;
+
+  function interceptGetUserMedia() {
+    if (navigator.mediaDevices) {
+      Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+        value: function(constraints) {
+          return requestMediaPermissions(constraints).then((granted) => {
+            if (granted) {
+              if (originalGetUserMedia) {
+                return originalGetUserMedia(constraints);
+              } else {
+                throw new Error("Original getUserMedia not available.");
+              }
+            } else {
+              throw new DOMException('Permission denied', 'NotAllowedError');
+            }
+          });
+        },
+        writable: false,
+        configurable: false
+      });
+    }
+  }
+
+  interceptGetUserMedia();
+
+  const observer = new MutationObserver(function(mutationsList, observer) {
+    for (const mutation of mutationsList) {
+      if (mutation.type === 'reconfigured' && mutation.name === 'getUserMedia' && mutation.object === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'attributes' && mutation.attributeName === 'getUserMedia' && mutation.target === navigator.mediaDevices) {
+        interceptGetUserMedia();
+      } else if (mutation.type === 'childList' && mutation.addedNodes) {
+        mutation.addedNodes.forEach(node => {
+          if (node === navigator.mediaDevices) {
+            interceptGetUserMedia();
+          }
+        });
+      }
+    }
+  });
+
+  function interceptSpeechRecognition() {
+    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+      return;
+    }
+
+    const OriginalSpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    const SpeechRecognitionWrapper = function(...args) {
+      const recognizer = new OriginalSpeechRecognition(...args);
+      const originalStart = recognizer.start.bind(recognizer);
+
+      recognizer.start = function() {
+        requestMediaPermissions({ audio: true }).then(granted => {
+          if (granted) {
+            originalStart();
+          } else {
+            const errorEvent = new SpeechRecognitionErrorEvent('error');
+            errorEvent.error = 'not-allowed'; // This is the standard error for permission denial.
+            recognizer.dispatchEvent(errorEvent);
+          }
+        });
+      };
+
+      return recognizer;
+    };
+
+    SpeechRecognitionWrapper.prototype = OriginalSpeechRecognition.prototype;
+    SpeechRecognitionWrapper.prototype.constructor = SpeechRecognitionWrapper;
+
+    if (window.SpeechRecognition) {
+      window.SpeechRecognition = SpeechRecognitionWrapper;
+    }
+    if (window.webkitSpeechRecognition) {
+      window.webkitSpeechRecognition = SpeechRecognitionWrapper;
+    }
+  }
+
+  interceptSpeechRecognition();
+
+  window.addEventListener('message', function(event) {
+    if (event.data) {
+      if (event.data.type === 'resolveMediaPermission') {
+        const { promiseId, granted } = event.data;
+        if (pendingMediaResolvers[promiseId]) {
+          pendingMediaResolvers[promiseId](granted);
+        }
+      }
+    }
+  });
+
+})();</script><script ws-interception-config="{&quot;parentOrigin&quot;:&quot;https://gemini.google.com&quot;,&quot;proxiedDomains&quot;:[]}" data-bard-client-injected="true">(function(){'use strict';var u=typeof Object.defineProperties=="function"?Object.defineProperty:function(b,d,e){if(b==Array.prototype||b==Object.prototype)return b;b[d]=e.value;return b};function v(b){b=["object"==typeof globalThis&&globalThis,b,"object"==typeof window&&window,"object"==typeof self&&self,"object"==typeof global&&global];for(var d=0;d<b.length;++d){var e=b[d];if(e&&e.Math==Math)return e}throw Error("Cannot find global object");}var w=v(this);
+function y(b,d){if(d)a:{var e=w;b=b.split(".");for(var h=0;h<b.length-1;h++){var k=b[h];if(!(k in e))break a;e=e[k]}b=b[b.length-1];h=e[b];d=d(h);d!=h&&d!=null&&u(e,b,{configurable:!0,writable:!0,value:d})}}function z(b){function d(h){return b.next(h)}function e(h){return b.throw(h)}return new Promise(function(h,k){function m(n){n.done?h(n.value):Promise.resolve(n.value).then(d,e).then(m,k)}m(b.next())})}y("globalThis",function(b){return b||w});/*
+
+ Copyright The Closure Library Authors.
+ SPDX-License-Identifier: Apache-2.0
+*/
+function A(b,d){function e(){}e.prototype=d.prototype;b.i=d.prototype;b.prototype=new e;b.prototype.constructor=b;b.h=function(h,k,m){for(var n=Array(arguments.length-2),p=2;p<arguments.length;p++)n[p-2]=arguments[p];return d.prototype[k].apply(h,n)}};function B(b,d,e="*"){function h(a){if(typeof a==="string")return F.encode(a).buffer;if(a instanceof ArrayBuffer)return a.slice(0);if(ArrayBuffer.isView(a))return a.buffer.slice(a.byteOffset,a.byteOffset+a.byteLength);throw Error("Invalid data type");}function k(a){a=h(a);var f={type:"send",data:new Uint8Array(a)},g;(g=r)==null||g.postMessage(f,[a])}function m(){if(!r)throw Error("Data port not captured yet.");r.onmessage=a=>{if(a.data.type==="message"){a=new MessageEvent("message",{data:G.decode(a.data.data)});
+let f;(f=c.onmessage)==null||f.call(c,a);c.dispatchEvent(a)}}}function n(){if(!t)throw Error("Control port not captured yet.");t.onmessage=a=>{switch(a.data.type){case "open":l=1;var f=new Event("open"),g;(g=c.onopen)==null||g.call(c,f);c.dispatchEvent(f);q.forEach(H=>{k(H)});q=[];break;case "close":g=a.data;l=3;g=new CloseEvent("close",{code:g.code,reason:g.reason,wasClean:g.wasClean});(f=c.onclose)==null||f.call(c,g);c.dispatchEvent(g);break;case "error":l=3;f=new Event("error");let x;(x=c.onerror)==
+null||x.call(c,f);c.dispatchEvent(f)}}}function p(a){return z(function*(){var f=new MessageChannel;t=f.port1;var g=new MessageChannel;r=g.port1;n();m();window.parent.postMessage({type:"websocket_open",portOrdering:["control","data"],url:b,protocols:a||[],connectionId:I},e,[f.port2,g.port2])}())}var c=Reflect.construct(EventTarget,[],new.target);c.CONNECTING=0;c.OPEN=1;c.CLOSING=2;c.CLOSED=3;c.url=b;c.binaryType="arraybuffer";c.protocol="";c.extensions="";var l=0,t=null,r=null,q=[],F=new TextEncoder,
+G=new TextDecoder;c.onopen=null;c.onmessage=null;c.onclose=null;c.onerror=null;Object.defineProperty(c,"readyState",{get:()=>l,enumerable:!0,configurable:!0});Object.defineProperty(c,"bufferedAmount",{get:()=>{var a=0;q.forEach(f=>{a+=typeof f==="string"?f.length:f.byteLength});return a},enumerable:!0,configurable:!0});var I=function(){var a;return((a=globalThis.crypto)==null?0:a.randomUUID)?globalThis.crypto.randomUUID():"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,f=>{var g=Math.random()*
+16|0;return(f==="x"?g:g&3|8).toString(16)})}();c.send=a=>{if(l===1)a instanceof Blob?a.arrayBuffer().then(f=>{k(f)}):k(a);else if(l===0)if(typeof a==="string")q.push(a);else if(a instanceof ArrayBuffer||ArrayBuffer.isView(a))q.push(h(a));else throw Error("Sending Blob is not supported before the connection is open.");else console.debug("WebSocket send called in CLOSING or CLOSED state; ignored.")};c.close=(a=1E3,f="")=>{if(l!==2&&l!==3){l=2;a={type:"close",code:a,reason:f,wasClean:a===1E3};var g;
+(g=t)==null||g.postMessage(a)}};Promise.resolve().then(()=>p(d));return c}A(B,EventTarget);var C=document.currentScript,D=C==null?void 0:C.getAttribute("ws-interception-config");if(!D)throw Error("WebSocket Interceptor: Missing ws-interception-config attribute in the script tag.");var E=JSON.parse(D);if(!E.parentOrigin||typeof E.parentOrigin!=="string")throw Error("WebSocket Interceptor: Invalid parentOrigin in ws-interception-config");
+(function(b){var d=Object.getOwnPropertyDescriptor(window,"WebSocket");if(!d||d.writable||d.configurable)d=Object.assign(function(e,h){try{let k=(new URL(e)).hostname;if(b.proxiedDomains.some(m=>k===m||k.endsWith(`.${m}`)))return new B(e,h,b.parentOrigin)}catch(k){throw window.parent.postMessage({type:"websocket_blocked",url:e,reason:"blocked_invalid_url"},b.parentOrigin),new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");}window.parent.postMessage({type:"websocket_blocked",
+url:e,reason:"blocked_domain_not_allowlisted"},b.parentOrigin);throw new DOMException(`WebSocket connection to '${e}' is not allowed in Canvas.`,"SecurityError");},{CONNECTING:0,OPEN:1,CLOSING:2,CLOSED:3}),Object.defineProperty(window,"WebSocket",{value:d,writable:!1,configurable:!1})})({proxiedDomains:E.proxiedDomains||[],parentOrigin:E.parentOrigin});}).call(this);
+</script><script data-bard-client-injected="true">((function(modelInformation) {
+  const originalFetch = window.fetch;
+  // TODO: b/421908508 - Move these out of the script and match all generative AI model calls.
+  let googleLlmBaseApiUrls = [
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':streamGenerateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.textModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageModelName + ':predictLongRunning',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageEditModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.imageTransformModelName + ':generateContent',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predict',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.videoModelName + ':predictLongRunning',
+    'https://generativelanguage.googleapis.com/v1beta/models/' + modelInformation.ttsModelName + ':generateContent',
+  ];
+  modelInformation.deprecatedTextModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+    );
+  });
+  modelInformation.deprecatedImageModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predict',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':predictLongRunning',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+  modelInformation.deprecatedGenerateImageModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+  modelInformation.deprecatedImageTransformModelNames.forEach((modelName) => {
+    googleLlmBaseApiUrls.push(
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/' + modelName + ':streamGenerateContent',
+    );
+  });
+
+  const pendingFetchResolvers = {};
+  let nextPromiseId = 0;
+
+  function handleStringInput(input, optionsArgument) {
+    const actualUrl = input;
+    const fetchCallArgs = [actualUrl, optionsArgument];
+    const effectiveOptions = optionsArgument || {};
+    const bodyForApiKeyCheck = effectiveOptions.body;
+    const bodyForPostMessage = effectiveOptions.body;
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  function handleRequestInput(input, optionsArgument) {
+    const actualUrl = input.url;
+    const fetchCallArgs = [input, optionsArgument];
+    const effectiveOptions = { method: input.method, headers: new Headers(input.headers) };
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (optionsArgument) {
+      if (optionsArgument.method) effectiveOptions.method = optionsArgument.method;
+      if (optionsArgument.headers) effectiveOptions.headers = new Headers(optionsArgument.headers);
+      if ('body' in optionsArgument) {
+        bodyForApiKeyCheck = optionsArgument.body;
+        bodyForPostMessage = optionsArgument.body;
+      } else {
+        bodyForApiKeyCheck = undefined;
+        bodyForPostMessage = input.body;
+      }
+    } else {
+      bodyForApiKeyCheck = undefined;
+      bodyForPostMessage = input.body;
+    }
+    return { actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage };
+  }
+
+  window.fetch = function(input, optionsArgument) {
+    let actualUrl;
+    let fetchCallArgs;
+    let effectiveOptions = {};
+    let bodyForApiKeyCheck;
+    let bodyForPostMessage;
+
+    if (typeof input === 'string') {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleStringInput(input, optionsArgument));
+    } else if (input instanceof Request) {
+      ({actualUrl, fetchCallArgs, effectiveOptions, bodyForApiKeyCheck, bodyForPostMessage} = handleRequestInput(input, optionsArgument));
+    } else {
+      return originalFetch.apply(window, [input, optionsArgument]);
+    }
+
+    effectiveOptions.method = effectiveOptions.method || 'GET';
+    if (!effectiveOptions.headers) {
+      effectiveOptions.headers = new Headers();
+    }
+
+
+    if (typeof actualUrl === 'string' && googleLlmBaseApiUrls.some((url) => actualUrl.startsWith(url))) {
+      let apiKeyIsNull = true;
+
+      const regex = new RegExp("models/([^:]+)");
+      const modelNameMatch = actualUrl.match(regex);
+      const modelName = modelNameMatch ? modelNameMatch[1] : 'unspecified';
+
+
+      try {
+        const urlObject = new URL(actualUrl);  // Use URL object for robust parsing
+        const apiKeyParam = urlObject.searchParams.get('key');
+        if (apiKeyParam) {
+          apiKeyIsNull = false;
+        }
+      } catch (e) {
+        // Continue checks even if URL parsing fails
+      }
+
+      if (apiKeyIsNull && effectiveOptions.headers) {
+        const h = new Headers(effectiveOptions.headers);
+        const apiKeyHeaderValue = h.get('X-API-Key') || h.get('x-api-key');
+        if (apiKeyHeaderValue) {
+          apiKeyIsNull = false;
+          return originalFetch.apply(window, fetchCallArgs);
+        }
+      }
+
+      if (apiKeyIsNull && effectiveOptions.method && ['POST', 'PUT', 'PATCH'].includes(effectiveOptions.method.toUpperCase()) && typeof bodyForApiKeyCheck === 'string') {
+        try {
+          const bodyData = JSON.parse(bodyForApiKeyCheck);
+          if (bodyData && bodyData.apiKey) {
+            apiKeyIsNull = false;
+            return originalFetch.apply(window, fetchCallArgs);
+          }
+        } catch (e) {
+          // Ignore JSON parsing errors
+        }
+      }
+
+      if(apiKeyIsNull) {
+        const promiseId = nextPromiseId++;
+        const promise = new Promise((resolve) => {
+          pendingFetchResolvers[promiseId] = (resolvedResponse) => {
+            delete pendingFetchResolvers[promiseId];
+            resolve(resolvedResponse);
+          };
+        });
+
+        let serializedBodyForPostMessage;
+        if (typeof bodyForPostMessage === 'string' || bodyForPostMessage == null) {
+            serializedBodyForPostMessage = bodyForPostMessage;
+        } else if (bodyForPostMessage instanceof ReadableStream) {
+            serializedBodyForPostMessage = null;
+        } else {
+            try {
+                serializedBodyForPostMessage = JSON.stringify(bodyForPostMessage);
+            } catch (e) {
+                serializedBodyForPostMessage = null;
+            }
+        }
+
+        const messageOptions = {
+            method: effectiveOptions.method,
+            headers: Object.fromEntries(new Headers(effectiveOptions.headers).entries()),
+            body: serializedBodyForPostMessage
+        };
+
+        window.parent.postMessage({
+          type: 'requestFetch',
+          url: actualUrl,
+          modelName: modelName,
+          options: messageOptions,
+          promiseId: promiseId,
+        }, '*');
+
+        return promise;
+      }
+      return originalFetch.apply(window, fetchCallArgs);
+    }
+    return originalFetch.apply(window, fetchCallArgs);
+  };
+
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'resolveFetch') {
+      const { promiseId, response } = event.data;
+      if (pendingFetchResolvers[promiseId]) {
+        try {
+          const reconstructedResponse = new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: new Headers(response.headers),
+          });
+          pendingFetchResolvers[promiseId](reconstructedResponse);
+        } catch (error) {
+          pendingFetchResolvers[promiseId](new Response(null, { status: 500, statusText: "Interceptor Response Reconstruction Error" }));
+        }
+      }
+    }
+  });
+
+}))({"textModelName":"gemini-3-flash-preview","imageModelName":"imagen-4.0-generate-001","imageEditModelName":"gemini-3.1-flash-image","imageTransformModelName":"gemini-3-pro-image","videoModelName":"veo-2.0-generate-001","ttsModelName":"gemini-2.5-flash-preview-tts","deprecatedTextModelNames":["gemini-2.0-flash","gemini-2.5-flash","gemini-2.5-flash-preview-04-17","gemini-2.5-flash-preview-05-20","gemini-2.5-flash-preview-09-2025"],"deprecatedImageModelNames":["imagen-3.0-generate-001","imagen-3.0-generate-002"],"deprecatedGenerateImageModelNames":["gemini-2.5-flash-image-preview","gemini-2.5-flash-image","gemini-3.1-flash-image-preview"],"deprecatedImageTransformModelNames":["gemini-3-pro-image-preview-11-2025"]})</script><script data-bard-client-injected="true">(function() {
+  const OVERLAY_SELECTOR =
+    'dialog[open], [role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"], [role="combobox"]';
+
+  function isVisibleOverlay(element) {
+    if (element.closest('[hidden], [aria-hidden="true"], [inert]')) {
+      return false;
+    }
+    if (window.getComputedStyle(element).visibility === 'hidden') {
+      return false;
+    }
+    for (let cur = element; cur; cur = cur.parentElement) {
+      if (window.getComputedStyle(cur).display === 'none') {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function hasOpenOverlay() {
+    const candidates = document.querySelectorAll(OVERLAY_SELECTOR);
+    for (let i = 0; i < candidates.length; i++) {
+      if (isVisibleOverlay(candidates[i])) {
+        return true;
+      }
+    }
+    try {
+      if (document.querySelector('[popover]:popover-open')) {
+        return true;
+      }
+    } catch (e) {
+      // Ignore engines that do not support :popover-open.
+    }
+    return false;
+  }
+
+  function isNonEmptySearchInput(target) {
+    return (
+      Boolean(target) &&
+      target.tagName === 'INPUT' &&
+      typeof target.type === 'string' &&
+      target.type.toLowerCase() === 'search' &&
+      typeof target.value === 'string' &&
+      target.value.length > 0
+    );
+  }
+
+  function shouldIgnoreEscape(event) {
+    return (
+      event.key !== 'Escape' ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.shiftKey ||
+      event.isComposing ||
+      event.repeat ||
+      event.keyCode === 229 ||
+      isNonEmptySearchInput(event.target)
+    );
+  }
+
+  let shouldIgnoreCaptureState = false;
+
+  window.addEventListener(
+    'keydown',
+    function(event) {
+      if (event.key === 'Escape') {
+        shouldIgnoreCaptureState =
+          hasOpenOverlay() || isNonEmptySearchInput(event.target);
+      }
+    },
+    {capture: true},
+  );
+
+  window.addEventListener('keydown', function(event) {
+    if (
+      shouldIgnoreEscape(event) ||
+      event.defaultPrevented ||
+      shouldIgnoreCaptureState
+    ) {
+      return;
+    }
+    const wasBlockedOnCapture = shouldIgnoreCaptureState;
+    queueMicrotask(function() {
+      if (event.defaultPrevented || wasBlockedOnCapture) {
+        return;
+      }
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({'type': 'escapeKey'}, '*');
+      }
+    });
+  });
+})();</script><script data-bard-client-injected="true">(function() {
+  function normalizeSlug(str) {
+    try {
+      return str
+        .trim()
+        .toLowerCase()
+        .replace(/[^p{L}p{N}s_-]/gu, '')
+        .replace(/s+/g, '-');
+    } catch (e) {
+      return str
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9s_-]/g, '')
+        .replace(/s+/g, '-');
+    }
+  }
+
+  function findTargetElement(hash) {
+    if (!hash || hash === '#') {
+      return null;
+    }
+    const rawId = hash.startsWith('#') ? hash.slice(1) : hash;
+    let decodedId = rawId;
+    try {
+      decodedId = decodeURIComponent(rawId);
+    } catch (e) {
+      // Ignore URI malformed errors.
+    }
+
+    // 1. Direct ID match (raw and decoded).
+    let target = document.getElementById(rawId) || document.getElementById(decodedId);
+    if (target) {
+      return target;
+    }
+
+    // 2. Name attribute match (<a name="...">).
+    try {
+      if (typeof CSS !== 'undefined' && CSS.escape) {
+        target =
+          document.querySelector('[name="' + CSS.escape(rawId) + '"]') ||
+          document.querySelector('[name="' + CSS.escape(decodedId) + '"]');
+      } else {
+        const namedElements = document.getElementsByName(rawId);
+        if (namedElements && namedElements.length > 0) {
+          return namedElements[0];
+        }
+      }
+    } catch (e) {
+      // Ignore querySelector syntax errors.
+    }
+    if (target) {
+      return target;
+    }
+
+    // 3. Match heading text by slug (for Markdown TOCs where headings lack explicit IDs).
+    const targetSlug = normalizeSlug(decodedId);
+    if (targetSlug) {
+      for (const heading of document.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
+        if (normalizeSlug(heading.textContent || '') === targetSlug) {
+          return heading;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  document.addEventListener('click', function(event) {
+    const target = event.target;
+    const anchor = target && typeof target.closest === 'function' ? target.closest('a') : null;
+    if (!anchor) {
+      return;
+    }
+
+    const href = anchor.getAttribute('href');
+    if (
+      !href ||
+      href.trim().toLowerCase().startsWith('javascript:') ||
+      anchor.hasAttribute('download')
+    ) {
+      return;
+    }
+
+    // Check if the link is an in-page hash / anchor link.
+    if (href.startsWith('#')) {
+      event.preventDefault();
+      const targetElement = findTargetElement(href);
+      if (targetElement) {
+        targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+      }
+      return;
+    }
+
+    // Check if the URL has the same origin/pathname but with a hash.
+    try {
+      const url = new URL(anchor.href, window.location.href);
+      if (
+        url.hash &&
+        url.origin === window.location.origin &&
+        url.pathname === window.location.pathname
+      ) {
+        event.preventDefault();
+        const targetElement = findTargetElement(url.hash);
+        if (targetElement) {
+          targetElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+        return;
+      }
+    } catch (e) {
+      // Fall through if URL parsing fails.
+    }
+
+    // For all external or full navigation links, prevent iframe-level navigation
+    // (which breaks in AGSA WebView or sandboxed iframes) and ensure they open
+    // safely in a new tab/window.
+    if (anchor.target !== '_blank') {
+      event.preventDefault();
+      window.open(anchor.href, '_blank', 'noopener,noreferrer');
+    }
+  }, {capture: true});
+})();</script><script data-bard-client-injected="true">(function(){'use strict';function a(){window.parent.postMessage({type:"interaction"},"*")}window.addEventListener("click",a,{capture:!0,passive:!0});window.addEventListener("touchstart",a,{capture:!0,passive:!0});window.addEventListener("keydown",a,{capture:!0,passive:!0});}).call(this);
+</script><script data-bard-client-injected="true">(function() {
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
+
+    /**
+   * Normalizes an error event or a promise rejection reason into a structured error object.
+   * @param {*} errorEventOrReason The error object or reason.
+   * @return {object} Structured error data { message, name, stack }.
+   */
+  function getErrorObject(errorEventOrReason) {
+    if (errorEventOrReason instanceof Error) {
+      return {
+        message: errorEventOrReason.message,
+        name: errorEventOrReason.name,
+        stack: errorEventOrReason.stack,
+      };
+    }
+    // Fallback for non-Error objects.
+    try {
+      return {
+        message: JSON.stringify(errorEventOrReason),
+        name: 'UnknownErrorType',
+        stack: null,
+      };
+    } catch (e) {
+      return {
+        message: String(errorEventOrReason),
+        name: 'UnknownErrorTypeNonStringifiable',
+        stack: null,
+      };
+    }
+  }
+
+  /**
+   * Converts an array of arguments (from log/error) into a single string.
+   * Handles Error objects specially to include their message and stack.
+   * @param {Array<*>} args - Arguments passed to console methods.
+   * @return {string} A string representation of the arguments.
+   */
+  function stringifyArgs(args) {
+    return args
+      .map((arg) => {
+        if (arg instanceof Error) {
+          const {message, stack} = arg;
+          return `Error: ${message}${stack ? ('\nStack: ' + stack) : ''}`;
+        }
+        if (typeof arg === 'object' && arg !== null) {
+          try {
+            return JSON.stringify(arg);
+          } catch (error) {
+            return '[Circular Object]';
+          }
+        } else {
+          return String(arg);
+        }
+      })
+      .join(' ');
+  }
+
+  console.log = function(...args) {
+    const logString = stringifyArgs(args);
+    window.parent.postMessage({ type: 'log', message: logString }, '*');
+    originalConsoleLog.apply(console, args);
+  };
+
+  console.error = function(...args) {
+    let errorData;
+    if (args.length > 0 && args[0] instanceof Error) {
+      const err = args[0];
+      // If the first arg is an Error, capture its details.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        ...getErrorObject(err),
+        rawArgsString: stringifyArgs(args.slice(1)),
+        timestamp: new Date().toISOString(),
+      };
+    } else {
+      // If not an Error object, treat all args as a general error message.
+      errorData = {
+        type: 'error',
+        source: 'CONSOLE_ERROR',
+        message: stringifyArgs(args),
+        name: 'ConsoleLoggedError',
+        stack: null,
+        timestamp: new Date().toISOString(),
+      };
+    }
+    window.parent.postMessage(errorData, '*');
+    originalConsoleError.apply(console, args);
+  };
+
+  // Listen for global unhandled synchronous errors.
+  window.addEventListener('error', function(event) {
+    const errorDetails = event.error ? getErrorObject(event.error) : {
+      message: event.message,
+      name: 'GlobalError',
+      stack: null,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    };
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'global',
+      ...errorDetails,
+      message: errorDetails.message || event.message,
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+  // Listen for unhandled promise rejections (asynchronous errors).
+  window.addEventListener('unhandledrejection', function(event) {
+    const errorDetails = getErrorObject(event.reason);
+
+    window.parent.postMessage({
+      type: 'error',
+      source: 'unhandledrejection',
+      ...errorDetails,
+      message: errorDetails.message || 'Unhandled Promise Rejection',
+      timestamp: new Date().toISOString(),
+    }, '*');
+  });
+
+})();</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>金幣閃耀 · Google Sheet 常用字串清單快取工具</title>
+  <!-- 載入 Tailwind CSS 與 Noto Sans TC 字體 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    /* 防止橫向捲動並建立明亮閃耀金幣氛圍 */
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+      font-family: 'Noto Sans TC', sans-serif;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(254, 240, 138, 0.72) 0%, transparent 38%),
+        radial-gradient(circle at 88% 18%, rgba(251, 191, 36, 0.34) 0%, transparent 42%),
+        radial-gradient(circle at 50% 92%, rgba(253, 224, 71, 0.42) 0%, transparent 48%),
+        linear-gradient(155deg, #fffdf7 0%, #fef9e7 48%, #fdf2cf 100%);
+      color: #271b05;
+      min-height: 100vh;
+    }
+
+    /* 金幣立體光澤與微閃動效 */
+    .coin-badge {
+      background: linear-gradient(135deg, #fffbeb 0%, #fde047 28%, #f59e0b 65%, #b45309 100%);
+      box-shadow:
+        0 8px 20px -4px rgba(217, 119, 6, 0.45),
+        inset 0 2px 4px rgba(255, 255, 255, 0.9),
+        inset 0 -3px 6px rgba(120, 53, 15, 0.45);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .coin-badge::after {
+      content: "";
+      position: absolute;
+      top: -60%;
+      left: -80%;
+      width: 50%;
+      height: 220%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+      transform: rotate(25deg);
+      animation: coinShine 3.6s infinite ease-in-out;
+    }
+
+    @keyframes coinShine {
+      0% { left: -85%; }
+      45% { left: 135%; }
+      100% { left: 135%; }
+    }
+
+    /* 閃耀金色按鈕質感 */
+    .gold-btn {
+      background: linear-gradient(135deg, #fef08a 0%, #f59e0b 48%, #d97706 100%);
+      box-shadow:
+        0 4px 14px rgba(217, 119, 6, 0.32),
+        inset 0 1px 1px rgba(255, 255, 255, 0.85);
+      transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+
+    .gold-btn:hover {
+      filter: brightness(1.04);
+      box-shadow:
+        0 6px 18px rgba(217, 119, 6, 0.45),
+        inset 0 1px 1px rgba(255, 255, 255, 0.95);
+    }
+
+    .gold-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* 卡片明亮玻璃金邊質感 */
+    .luminous-card {
+      background: rgba(255, 255, 255, 0.86);
+      backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(245, 158, 11, 0.35);
+      box-shadow:
+        0 12px 32px -8px rgba(180, 83, 9, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    /* 側邊隱藏抽屜平滑轉場 */
+    .drawer-panel {
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* 密碼與特殊符號等寬顯示輔助 */
+    .mono-secret {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      word-break: break-all;
+    }
+  </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:"Noto Sans TC", sans-serif;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.fixed{position:fixed}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0px}.right-0{right:0px}.top-0{top:0px}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.mx-auto{margin-left:auto;margin-right:auto}.mx-3\.5{margin-left:0.875rem;margin-right:0.875rem}.mb-1\.5{margin-bottom:0.375rem}.mt-1{margin-top:0.25rem}.mt-3{margin-top:0.75rem}.mt-auto{margin-top:auto}.block{display:block}.flex{display:flex}.inline-flex{display:inline-flex}.grid{display:grid}.hidden{display:none}.h-10{height:2.5rem}.h-4{height:1rem}.h-8{height:2rem}.h-full{height:100%}.h-3{height:0.75rem}.min-h-screen{min-height:100vh}.w-10{width:2.5rem}.w-4{width:1rem}.w-8{width:2rem}.w-full{width:100%}.w-3{width:0.75rem}.min-w-0{min-width:0px}.max-w-6xl{max-width:72rem}.max-w-md{max-width:28rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.translate-x-full{--tw-translate-x:100%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;user-select:none}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.gap-3{gap:0.75rem}.gap-1{gap:0.25rem}.gap-3\.5{gap:0.875rem}.gap-4{gap:1rem}.space-y-2\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.625rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.625rem * var(--tw-space-y-reverse))}.space-y-0\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.125rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.125rem * var(--tw-space-y-reverse))}.space-y-1 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.25rem * var(--tw-space-y-reverse))}.space-y-1\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.375rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.375rem * var(--tw-space-y-reverse))}.space-y-3\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.875rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.875rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.space-y-5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.25rem * var(--tw-space-y-reverse))}.space-y-6 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem * var(--tw-space-y-reverse))}.self-start{align-self:flex-start}.overflow-y-auto{overflow-y:auto}.overflow-x-hidden{overflow-x:hidden}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.break-words{overflow-wrap:break-word}.rounded-full{border-radius:9999px}.rounded-xl{border-radius:0.75rem}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-3xl{border-radius:1.5rem}.rounded-lg{border-radius:0.5rem}.rounded-md{border-radius:0.375rem}.border{border-width:1px}.border-2{border-width:2px}.border-b{border-bottom-width:1px}.border-l-2{border-left-width:2px}.border-l-4{border-left-width:4px}.border-t{border-top-width:1px}.border-amber-200{--tw-border-opacity:1;border-color:rgb(253 230 138 / var(--tw-border-opacity, 1))}.border-amber-200\/80{border-color:rgb(253 230 138 / 0.8)}.border-amber-300{--tw-border-opacity:1;border-color:rgb(252 211 77 / var(--tw-border-opacity, 1))}.border-amber-300\/70{border-color:rgb(252 211 77 / 0.7)}.border-amber-300\/80{border-color:rgb(252 211 77 / 0.8)}.border-amber-400{--tw-border-opacity:1;border-color:rgb(251 191 36 / var(--tw-border-opacity, 1))}.border-amber-300\/90{border-color:rgb(252 211 77 / 0.9)}.border-amber-200\/90{border-color:rgb(253 230 138 / 0.9)}.border-amber-500{--tw-border-opacity:1;border-color:rgb(245 158 11 / var(--tw-border-opacity, 1))}.border-l-amber-500{--tw-border-opacity:1;border-left-color:rgb(245 158 11 / var(--tw-border-opacity, 1))}.bg-amber-100{--tw-bg-opacity:1;background-color:rgb(254 243 199 / var(--tw-bg-opacity, 1))}.bg-amber-100\/90{background-color:rgb(254 243 199 / 0.9)}.bg-amber-50\/70{background-color:rgb(255 251 235 / 0.7)}.bg-amber-950\/35{background-color:rgb(69 26 3 / 0.35)}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-white\/80{background-color:rgb(255 255 255 / 0.8)}.bg-amber-200\/80{background-color:rgb(253 230 138 / 0.8)}.bg-amber-50\/90{background-color:rgb(255 251 235 / 0.9)}.bg-amber-500{--tw-bg-opacity:1;background-color:rgb(245 158 11 / var(--tw-bg-opacity, 1))}.bg-amber-950{--tw-bg-opacity:1;background-color:rgb(69 26 3 / var(--tw-bg-opacity, 1))}.bg-white\/85{background-color:rgb(255 255 255 / 0.85)}.bg-amber-200{--tw-bg-opacity:1;background-color:rgb(253 230 138 / var(--tw-bg-opacity, 1))}.bg-amber-200\/75{background-color:rgb(253 230 138 / 0.75)}.bg-amber-50{--tw-bg-opacity:1;background-color:rgb(255 251 235 / var(--tw-bg-opacity, 1))}.bg-white\/90{background-color:rgb(255 255 255 / 0.9)}.bg-white\/95{background-color:rgb(255 255 255 / 0.95)}.bg-emerald-500{--tw-bg-opacity:1;background-color:rgb(16 185 129 / var(--tw-bg-opacity, 1))}.bg-gradient-to-b{background-image:linear-gradient(to bottom, var(--tw-gradient-stops))}.bg-gradient-to-r{background-image:linear-gradient(to right, var(--tw-gradient-stops))}.bg-gradient-to-br{background-image:linear-gradient(to bottom right, var(--tw-gradient-stops))}.from-\[\#fffdf7\]{--tw-gradient-from:#fffdf7 var(--tw-gradient-from-position);--tw-gradient-to:rgb(255 253 247 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-white{--tw-gradient-from:#fff var(--tw-gradient-from-position);--tw-gradient-to:rgb(255 255 255 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.from-amber-100\/95{--tw-gradient-from:rgb(254 243 199 / 0.95) var(--tw-gradient-from-position);--tw-gradient-to:rgb(254 243 199 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-\[\#fef9e7\]{--tw-gradient-to:rgb(254 249 231 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), #fef9e7 var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-\[\#fdeec2\]{--tw-gradient-to:#fdeec2 var(--tw-gradient-to-position)}.to-amber-50\/70{--tw-gradient-to:rgb(255 251 235 / 0.7) var(--tw-gradient-to-position)}.to-yellow-50{--tw-gradient-to:#fefce8 var(--tw-gradient-to-position)}.p-2{padding:0.5rem}.p-3\.5{padding:0.875rem}.p-4{padding:1rem}.p-3{padding:0.75rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-3\.5{padding-left:0.875rem;padding-right:0.875rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.px-1\.5{padding-left:0.375rem;padding-right:0.375rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-4{padding-left:1rem;padding-right:1rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-2\.5{padding-top:0.625rem;padding-bottom:0.625rem}.py-3\.5{padding-top:0.875rem;padding-bottom:0.875rem}.py-5{padding-top:1.25rem;padding-bottom:1.25rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.pb-3{padding-bottom:0.75rem}.pb-4{padding-bottom:1rem}.pt-1{padding-top:0.25rem}.text-left{text-align:left}.text-center{text-align:center}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.text-\[10px\]{font-size:10px}.font-black{font-weight:900}.font-bold{font-weight:700}.font-medium{font-weight:500}.tracking-tight{letter-spacing:-0.025em}.text-amber-500{--tw-text-opacity:1;color:rgb(245 158 11 / var(--tw-text-opacity, 1))}.text-amber-700{--tw-text-opacity:1;color:rgb(180 83 9 / var(--tw-text-opacity, 1))}.text-amber-800{--tw-text-opacity:1;color:rgb(146 64 14 / var(--tw-text-opacity, 1))}.text-amber-800\/85{color:rgb(146 64 14 / 0.85)}.text-amber-950{--tw-text-opacity:1;color:rgb(69 26 3 / var(--tw-text-opacity, 1))}.text-amber-100{--tw-text-opacity:1;color:rgb(254 243 199 / var(--tw-text-opacity, 1))}.text-amber-300{--tw-text-opacity:1;color:rgb(252 211 77 / var(--tw-text-opacity, 1))}.text-amber-600{--tw-text-opacity:1;color:rgb(217 119 6 / var(--tw-text-opacity, 1))}.text-amber-800\/80{color:rgb(146 64 14 / 0.8)}.text-amber-800\/90{color:rgb(146 64 14 / 0.9)}.text-amber-900{--tw-text-opacity:1;color:rgb(120 53 15 / var(--tw-text-opacity, 1))}.underline{-webkit-text-decoration-line:underline;text-decoration-line:underline}.opacity-0{opacity:0}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow{--tw-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_8px_rgba\(245\2c 158\2c 11\2c 0\.9\)\]{--tw-shadow:0 0 8px rgba(245,158,11,0.9);--tw-shadow-colored:0 0 8px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_8px_rgba\(16\2c 185\2c 129\2c 0\.85\)\]{--tw-shadow:0 0 8px rgba(16,185,129,0.85);--tw-shadow-colored:0 0 8px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.ring-2{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.ring-amber-300\/70{--tw-ring-color:rgb(252 211 77 / 0.7)}.backdrop-blur-\[2px\]{--tw-backdrop-blur:blur(2px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-md{--tw-backdrop-blur:blur(12px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-opacity{transition-property:opacity;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-200{transition-duration:200ms}.placeholder\:text-amber-700\/50::placeholder{color:rgb(180 83 9 / 0.5)}.hover\:border-amber-400:hover{--tw-border-opacity:1;border-color:rgb(251 191 36 / var(--tw-border-opacity, 1))}.hover\:bg-amber-200:hover{--tw-bg-opacity:1;background-color:rgb(253 230 138 / var(--tw-bg-opacity, 1))}.hover\:bg-amber-50:hover{--tw-bg-opacity:1;background-color:rgb(255 251 235 / var(--tw-bg-opacity, 1))}.hover\:bg-amber-100:hover{--tw-bg-opacity:1;background-color:rgb(254 243 199 / var(--tw-bg-opacity, 1))}.hover\:bg-amber-900:hover{--tw-bg-opacity:1;background-color:rgb(120 53 15 / var(--tw-bg-opacity, 1))}.hover\:bg-amber-100\/80:hover{background-color:rgb(254 243 199 / 0.8)}.hover\:bg-amber-50\/90:hover{background-color:rgb(255 251 235 / 0.9)}.hover\:text-amber-950:hover{--tw-text-opacity:1;color:rgb(69 26 3 / var(--tw-text-opacity, 1))}.focus\:border-amber-500:focus{--tw-border-opacity:1;border-color:rgb(245 158 11 / var(--tw-border-opacity, 1))}.focus\:border-amber-600:focus{--tw-border-opacity:1;border-color:rgb(217 119 6 / var(--tw-border-opacity, 1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus\:ring-2:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.focus\:ring-4:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(4px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.focus\:ring-amber-400:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(251 191 36 / var(--tw-ring-opacity, 1))}.focus\:ring-amber-300\/40:focus{--tw-ring-color:rgb(252 211 77 / 0.4)}@media (min-width: 640px){.sm\:mt-0{margin-top:0px}.sm\:h-11{height:2.75rem}.sm\:w-11{width:2.75rem}.sm\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.sm\:flex-row{flex-direction:row}.sm\:items-center{align-items:center}.sm\:self-auto{align-self:auto}.sm\:p-4{padding:1rem}.sm\:p-5{padding:1.25rem}.sm\:p-6{padding:1.5rem}.sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}.sm\:py-7{padding-top:1.75rem;padding-bottom:1.75rem}.sm\:text-right{text-align:right}.sm\:text-base{font-size:1rem;line-height:1.5rem}.sm\:text-sm{font-size:0.875rem;line-height:1.25rem}.sm\:text-xl{font-size:1.25rem;line-height:1.75rem}.sm\:text-2xl{font-size:1.5rem;line-height:2rem}.sm\:text-lg{font-size:1.125rem;line-height:1.75rem}.sm\:text-xs{font-size:0.75rem;line-height:1rem}}@media (min-width: 768px){.md\:col-span-3{grid-column:span 3 / span 3}.md\:col-span-6{grid-column:span 6 / span 6}.md\:grid-cols-12{grid-template-columns:repeat(12, minmax(0, 1fr))}.md\:flex-row{flex-direction:row}.md\:items-center{align-items:center}.md\:p-7{padding:1.75rem}}@media (min-width: 1024px){.lg\:col-span-4{grid-column:span 4 / span 4}.lg\:col-span-8{grid-column:span 8 / span 8}.lg\:grid-cols-12{grid-template-columns:repeat(12, minmax(0, 1fr))}.lg\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}}</style></head>
+<body class="flex flex-col min-h-screen w-full overflow-x-hidden">
+
+  <!-- 頂部導覽與即時指標列 -->
+  <header class="w-full border-b border-amber-300/70 bg-white/80 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2.5">
+      <!-- 品牌與金幣圖示 -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="coin-badge w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0 border border-amber-200" aria-hidden="true">
+          <span class="text-amber-950 font-black text-lg sm:text-xl select-none">$</span>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-base sm:text-xl font-black text-amber-950 tracking-tight truncate">
+            常用字串清單快取工具
+          </h1>
+          <p class="text-xs text-amber-800/85 truncate">
+            Google Sheet「資料夾常用字串清單」· 特殊符號與密碼一鍵複製
+          </p>
+        </div>
+      </div>
+
+      <!-- 頂部即時行數 / 大小指標與操作按鈕 -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div id="topMetricsBadge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100/90 border border-amber-300 text-amber-950 text-xs font-bold">
+          <span>行數: <strong id="topLineCount">2202</strong></span>
+          <span class="text-amber-500">|</span>
+          <span>大小: <strong id="topSizeKb">124.20 KB</strong></span>
+        </div>
+
+        <button id="openDrawerBtn" type="button" class="gold-btn text-amber-950 font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 cursor-pointer" aria-label="開啟側邊隱藏快速選單">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10"></path>
+          </svg>
+          <span>側邊隱藏選單</span>
+        </button>
+
+        <button id="downloadHtmlBtn" type="button" class="px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 text-amber-950 border border-amber-400 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 shadow-sm transition cursor-pointer">
+          <svg class="w-4 h-4 shrink-0 text-amber-700" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3"></path>
+          </svg>
+          <span>下載完整 HTML</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 側邊隱藏選單遮罩層（跨視窗快速取用抽屜） -->
+  <div id="drawerBackdrop" class="fixed inset-0 bg-amber-950/35 backdrop-blur-[2px] z-40 hidden opacity-0 transition-opacity duration-200" aria-hidden="true"></div>
+
+  <!-- 側邊隱藏抽屜本體 -->
+  <aside id="sideDrawer" class="drawer-panel fixed top-0 right-0 h-full w-full max-w-md bg-gradient-to-b from-[#fffdf7] via-[#fef9e7] to-[#fdeec2] border-l-2 border-amber-400 shadow-2xl z-50 translate-x-full flex flex-col" aria-label="側邊隱藏快速選單">
+    <!-- 抽屜標題列 -->
+    <div class="p-4 border-b border-amber-300/80 bg-white/80 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <span class="coin-badge w-8 h-8 rounded-full flex items-center justify-center text-amber-950 font-black text-sm">★</span>
+        <div>
+          <h2 class="text-sm sm:text-base font-black text-amber-950">側邊隱藏快速選單</h2>
+          <p class="text-[11px] text-amber-800">點選任何字串立即放入剪貼簿，隨時貼上</p>
+        </div>
+      </div>
+      <button id="closeDrawerBtn" type="button" class="p-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 font-bold text-xs cursor-pointer transition" aria-label="關閉側邊選單">
+        ✕ 關閉
+      </button>
+    </div>
+
+    <!-- 抽屜內建搜尋與分類篩選 -->
+    <div class="p-3.5 border-b border-amber-200/80 bg-amber-50/70 space-y-2.5">
+      <input id="drawerSearchInput" type="search" placeholder="搜尋名稱、密碼、符號或分類..." class="w-full px-3.5 py-2 rounded-xl bg-white border border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm text-amber-950 placeholder:text-amber-700/50">
+      <div class="flex items-center justify-between text-xs text-amber-900">
+        <label class="inline-flex items-center gap-1.5 cursor-pointer select-none">
+          <input id="drawerMaskToggle" type="checkbox" class="rounded border-amber-400 text-amber-600 focus:ring-amber-400" checked="">
+          <span>密碼遮罩顯示</span>
+        </label>
+        <button id="drawerReloadBtn" type="button" class="text-amber-800 hover:text-amber-950 font-bold underline cursor-pointer">
+          重新同步清單
+        </button>
+      </div>
+    </div>
+
+    <!-- 抽屜內的即時狀態提示列 -->
+    <div id="drawerStatusBanner" class="mx-3.5 mt-3 px-3 py-2 rounded-xl bg-amber-100 border border-amber-300 text-xs text-amber-950 font-medium hidden"></div>
+
+    <!-- 抽屜快速清單容器 -->
+    <div id="drawerQuickList" class="flex-1 overflow-y-auto p-3.5 space-y-2.5"><button type="button" class="w-full text-left p-3 rounded-2xl bg-white/95 hover:bg-amber-100/80 border border-amber-300/80 shadow-sm transition flex items-center justify-between gap-2.5 cursor-pointer"><div class="min-w-0 flex-1 space-y-0.5"><div class="flex items-center gap-1.5 min-w-0"><span class="px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 text-[10px] font-black shrink-0">密碼</span><span class="text-xs sm:text-sm font-black text-amber-950 truncate">伺服器管理員密碼</span></div><div class="mono-secret text-xs text-amber-800 truncate">••••••••••••</div></div><span class="gold-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black text-amber-950 shrink-0">複製</span></button><button type="button" class="w-full text-left p-3 rounded-2xl bg-white/95 hover:bg-amber-100/80 border border-amber-300/80 shadow-sm transition flex items-center justify-between gap-2.5 cursor-pointer"><div class="min-w-0 flex-1 space-y-0.5"><div class="flex items-center gap-1.5 min-w-0"><span class="px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 text-[10px] font-black shrink-0">密碼</span><span class="text-xs sm:text-sm font-black text-amber-950 truncate">VPN / 資料庫連線密鑰</span></div><div class="mono-secret text-xs text-amber-800 truncate">••••••••••••</div></div><span class="gold-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black text-amber-950 shrink-0">複製</span></button><button type="button" class="w-full text-left p-3 rounded-2xl bg-white/95 hover:bg-amber-100/80 border border-amber-300/80 shadow-sm transition flex items-center justify-between gap-2.5 cursor-pointer"><div class="min-w-0 flex-1 space-y-0.5"><div class="flex items-center gap-1.5 min-w-0"><span class="px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 text-[10px] font-black shrink-0">特殊符號</span><span class="text-xs sm:text-sm font-black text-amber-950 truncate">全形與半形特殊符號組</span></div><div class="mono-secret text-xs text-amber-800 truncate">★☆◆◇■□●○▲▼【】「」『』《》〈〉※†‡§¶©®™€£¥¢±×÷≠≤≥∞</div></div><span class="gold-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black text-amber-950 shrink-0">複製</span></button><button type="button" class="w-full text-left p-3 rounded-2xl bg-white/95 hover:bg-amber-100/80 border border-amber-300/80 shadow-sm transition flex items-center justify-between gap-2.5 cursor-pointer"><div class="min-w-0 flex-1 space-y-0.5"><div class="flex items-center gap-1.5 min-w-0"><span class="px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 text-[10px] font-black shrink-0">特殊符號</span><span class="text-xs sm:text-sm font-black text-amber-950 truncate">密碼常見特殊字元集合</span></div><div class="mono-secret text-xs text-amber-800 truncate">!@#$%^&amp;*()_+-=[]{}|;:,.&lt;&gt;?/~`</div></div><span class="gold-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black text-amber-950 shrink-0">複製</span></button><button type="button" class="w-full text-left p-3 rounded-2xl bg-white/95 hover:bg-amber-100/80 border border-amber-300/80 shadow-sm transition flex items-center justify-between gap-2.5 cursor-pointer"><div class="min-w-0 flex-1 space-y-0.5"><div class="flex items-center gap-1.5 min-w-0"><span class="px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 text-[10px] font-black shrink-0">常用字串</span><span class="text-xs sm:text-sm font-black text-amber-950 truncate">資料夾命名標準前綴</span></div><div class="mono-secret text-xs text-amber-800 truncate">[資料夾常用字串清單]_2026_</div></div><span class="gold-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black text-amber-950 shrink-0">複製</span></button><button type="button" class="w-full text-left p-3 rounded-2xl bg-white/95 hover:bg-amber-100/80 border border-amber-300/80 shadow-sm transition flex items-center justify-between gap-2.5 cursor-pointer"><div class="min-w-0 flex-1 space-y-0.5"><div class="flex items-center gap-1.5 min-w-0"><span class="px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 text-[10px] font-black shrink-0">常用字串</span><span class="text-xs sm:text-sm font-black text-amber-950 truncate">正式環境確認指令字串</span></div><div class="mono-secret text-xs text-amber-800 truncate">CONFIRM_PROD_DEPLOY::YES</div></div><span class="gold-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black text-amber-950 shrink-0">複製</span></button><button type="button" class="w-full text-left p-3 rounded-2xl bg-white/95 hover:bg-amber-100/80 border border-amber-300/80 shadow-sm transition flex items-center justify-between gap-2.5 cursor-pointer"><div class="min-w-0 flex-1 space-y-0.5"><div class="flex items-center gap-1.5 min-w-0"><span class="px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 text-[10px] font-black shrink-0">常用字串</span><span class="text-xs sm:text-sm font-black text-amber-950 truncate">常用連絡信箱格式</span></div><div class="mono-secret text-xs text-amber-800 truncate">support@example.com.tw</div></div><span class="gold-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black text-amber-950 shrink-0">複製</span></button><button type="button" class="w-full text-left p-3 rounded-2xl bg-white/95 hover:bg-amber-100/80 border border-amber-300/80 shadow-sm transition flex items-center justify-between gap-2.5 cursor-pointer"><div class="min-w-0 flex-1 space-y-0.5"><div class="flex items-center gap-1.5 min-w-0"><span class="px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 text-[10px] font-black shrink-0">特殊符號</span><span class="text-xs sm:text-sm font-black text-amber-950 truncate">金幣閃耀分隔橫線</span></div><div class="mono-secret text-xs text-amber-800 truncate">✦══════════════════════════════✦</div></div><span class="gold-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black text-amber-950 shrink-0">複製</span></button></div>
+  </aside>
+
+  <!-- 主內容區 -->
+  <main class="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-6 py-5 sm:py-7 space-y-6">
+
+    <!-- 全域剪貼簿與狀態通知列（完全取代瀏覽器 alert()） -->
+    <section id="statusBanner" role="status" aria-live="polite" class="luminous-card rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-l-4 border-l-amber-500">
+      <div class="flex items-start sm:items-center gap-2.5 min-w-0">
+        <span id="statusDot" class="mt-1 sm:mt-0 w-3 h-3 rounded-full shrink-0 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.85)]"></span>
+        <p id="statusMessage" class="text-xs sm:text-sm font-bold text-amber-950 break-words">已將「伺服器管理員密碼」放入剪貼簿！現在可於任何視窗貼上使用。</p>
+      </div>
+      <span id="statusTimestamp" class="text-[11px] font-medium text-amber-800/80 shrink-0">更新於 15:13:39</span>
+    </section>
+
+    <!-- 核心功能：Google Sheet 下拉選單 + 即時點選複製卡片 -->
+    <section class="luminous-card rounded-3xl p-4 sm:p-6 md:p-7 space-y-5">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-amber-200/80 pb-4">
+        <div>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-[11px] font-bold text-amber-900 mb-1.5">
+            <span>✦ 即時剪貼簿核心</span>
+            <span id="dataSourceTag" class="text-amber-700">內建備援清單</span>
+          </span>
+          <h2 class="text-lg sm:text-2xl font-black text-amber-950">
+            選擇常用字串 / 密碼 / 特殊符號
+          </h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="syncSheetBtn" type="button" class="gold-btn text-amber-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl inline-flex items-center gap-1.5 cursor-pointer">
+            <svg id="syncIcon" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span>從 Google Sheet 同步</span>
+          </button>
+
+          <button id="copySelectedBtn" type="button" class="px-4 py-2.5 rounded-xl bg-amber-950 hover:bg-amber-900 text-amber-100 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 shadow transition cursor-pointer">
+            <svg class="w-4 h-4 shrink-0 text-amber-300" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            <span>複製目前選取字串</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 下拉選單區與快速過濾 -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
+        <div class="lg:col-span-4 space-y-1.5">
+          <label for="categoryFilterSelect" class="block text-xs sm:text-sm font-bold text-amber-950">
+            分類篩選（可選）
+          </label>
+          <select id="categoryFilterSelect" class="w-full px-3.5 py-3 rounded-2xl bg-white border-2 border-amber-300/90 focus:border-amber-500 focus:outline-none text-sm font-bold text-amber-950 shadow-sm cursor-pointer"><option value="__ALL__">全部類別（共 8 筆）</option><option value="密碼">密碼（2 筆）</option><option value="特殊符號">特殊符號（3 筆）</option><option value="常用字串">常用字串（3 筆）</option></select>
+        </div>
+
+        <div class="lg:col-span-8 space-y-1.5">
+          <div class="flex items-center justify-between gap-2">
+            <label for="commonStringSelect" class="block text-xs sm:text-sm font-bold text-amber-950">
+              資料夾常用字串清單下拉選單（點選選項即自動複製）
+            </label>
+            <label class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 cursor-pointer select-none">
+              <input id="autoCopyOnChangeCheckbox" type="checkbox" class="rounded border-amber-400 text-amber-600 focus:ring-amber-400" checked="">
+              <span>選取即自動複製</span>
+            </label>
+          </div>
+          <select id="commonStringSelect" class="w-full px-4 py-3.5 rounded-2xl bg-gradient-to-r from-white to-amber-50/70 border-2 border-amber-400 focus:border-amber-600 focus:outline-none focus:ring-4 focus:ring-amber-300/40 text-sm sm:text-base font-bold text-amber-950 shadow-sm cursor-pointer"><option value="item-1">[密碼] 伺服器管理員密碼 → ••••••••</option><option value="item-2">[密碼] VPN / 資料庫連線密鑰 → ••••••••</option><option value="item-3">[特殊符號] 全形與半形特殊符號組 → ★☆◆◇■□●○▲▼【】「」『』《》〈〉※†‡§¶©®™€£¥¢±×÷≠≤≥∞</option><option value="item-4">[特殊符號] 密碼常見特殊字元集合 → !@#$%^&amp;*()_+-=[]{}|;:,.&lt;&gt;?/~`</option><option value="item-5">[常用字串] 資料夾命名標準前綴 → [資料夾常用字串清單]_2026_</option><option value="item-6">[常用字串] 正式環境確認指令字串 → CONFIRM_PROD_DEPLOY::YES</option><option value="item-7">[常用字串] 常用連絡信箱格式 → support@example.com.tw</option><option value="item-8">[特殊符號] 金幣閃耀分隔橫線 → ✦══════════════════════════════✦</option></select>
+        </div>
+      </div>
+
+      <!-- 已選項目檢視與精準複製面板 -->
+      <div class="rounded-2xl bg-amber-50/90 border border-amber-300/90 p-4 sm:p-5 space-y-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <span id="selectedCategoryBadge" class="px-2.5 py-1 rounded-lg bg-amber-200/80 text-amber-950 text-xs font-black">密碼</span>
+            <h3 id="selectedLabelTitle" class="text-sm sm:text-base font-black text-amber-950">伺服器管理員密碼</h3>
+            <span id="selectedNoteText" class="text-xs text-amber-800/85">· 含大小寫、數字與特殊符號</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button id="toggleRevealBtn" type="button" class="px-3 py-1.5 rounded-xl bg-white hover:bg-amber-100 border border-amber-300 text-xs font-bold text-amber-950 transition cursor-pointer">顯示明文</button>
+            <button id="quickCopyCardBtn" type="button" class="gold-btn px-3.5 py-1.5 rounded-xl text-xs font-black text-amber-950 cursor-pointer">
+              立即放入剪貼簿
+            </button>
+          </div>
+        </div>
+
+        <div class="relative">
+          <input id="selectedValueDisplay" type="password" readonly="" aria-label="目前選取字串內容" class="mono-secret w-full px-4 py-3 rounded-xl bg-white border border-amber-300 text-sm sm:text-base font-bold text-amber-950 focus:outline-none">
+        </div>
+        <p class="text-[11px] sm:text-xs text-amber-800/85">
+          提示：包含 <span class="mono-secret font-bold">!@#$%^&amp;*()_+-=[]{}|;:,.&lt;&gt;?/~`</span> 等特殊符號與密碼皆完整保留前後空白以外的字元，可直接切換視窗並按 <kbd class="px-1.5 py-0.5 rounded bg-white border border-amber-300 font-bold">Ctrl+V</kbd> / <kbd class="px-1.5 py-0.5 rounded bg-white border border-amber-300 font-bold">Cmd+V</kbd> 貼上。
+        </p>
+      </div>
+    </section>
+
+    <!-- Google Sheet 設定與本地儲存區塊 -->
+    <section class="luminous-card rounded-3xl p-4 sm:p-6 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200/80 pb-3">
+        <div>
+          <h2 class="text-base sm:text-lg font-black text-amber-950">
+            Google Sheet「資料夾常用字串清單」連線設定
+          </h2>
+          <p class="text-xs text-amber-800/85">
+            支援公開 Google Sheet 試算表 ID / 網址（CSV 匯出）或 Google Apps Script Web App 網址，設定自動儲存於瀏覽器 localStorage。
+          </p>
+        </div>
+        <button id="resetDefaultConfigBtn" type="button" class="px-3 py-1.5 rounded-xl bg-white hover:bg-amber-50 border border-amber-300 text-xs font-bold text-amber-900 transition cursor-pointer self-start sm:self-auto">
+          還原預設範例設定
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+        <div class="md:col-span-6 space-y-1">
+          <label for="sheetSourceInput" class="block text-xs font-bold text-amber-950">
+            Google Sheet 網址、試算表 ID 或 Apps Script 網址
+          </label>
+          <input id="sheetSourceInput" type="text" placeholder="例如：https://docs.google.com/spreadsheets/d/你的試算表ID/edit 或 Apps Script 網址" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-amber-300 focus:border-amber-500 focus:outline-none text-xs sm:text-sm text-amber-950">
+        </div>
+
+        <div class="md:col-span-3 space-y-1">
+          <label for="sheetNameInput" class="block text-xs font-bold text-amber-950">
+            工作表 / 分頁名稱
+          </label>
+          <input id="sheetNameInput" type="text" placeholder="資料夾常用字串清單" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-amber-300 focus:border-amber-500 focus:outline-none text-xs sm:text-sm text-amber-950">
+        </div>
+
+        <div class="md:col-span-3 space-y-1">
+          <label for="sheetRangeInput" class="block text-xs font-bold text-amber-950">
+            儲存格範圍（選填）
+          </label>
+          <input id="sheetRangeInput" type="text" placeholder="A1:D100" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-amber-300 focus:border-amber-500 focus:outline-none text-xs sm:text-sm text-amber-950">
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div class="text-xs text-amber-800/90 space-y-0.5">
+          <p>
+            <strong>建議欄位順序（第 1 列為標題）：</strong>
+            <span class="mono-secret">名稱 / 標籤</span>,
+            <span class="mono-secret">字串內容 / 密碼</span>,
+            <span class="mono-secret">分類（選填）</span>,
+            <span class="mono-secret">備註（選填）</span>
+          </p>
+          <p>
+            若您的試算表設為私人或含敏感密碼，建議使用 <strong>Google Apps Script Web App</strong>（回傳 JSON 陣列或 CSV）搭配存取控管，並於同步失敗時自動保留內建/快取清單。
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="saveConfigBtn" type="button" class="px-4 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-400 text-amber-950 font-bold text-xs sm:text-sm transition cursor-pointer">
+            儲存設定
+          </button>
+          <button id="saveAndSyncBtn" type="button" class="gold-btn px-4 py-2 rounded-xl text-amber-950 font-black text-xs sm:text-sm cursor-pointer">
+            儲存並立即同步
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 快捷網格預覽區（方便在主畫面直接點選特殊符號/密碼/常用字串） -->
+    <section class="luminous-card rounded-3xl p-4 sm:p-6 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 class="text-base sm:text-lg font-black text-amber-950">
+            快捷點選卡片總覽
+          </h2>
+          <p class="text-xs text-amber-800/85">
+            可直接點選任一張金幣卡片放入剪貼簿，也可用右上角「側邊隱藏選單」隨時呼叫。
+          </p>
+        </div>
+        <span id="itemCountBadge" class="px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-xs font-black text-amber-950">共 8 筆字串</span>
+      </div>
+
+      <div id="quickCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"><button type="button" class="text-left p-4 rounded-2xl border transition flex flex-col justify-between gap-2.5 cursor-pointer bg-gradient-to-br from-amber-100/95 to-yellow-50 border-amber-500 ring-2 ring-amber-300/70 shadow-md"><div class="flex items-center justify-between gap-2 w-full"><span class="px-2 py-0.5 rounded-md bg-amber-200/75 text-amber-950 text-[11px] font-black">密碼</span><span class="text-[11px] font-bold text-amber-700">點選複製</span></div><div class="text-sm font-black text-amber-950 truncate w-full">伺服器管理員密碼</div><div class="mono-secret text-xs px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900 truncate w-full">•••••••••••• (點選即複製密碼)</div></button><button type="button" class="text-left p-4 rounded-2xl border transition flex flex-col justify-between gap-2.5 cursor-pointer bg-white/90 hover:bg-amber-50/90 border-amber-200/90 hover:border-amber-400 shadow-sm"><div class="flex items-center justify-between gap-2 w-full"><span class="px-2 py-0.5 rounded-md bg-amber-200/75 text-amber-950 text-[11px] font-black">密碼</span><span class="text-[11px] font-bold text-amber-700">點選複製</span></div><div class="text-sm font-black text-amber-950 truncate w-full">VPN / 資料庫連線密鑰</div><div class="mono-secret text-xs px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900 truncate w-full">•••••••••••• (點選即複製密碼)</div></button><button type="button" class="text-left p-4 rounded-2xl border transition flex flex-col justify-between gap-2.5 cursor-pointer bg-white/90 hover:bg-amber-50/90 border-amber-200/90 hover:border-amber-400 shadow-sm"><div class="flex items-center justify-between gap-2 w-full"><span class="px-2 py-0.5 rounded-md bg-amber-200/75 text-amber-950 text-[11px] font-black">特殊符號</span><span class="text-[11px] font-bold text-amber-700">點選複製</span></div><div class="text-sm font-black text-amber-950 truncate w-full">全形與半形特殊符號組</div><div class="mono-secret text-xs px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900 truncate w-full">★☆◆◇■□●○▲▼【】「」『』《》〈〉※†‡§¶©®™€£¥¢±×÷≠≤≥∞</div></button><button type="button" class="text-left p-4 rounded-2xl border transition flex flex-col justify-between gap-2.5 cursor-pointer bg-white/90 hover:bg-amber-50/90 border-amber-200/90 hover:border-amber-400 shadow-sm"><div class="flex items-center justify-between gap-2 w-full"><span class="px-2 py-0.5 rounded-md bg-amber-200/75 text-amber-950 text-[11px] font-black">特殊符號</span><span class="text-[11px] font-bold text-amber-700">點選複製</span></div><div class="text-sm font-black text-amber-950 truncate w-full">密碼常見特殊字元集合</div><div class="mono-secret text-xs px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900 truncate w-full">!@#$%^&amp;*()_+-=[]{}|;:,.&lt;&gt;?/~`</div></button><button type="button" class="text-left p-4 rounded-2xl border transition flex flex-col justify-between gap-2.5 cursor-pointer bg-white/90 hover:bg-amber-50/90 border-amber-200/90 hover:border-amber-400 shadow-sm"><div class="flex items-center justify-between gap-2 w-full"><span class="px-2 py-0.5 rounded-md bg-amber-200/75 text-amber-950 text-[11px] font-black">常用字串</span><span class="text-[11px] font-bold text-amber-700">點選複製</span></div><div class="text-sm font-black text-amber-950 truncate w-full">資料夾命名標準前綴</div><div class="mono-secret text-xs px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900 truncate w-full">[資料夾常用字串清單]_2026_</div></button><button type="button" class="text-left p-4 rounded-2xl border transition flex flex-col justify-between gap-2.5 cursor-pointer bg-white/90 hover:bg-amber-50/90 border-amber-200/90 hover:border-amber-400 shadow-sm"><div class="flex items-center justify-between gap-2 w-full"><span class="px-2 py-0.5 rounded-md bg-amber-200/75 text-amber-950 text-[11px] font-black">常用字串</span><span class="text-[11px] font-bold text-amber-700">點選複製</span></div><div class="text-sm font-black text-amber-950 truncate w-full">正式環境確認指令字串</div><div class="mono-secret text-xs px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900 truncate w-full">CONFIRM_PROD_DEPLOY::YES</div></button><button type="button" class="text-left p-4 rounded-2xl border transition flex flex-col justify-between gap-2.5 cursor-pointer bg-white/90 hover:bg-amber-50/90 border-amber-200/90 hover:border-amber-400 shadow-sm"><div class="flex items-center justify-between gap-2 w-full"><span class="px-2 py-0.5 rounded-md bg-amber-200/75 text-amber-950 text-[11px] font-black">常用字串</span><span class="text-[11px] font-bold text-amber-700">點選複製</span></div><div class="text-sm font-black text-amber-950 truncate w-full">常用連絡信箱格式</div><div class="mono-secret text-xs px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900 truncate w-full">support@example.com.tw</div></button><button type="button" class="text-left p-4 rounded-2xl border transition flex flex-col justify-between gap-2.5 cursor-pointer bg-white/90 hover:bg-amber-50/90 border-amber-200/90 hover:border-amber-400 shadow-sm"><div class="flex items-center justify-between gap-2 w-full"><span class="px-2 py-0.5 rounded-md bg-amber-200/75 text-amber-950 text-[11px] font-black">特殊符號</span><span class="text-[11px] font-bold text-amber-700">點選複製</span></div><div class="text-sm font-black text-amber-950 truncate w-full">金幣閃耀分隔橫線</div><div class="mono-secret text-xs px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900 truncate w-full">✦══════════════════════════════✦</div></button></div>
+    </section>
+  </main>
+
+  <!-- 底部即時行數 / KB 大小指標列 -->
+  <footer class="w-full border-t border-amber-300/80 bg-white/85 backdrop-blur-md mt-auto">
+    <div class="max-w-6xl mx-auto px-3 sm:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-amber-900">
+      <div class="flex flex-wrap items-center gap-2 font-bold">
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 border border-amber-300">
+          <span>文件總行數：</span>
+          <span id="footerLineCount" class="text-amber-950 font-black">2202</span>
+          <span>行</span>
+        </span>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-100 border border-amber-300">
+          <span>檔案大小：</span>
+          <span id="footerSizeKb" class="text-amber-950 font-black">124.20 KB</span>
+        </span>
+      </div>
+      <p class="text-[11px] sm:text-xs text-amber-800/85 text-center sm:text-right">
+        明亮金幣主題 · 支援特殊符號與密碼剪貼簿複製 · 零橫向捲動自適應版面
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    /**
+     * =========================================================================
+     * 狀態管理與常數定義（Single Source of Truth）
+     * =========================================================================
+     */
+    const STORAGE_KEYS = {
+      CONFIG: 'gold_coin_sheet_config_v1',
+      CACHED_ITEMS: 'gold_coin_sheet_items_v1',
+    };
+
+    // 內建備援資料：涵蓋常用字串、高強度密碼與特殊符號
+    const DEFAULT_ITEMS = [
+      {
+        id: 'item-1',
+        label: '伺服器管理員密碼',
+        value: 'G0ld#Coin!2026$Pass@99',
+        category: '密碼',
+        note: '含大小寫、數字與特殊符號',
+        isSecret: true,
+      },
+      {
+        id: 'item-2',
+        label: 'VPN / 資料庫連線密鑰',
+        value: 'Db_Secr3t*Key^789&~',
+        category: '密碼',
+        note: '請勿於公開群組貼上',
+        isSecret: true,
+      },
+      {
+        id: 'item-3',
+        label: '全形與半形特殊符號組',
+        value: '★☆◆◇■□●○▲▼【】「」『』《》〈〉※†‡§¶©®™€£¥¢±×÷≠≤≥∞',
+        category: '特殊符號',
+        note: '排版與公告常用符號',
+        isSecret: false,
+      },
+      {
+        id: 'item-4',
+        label: '密碼常見特殊字元集合',
+        value: '!@#$%^&*()_+-=[]{}|;:,.<>?/~`',
+        category: '特殊符號',
+        note: '測試密碼規則或建立組合用',
+        isSecret: false,
+      },
+      {
+        id: 'item-5',
+        label: '資料夾命名標準前綴',
+        value: '[資料夾常用字串清單]_2026_',
+        category: '常用字串',
+        note: '檔案與資料夾歸檔前綴',
+        isSecret: false,
+      },
+      {
+        id: 'item-6',
+        label: '正式環境確認指令字串',
+        value: 'CONFIRM_PROD_DEPLOY::YES',
+        category: '常用字串',
+        note: '部署確認輸入用',
+        isSecret: false,
+      },
+      {
+        id: 'item-7',
+        label: '常用連絡信箱格式',
+        value: 'support@example.com.tw',
+        category: '常用字串',
+        note: '表單填寫測試/範例',
+        isSecret: false,
+      },
+      {
+        id: 'item-8',
+        label: '金幣閃耀分隔橫線',
+        value: '✦══════════════════════════════✦',
+        category: '特殊符號',
+        note: '文件或訊息分隔線',
+        isSecret: false,
+      },
+    ];
+
+    const DEFAULT_CONFIG = {
+      sheetSource: '',
+      sheetName: '資料夾常用字串清單',
+      sheetRange: '',
+    };
+
+    const appState = {
+      config: { ...DEFAULT_CONFIG },
+      items: [...DEFAULT_ITEMS],
+      sourceLabel: '內建備援清單',
+      selectedCategory: '__ALL__',
+      selectedId: DEFAULT_ITEMS[0].id,
+      revealSelected: false,
+      autoCopyOnChange: true,
+      drawerSearch: '',
+      drawerMask: true,
+      drawerOpen: false,
+    };
+
+    // DOM 元素快取
+    const dom = {
+      statusBanner: document.getElementById('statusBanner'),
+      statusDot: document.getElementById('statusDot'),
+      statusMessage: document.getElementById('statusMessage'),
+      statusTimestamp: document.getElementById('statusTimestamp'),
+      dataSourceTag: document.getElementById('dataSourceTag'),
+      categoryFilterSelect: document.getElementById('categoryFilterSelect'),
+      commonStringSelect: document.getElementById('commonStringSelect'),
+      autoCopyOnChangeCheckbox: document.getElementById('autoCopyOnChangeCheckbox'),
+      selectedCategoryBadge: document.getElementById('selectedCategoryBadge'),
+      selectedLabelTitle: document.getElementById('selectedLabelTitle'),
+      selectedNoteText: document.getElementById('selectedNoteText'),
+      selectedValueDisplay: document.getElementById('selectedValueDisplay'),
+      toggleRevealBtn: document.getElementById('toggleRevealBtn'),
+      copySelectedBtn: document.getElementById('copySelectedBtn'),
+      quickCopyCardBtn: document.getElementById('quickCopyCardBtn'),
+      syncSheetBtn: document.getElementById('syncSheetBtn'),
+      syncIcon: document.getElementById('syncIcon'),
+      sheetSourceInput: document.getElementById('sheetSourceInput'),
+      sheetNameInput: document.getElementById('sheetNameInput'),
+      sheetRangeInput: document.getElementById('sheetRangeInput'),
+      saveConfigBtn: document.getElementById('saveConfigBtn'),
+      saveAndSyncBtn: document.getElementById('saveAndSyncBtn'),
+      resetDefaultConfigBtn: document.getElementById('resetDefaultConfigBtn'),
+      quickCardsGrid: document.getElementById('quickCardsGrid'),
+      itemCountBadge: document.getElementById('itemCountBadge'),
+      openDrawerBtn: document.getElementById('openDrawerBtn'),
+      closeDrawerBtn: document.getElementById('closeDrawerBtn'),
+      drawerBackdrop: document.getElementById('drawerBackdrop'),
+      sideDrawer: document.getElementById('sideDrawer'),
+      drawerSearchInput: document.getElementById('drawerSearchInput'),
+      drawerMaskToggle: document.getElementById('drawerMaskToggle'),
+      drawerReloadBtn: document.getElementById('drawerReloadBtn'),
+      drawerStatusBanner: document.getElementById('drawerStatusBanner'),
+      drawerQuickList: document.getElementById('drawerQuickList'),
+      downloadHtmlBtn: document.getElementById('downloadHtmlBtn'),
+      topLineCount: document.getElementById('topLineCount'),
+      topSizeKb: document.getElementById('topSizeKb'),
+      footerLineCount: document.getElementById('footerLineCount'),
+      footerSizeKb: document.getElementById('footerSizeKb'),
+    };
+
+    /**
+     * =========================================================================
+     * 通知與剪貼簿工具函式（無 alert / confirm，完整 fallback）
+     * =========================================================================
+     */
+    function formatTimeNow() {
+      const now = new Date();
+      return now.toLocaleTimeString('zh-Hant', { hour12: false });
+    }
+
+    function showStatus(message, level = 'info') {
+      try {
+        dom.statusMessage.textContent = message;
+        dom.statusTimestamp.textContent = `更新於 ${formatTimeNow()}`;
+
+        dom.statusDot.className = 'mt-1 sm:mt-0 w-3 h-3 rounded-full shrink-0 ';
+        if (level === 'success') {
+          dom.statusDot.className += 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.85)]';
+        } else if (level === 'error') {
+          dom.statusDot.className += 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.85)]';
+        } else {
+          dom.statusDot.className += 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.9)]';
+        }
+
+        if (appState.drawerOpen) {
+          dom.drawerStatusBanner.textContent = `${formatTimeNow()} · ${message}`;
+          dom.drawerStatusBanner.classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error('更新狀態列失敗:', err);
+      }
+    }
+
+    /**
+     * 將指定字串複製到系統剪貼簿，優先使用 Clipboard API，失敗時自動降級 execCommand
+     * @param {string} text
+     * @param {string} label
+     */
+    async function copyTextToClipboard(text, label = '字串') {
+      if (typeof text !== 'string' || text.length === 0) {
+        showStatus('此項目內容為空，無法複製。', 'error');
+        return false;
+      }
+
+      try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+          await navigator.clipboard.writeText(text);
+          showStatus(`已將「${label}」放入剪貼簿！現在可於任何視窗貼上使用。`, 'success');
+          return true;
+        }
+      } catch (clipboardErr) {
+        // 某些 iframe 或跨視窗權限下 writeText 可能受限，改用 execCommand 備援
+        console.warn('navigator.clipboard.writeText 不可用，嘗試使用 execCommand 備援:', clipboardErr);
+      }
+
+      try {
+        const tempTextarea = document.createElement('textarea');
+        tempTextarea.value = text;
+        tempTextarea.setAttribute('readonly', '');
+        tempTextarea.style.position = 'fixed';
+        tempTextarea.style.top = '-9999px';
+        tempTextarea.style.left = '-9999px';
+        document.body.appendChild(tempTextarea);
+
+        tempTextarea.focus();
+        tempTextarea.select();
+        tempTextarea.setSelectionRange(0, tempTextarea.value.length);
+
+        const successful = document.execCommand('copy');
+        document.body.removeChild(tempTextarea);
+
+        if (successful) {
+          showStatus(`已將「${label}」放入剪貼簿！現在可於任何視窗貼上使用。`, 'success');
+          return true;
+        }
+        throw new Error('execCommand copy 回傳 false');
+      } catch (fallbackErr) {
+        console.error('剪貼簿複製失敗:', fallbackErr);
+        showStatus(`複製「${label}」失敗，請改用下方欄位手動全選複製。`, 'error');
+        return false;
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 本地儲存（localStorage）與 Google Sheet 解析 / 同步邏輯
+     * =========================================================================
+     */
+    function loadPersistedState() {
+      try {
+        const rawConfig = localStorage.getItem(STORAGE_KEYS.CONFIG);
+        if (rawConfig) {
+          const parsedConfig = JSON.parse(rawConfig);
+          appState.config = {
+            sheetSource: typeof parsedConfig.sheetSource === 'string' ? parsedConfig.sheetSource : '',
+            sheetName: typeof parsedConfig.sheetName === 'string' && parsedConfig.sheetName.trim()
+              ? parsedConfig.sheetName.trim()
+              : '資料夾常用字串清單',
+            sheetRange: typeof parsedConfig.sheetRange === 'string' ? parsedConfig.sheetRange.trim() : '',
+          };
+        }
+      } catch (err) {
+        console.warn('讀取設定失敗，使用預設值:', err);
+        appState.config = { ...DEFAULT_CONFIG };
+      }
+
+      try {
+        const rawItems = localStorage.getItem(STORAGE_KEYS.CACHED_ITEMS);
+        if (rawItems) {
+          const parsed = JSON.parse(rawItems);
+          if (Array.isArray(parsed.items) && parsed.items.length > 0) {
+            appState.items = parsed.items;
+            appState.sourceLabel = parsed.sourceLabel || '本機快取清單';
+            appState.selectedId = appState.items[0].id;
+          }
+        }
+      } catch (err) {
+        console.warn('讀取快取清單失敗，使用內建範例:', err);
+        appState.items = [...DEFAULT_ITEMS];
+        appState.sourceLabel = '內建備援清單';
+        appState.selectedId = appState.items[0].id;
+      }
+
+      dom.sheetSourceInput.value = appState.config.sheetSource;
+      dom.sheetNameInput.value = appState.config.sheetName;
+      dom.sheetRangeInput.value = appState.config.sheetRange;
+    }
+
+    function saveConfigToStorage() {
+      appState.config = {
+        sheetSource: dom.sheetSourceInput.value.trim(),
+        sheetName: dom.sheetNameInput.value.trim() || '資料夾常用字串清單',
+        sheetRange: dom.sheetRangeInput.value.trim(),
+      };
+      dom.sheetNameInput.value = appState.config.sheetName;
+      dom.sheetRangeInput.value = appState.config.sheetRange;
+
+      try {
+        localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(appState.config));
+        showStatus('Google Sheet 設定已儲存至瀏覽器本機。', 'success');
+      } catch (err) {
+        console.error('儲存設定失敗:', err);
+        showStatus('儲存設定至 localStorage 失敗，請檢查瀏覽器儲存空間。', 'error');
+      }
+    }
+
+    function saveItemsToStorage(items, sourceLabel) {
+      try {
+        localStorage.setItem(
+          STORAGE_KEYS.CACHED_ITEMS,
+          JSON.stringify({
+            items,
+            sourceLabel,
+            updatedAt: new Date().toISOString(),
+          })
+        );
+      } catch (err) {
+        console.warn('快取清單至 localStorage 失敗:', err);
+      }
+    }
+
+    /**
+     * 解析 CSV 文字（支援雙引號包覆、引號跳脫 ""、換行與特殊符號）
+     * @param {string} csvText
+     * @returns {string[][]}
+     */
+    function parseCsvRows(csvText) {
+      const rows = [];
+      let currentRow = [];
+      let currentCell = '';
+      let inQuotes = false;
+
+      const normalized = String(csvText).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+      for (let i = 0; i < normalized.length; i += 1) {
+        const char = normalized[i];
+        const nextChar = normalized[i + 1];
+
+        if (inQuotes) {
+          if (char === '"' && nextChar === '"') {
+            currentCell += '"';
+            i += 1;
+          } else if (char === '"') {
+            inQuotes = false;
+          } else {
+            currentCell += char;
+          }
+        } else if (char === '"') {
+          inQuotes = true;
+        } else if (char === ',') {
+          currentRow.push(currentCell);
+          currentCell = '';
+        } else if (char === '\n') {
+          currentRow.push(currentCell);
+          rows.push(currentRow);
+          currentRow = [];
+          currentCell = '';
+        } else {
+          currentCell += char;
+        }
+      }
+
+      if (currentCell.length > 0 || currentRow.length > 0) {
+        currentRow.push(currentCell);
+        rows.push(currentRow);
+      }
+
+      return rows;
+    }
+
+    /**
+     * 將二維列資料轉換為標準字串項目陣列
+     * @param {string[][]} rows
+     */
+    function normalizeRowsToItems(rows) {
+      if (!Array.isArray(rows) || rows.length === 0) {
+        return [];
+      }
+
+      const firstRowJoined = rows[0].join(' ').toLowerCase();
+      const hasHeader =
+        firstRowJoined.includes('名稱') ||
+        firstRowJoined.includes('字串') ||
+        firstRowJoined.includes('密碼') ||
+        firstRowJoined.includes('label') ||
+        firstRowJoined.includes('value') ||
+        firstRowJoined.includes('name');
+
+      const dataRows = hasHeader ? rows.slice(1) : rows;
+      const result = [];
+
+      dataRows.forEach((cols, idx) => {
+        if (!Array.isArray(cols)) return;
+        const col0 = (cols[0] ?? '').trim();
+        const col1 = cols[1] ?? '';
+        const col2 = (cols[2] ?? '').trim();
+        const col3 = (cols[3] ?? '').trim();
+
+        // 若只有一欄有值，則名稱與內容皆使用該值
+        const value = col1 !== '' ? col1 : col0;
+        const label = col0 !== '' ? col0 : `項目 ${idx + 1}`;
+
+        if (!value && !col0) return;
+
+        const category =
+          col2 ||
+          (label.includes('密碼') || label.includes('密鑰') || label.includes('Token') || label.includes('Key')
+            ? '密碼'
+            : label.includes('符號')
+              ? '特殊符號'
+              : '常用字串');
+
+        const isSecret =
+          category === '密碼' ||
+          label.includes('密碼') ||
+          label.includes('密鑰') ||
+          label.includes('Key') ||
+          label.includes('Secret');
+
+        result.push({
+          id: `sheet-item-${idx}-${label.slice(0, 12)}`,
+          label,
+          value,
+          category,
+          note: col3 || `來自「${appState.config.sheetName}」`,
+          isSecret,
+        });
+      });
+
+      return result;
+    }
+
+    /**
+     * 從使用者輸入的網址或 ID 建構可抓取的端點 URL
+     */
+    function buildFetchEndpoint(config) {
+      const rawSource = (config.sheetSource || '').trim();
+      if (!rawSource) {
+        return null;
+      }
+
+      // 若是 Google Apps Script Web App 網址
+      if (/script\.google\.com\/macros\/s\//i.test(rawSource)) {
+        const urlObj = new URL(rawSource);
+        if (config.sheetName) {
+          urlObj.searchParams.set('sheet', config.sheetName);
+        }
+        if (config.sheetRange) {
+          urlObj.searchParams.set('range', config.sheetRange);
+        }
+        return { url: urlObj.toString(), type: 'apps_script' };
+      }
+
+      // 嘗試擷取 Google Sheet ID（完整網址或純 ID）
+      const idMatch = rawSource.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      const sheetId = idMatch ? idMatch[1] : (/^[a-zA-Z0-9-_]{20,}$/.test(rawSource) ? rawSource : null);
+
+      if (sheetId) {
+        const exportUrl = new URL(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq`);
+        exportUrl.searchParams.set('tqx', 'out:csv');
+        if (config.sheetName) {
+          exportUrl.searchParams.set('sheet', config.sheetName);
+        }
+        if (config.sheetRange) {
+          exportUrl.searchParams.set('range', config.sheetRange);
+        }
+        return { url: exportUrl.toString(), type: 'gsheet_csv' };
+      }
+
+      // 其他合法 HTTPS/HTTP CSV/JSON 網址
+      if (/^https?:\/\//i.test(rawSource)) {
+        return { url: rawSource, type: 'direct' };
+      }
+
+      throw new Error('無法辨識輸入的 Google Sheet 網址或 ID，請確認格式是否正確。');
+    }
+
+    /**
+     * 從 Google Sheet 同步清單；若未設定或發生網路/權限錯誤，皆妥善處理並保留可用清單
+     */
+    async function syncFromGoogleSheet() {
+      dom.syncIcon.classList.add('animate-spin');
+      dom.syncSheetBtn.disabled = true;
+
+      try {
+        const currentConfig = {
+          sheetSource: dom.sheetSourceInput.value.trim() || appState.config.sheetSource,
+          sheetName: dom.sheetNameInput.value.trim() || appState.config.sheetName || '資料夾常用字串清單',
+          sheetRange: dom.sheetRangeInput.value.trim() || appState.config.sheetRange,
+        };
+
+        const endpoint = buildFetchEndpoint(currentConfig);
+        if (!endpoint) {
+          showStatus(
+            '尚未填入 Google Sheet 網址或 ID，目前使用內建「資料夾常用字串清單」範例資料。',
+            'info'
+          );
+          return;
+        }
+
+        showStatus(`正在連線至「${currentConfig.sheetName}」同步字串清單...`, 'info');
+
+        const response = await fetch(endpoint.url, {
+          method: 'GET',
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP 狀態碼 ${response.status}（請確認試算表已開放檢視或 Apps Script 權限）`);
+        }
+
+        const rawText = await response.text();
+        if (!rawText || !rawText.trim()) {
+          throw new Error('Google Sheet 回傳內容為空。');
+        }
+
+        // 若回傳為 HTML 登入頁，代表權限未公開或需登入
+        if (/<!doctype html>|<html[\s>]/i.test(rawText.slice(0, 300))) {
+          throw new Error('收到 Google 登入頁面而非試算表資料，請確認試算表共用權限或改用 Apps Script Web App。');
+        }
+
+        let parsedItems = [];
+        const trimmed = rawText.trim();
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          const jsonPayload = JSON.parse(trimmed);
+          const listArray = Array.isArray(jsonPayload)
+            ? jsonPayload
+            : Array.isArray(jsonPayload.data)
+              ? jsonPayload.data
+              : Array.isArray(jsonPayload.rows)
+                ? jsonPayload.rows
+                : [];
+
+          const matrix = listArray.map((entry) => {
+            if (Array.isArray(entry)) return entry;
+            if (entry && typeof entry === 'object') {
+              return [
+                entry.label ?? entry.name ?? entry.title ?? entry.名稱 ?? '',
+                entry.value ?? entry.text ?? entry.password ?? entry.字串 ?? entry.內容 ?? '',
+                entry.category ?? entry.type ?? entry.分類 ?? '',
+                entry.note ?? entry.desc ?? entry.備註 ?? '',
+              ];
+            }
+            return [String(entry)];
+          });
+          parsedItems = normalizeRowsToItems(matrix);
+        } else {
+          const csvRows = parseCsvRows(rawText);
+          parsedItems = normalizeRowsToItems(csvRows);
+        }
+
+        if (parsedItems.length === 0) {
+          throw new Error('試算表中找不到有效的字串列，請檢查欄位內容。');
+        }
+
+        appState.items = parsedItems;
+        appState.sourceLabel = `Google Sheet · ${currentConfig.sheetName}`;
+        appState.selectedCategory = '__ALL__';
+        appState.selectedId = parsedItems[0].id;
+
+        saveItemsToStorage(parsedItems, appState.sourceLabel);
+        renderAllViews();
+        showStatus(`成功從「${currentConfig.sheetName}」同步 ${parsedItems.length} 筆常用字串！`, 'success');
+      } catch (err) {
+        console.error('Google Sheet 同步錯誤:', err);
+        showStatus(
+          `同步未完成（${err.message || '網路或權限錯誤'}）。已為您保留目前可用的字串清單。`,
+          'error'
+        );
+      } finally {
+        dom.syncIcon.classList.remove('animate-spin');
+        dom.syncSheetBtn.disabled = false;
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 畫面渲染函式（下拉選單、詳情面板、快捷卡片、側邊抽屜與檔案指標）
+     * =========================================================================
+     */
+    function getFilteredItems() {
+      if (appState.selectedCategory === '__ALL__') {
+        return appState.items;
+      }
+      return appState.items.filter((item) => item.category === appState.selectedCategory);
+    }
+
+    function getSelectedItem() {
+      const found = appState.items.find((item) => item.id === appState.selectedId);
+      if (found) return found;
+      const filtered = getFilteredItems();
+      return filtered[0] || appState.items[0] || null;
+    }
+
+    function renderCategoryOptions() {
+      const categories = Array.from(new Set(appState.items.map((item) => item.category).filter(Boolean)));
+      const currentVal = appState.selectedCategory;
+
+      dom.categoryFilterSelect.innerHTML = '';
+      const allOpt = document.createElement('option');
+      allOpt.value = '__ALL__';
+      allOpt.textContent = `全部類別（共 ${appState.items.length} 筆）`;
+      dom.categoryFilterSelect.appendChild(allOpt);
+
+      categories.forEach((cat) => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        const count = appState.items.filter((i) => i.category === cat).length;
+        opt.textContent = `${cat}（${count} 筆）`;
+        dom.categoryFilterSelect.appendChild(opt);
+      });
+
+      if (currentVal !== '__ALL__' && !categories.includes(currentVal)) {
+        appState.selectedCategory = '__ALL__';
+      }
+      dom.categoryFilterSelect.value = appState.selectedCategory;
+    }
+
+    function renderMainDropdown() {
+      const filtered = getFilteredItems();
+      dom.commonStringSelect.innerHTML = '';
+
+      if (filtered.length === 0) {
+        const emptyOpt = document.createElement('option');
+        emptyOpt.value = '';
+        emptyOpt.textContent = '目前此分類沒有可用字串';
+        dom.commonStringSelect.appendChild(emptyOpt);
+        return;
+      }
+
+      const activeItem = getSelectedItem();
+      if (activeItem && !filtered.some((i) => i.id === activeItem.id)) {
+        appState.selectedId = filtered[0].id;
+      }
+
+      filtered.forEach((item) => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        // 在下拉選單中顯示名稱與分類；密碼類以遮罩提示避免旁人窺視
+        const previewText = item.isSecret ? '••••••••' : item.value;
+        opt.textContent = `[${item.category}] ${item.label} → ${previewText}`;
+        dom.commonStringSelect.appendChild(opt);
+      });
+
+      dom.commonStringSelect.value = appState.selectedId;
+    }
+
+    function renderSelectedDetailPanel() {
+      const item = getSelectedItem();
+      if (!item) {
+        dom.selectedCategoryBadge.textContent = '無資料';
+        dom.selectedLabelTitle.textContent = '尚無可用項目';
+        dom.selectedNoteText.textContent = '';
+        dom.selectedValueDisplay.value = '';
+        return;
+      }
+
+      dom.selectedCategoryBadge.textContent = item.category || '一般';
+      dom.selectedLabelTitle.textContent = item.label;
+      dom.selectedNoteText.textContent = item.note ? `· ${item.note}` : '';
+      dom.selectedValueDisplay.value = item.value;
+
+      const shouldShowPlain = appState.revealSelected || !item.isSecret;
+      dom.selectedValueDisplay.type = shouldShowPlain ? 'text' : 'password';
+      dom.toggleRevealBtn.textContent = shouldShowPlain ? '隱藏明文' : '顯示明文';
+    }
+
+    function renderQuickCardsGrid() {
+      const filtered = getFilteredItems();
+      dom.quickCardsGrid.innerHTML = '';
+      dom.itemCountBadge.textContent = `共 ${filtered.length} 筆字串`;
+
+      if (filtered.length === 0) {
+        const emptyCard = document.createElement('div');
+        emptyCard.className = 'col-span-full p-6 rounded-2xl bg-amber-50 border border-amber-200 text-center text-sm text-amber-900 font-bold';
+        emptyCard.textContent = '目前篩選條件下沒有符合的字串項目。';
+        dom.quickCardsGrid.appendChild(emptyCard);
+        return;
+      }
+
+      filtered.forEach((item) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        const isSelected = item.id === appState.selectedId;
+
+        card.className = [
+          'text-left p-4 rounded-2xl border transition flex flex-col justify-between gap-2.5 cursor-pointer',
+          isSelected
+            ? 'bg-gradient-to-br from-amber-100/95 to-yellow-50 border-amber-500 ring-2 ring-amber-300/70 shadow-md'
+            : 'bg-white/90 hover:bg-amber-50/90 border-amber-200/90 hover:border-amber-400 shadow-sm',
+        ].join(' ');
+
+        const topRow = document.createElement('div');
+        topRow.className = 'flex items-center justify-between gap-2 w-full';
+
+        const catBadge = document.createElement('span');
+        catBadge.className = 'px-2 py-0.5 rounded-md bg-amber-200/75 text-amber-950 text-[11px] font-black';
+        catBadge.textContent = item.category;
+
+        const copyHint = document.createElement('span');
+        copyHint.className = 'text-[11px] font-bold text-amber-700';
+        copyHint.textContent = '點選複製';
+
+        topRow.appendChild(catBadge);
+        topRow.appendChild(copyHint);
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'text-sm font-black text-amber-950 truncate w-full';
+        titleEl.textContent = item.label;
+
+        const valEl = document.createElement('div');
+        valEl.className = 'mono-secret text-xs px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-900 truncate w-full';
+        valEl.textContent = item.isSecret ? '•••••••••••• (點選即複製密碼)' : item.value;
+
+        card.appendChild(topRow);
+        card.appendChild(titleEl);
+        card.appendChild(valEl);
+
+        card.addEventListener('click', async () => {
+          appState.selectedId = item.id;
+          renderMainDropdown();
+          renderSelectedDetailPanel();
+          renderQuickCardsGrid();
+          await copyTextToClipboard(item.value, item.label);
+        });
+
+        dom.quickCardsGrid.appendChild(card);
+      });
+    }
+
+    function renderSideDrawerList() {
+      const keyword = appState.drawerSearch.trim().toLowerCase();
+      const matches = appState.items.filter((item) => {
+        if (!keyword) return true;
+        return (
+          item.label.toLowerCase().includes(keyword) ||
+          item.value.toLowerCase().includes(keyword) ||
+          item.category.toLowerCase().includes(keyword) ||
+          (item.note || '').toLowerCase().includes(keyword)
+        );
+      });
+
+      dom.drawerQuickList.innerHTML = '';
+
+      if (matches.length === 0) {
+        const emptyEl = document.createElement('div');
+        emptyEl.className = 'p-4 rounded-2xl bg-white/80 border border-amber-200 text-center text-xs font-bold text-amber-900';
+        emptyEl.textContent = '找不到符合搜尋關鍵字的字串。';
+        dom.drawerQuickList.appendChild(emptyEl);
+        return;
+      }
+
+      matches.forEach((item) => {
+        const rowBtn = document.createElement('button');
+        rowBtn.type = 'button';
+        rowBtn.className =
+          'w-full text-left p-3 rounded-2xl bg-white/95 hover:bg-amber-100/80 border border-amber-300/80 shadow-sm transition flex items-center justify-between gap-2.5 cursor-pointer';
+
+        const infoBox = document.createElement('div');
+        infoBox.className = 'min-w-0 flex-1 space-y-0.5';
+
+        const nameLine = document.createElement('div');
+        nameLine.className = 'flex items-center gap-1.5 min-w-0';
+
+        const tagSpan = document.createElement('span');
+        tagSpan.className = 'px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 text-[10px] font-black shrink-0';
+        tagSpan.textContent = item.category;
+
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'text-xs sm:text-sm font-black text-amber-950 truncate';
+        labelSpan.textContent = item.label;
+
+        nameLine.appendChild(tagSpan);
+        nameLine.appendChild(labelSpan);
+
+        const valueLine = document.createElement('div');
+        valueLine.className = 'mono-secret text-xs text-amber-800 truncate';
+        const shouldMask = appState.drawerMask && item.isSecret;
+        valueLine.textContent = shouldMask ? '••••••••••••' : item.value;
+
+        infoBox.appendChild(nameLine);
+        infoBox.appendChild(valueLine);
+
+        const badgeAction = document.createElement('span');
+        badgeAction.className =
+          'gold-btn px-2.5 py-1.5 rounded-xl text-[11px] font-black text-amber-950 shrink-0';
+        badgeAction.textContent = '複製';
+
+        rowBtn.appendChild(infoBox);
+        rowBtn.appendChild(badgeAction);
+
+        rowBtn.addEventListener('click', async () => {
+          appState.selectedId = item.id;
+          renderMainDropdown();
+          renderSelectedDetailPanel();
+          renderQuickCardsGrid();
+          await copyTextToClipboard(item.value, item.label);
+        });
+
+        dom.drawerQuickList.appendChild(rowBtn);
+      });
+    }
+
+    /**
+     * 計算目前完整 HTML 原始碼的行數與 KB 大小並更新頂部與底部指標
+     */
+    function updateDocumentMetrics() {
+      try {
+        const fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const lineCount = fullHtml.split('\n').length;
+        const byteSize = new Blob([fullHtml], { type: 'text/html;charset=utf-8' }).size;
+        const sizeKb = (byteSize / 1024).toFixed(2) + ' KB';
+
+        dom.topLineCount.textContent = String(lineCount);
+        dom.topSizeKb.textContent = sizeKb;
+        dom.footerLineCount.textContent = String(lineCount);
+        dom.footerSizeKb.textContent = sizeKb;
+      } catch (err) {
+        console.warn('更新行數與檔案大小指標失敗:', err);
+      }
+    }
+
+    function renderAllViews() {
+      dom.dataSourceTag.textContent = appState.sourceLabel;
+      renderCategoryOptions();
+      renderMainDropdown();
+      renderSelectedDetailPanel();
+      renderQuickCardsGrid();
+      renderSideDrawerList();
+      updateDocumentMetrics();
+    }
+
+    /**
+     * =========================================================================
+     * 側邊隱藏選單開關與完整 HTML 下載功能
+     * =========================================================================
+     */
+    function setDrawerOpen(isOpen) {
+      appState.drawerOpen = Boolean(isOpen);
+      if (appState.drawerOpen) {
+        dom.drawerBackdrop.classList.remove('hidden');
+        requestAnimationFrame(() => {
+          dom.drawerBackdrop.classList.remove('opacity-0');
+          dom.sideDrawer.classList.remove('translate-x-full');
+        });
+        renderSideDrawerList();
+      } else {
+        dom.sideDrawer.classList.add('translate-x-full');
+        dom.drawerBackdrop.classList.add('opacity-0');
+        setTimeout(() => {
+          if (!appState.drawerOpen) {
+            dom.drawerBackdrop.classList.add('hidden');
+          }
+        }, 260);
+      }
+    }
+
+    function downloadCompleteHtmlFile() {
+      try {
+        const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = '常用字串清單快取工具.html';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showStatus('已產生並下載完整 HTML 檔案（常用字串清單快取工具.html）。', 'success');
+      } catch (err) {
+        console.error('下載 HTML 失敗:', err);
+        showStatus('下載 HTML 檔案時發生錯誤，請稍後再試。', 'error');
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 事件繫結與初始化
+     * =========================================================================
+     */
+    function bindEvents() {
+      // 分類篩選變更
+      dom.categoryFilterSelect.addEventListener('change', (e) => {
+        appState.selectedCategory = e.target.value;
+        renderMainDropdown();
+        renderSelectedDetailPanel();
+        renderQuickCardsGrid();
+      });
+
+      // 下拉選單變更：更新選取項目並視設定自動複製到剪貼簿
+      dom.commonStringSelect.addEventListener('change', async (e) => {
+        const chosenId = e.target.value;
+        if (!chosenId) return;
+        appState.selectedId = chosenId;
+        renderSelectedDetailPanel();
+        renderQuickCardsGrid();
+
+        const item = getSelectedItem();
+        if (item && appState.autoCopyOnChange) {
+          await copyTextToClipboard(item.value, item.label);
+        }
+      });
+
+      dom.autoCopyOnChangeCheckbox.addEventListener('change', (e) => {
+        appState.autoCopyOnChange = Boolean(e.target.checked);
+        showStatus(
+          appState.autoCopyOnChange
+            ? '已啟用「下拉選單選取即自動複製」。'
+            : '已關閉自動複製，請改按「複製目前選取字串」按鈕。',
+          'info'
+        );
+      });
+
+      // 顯示 / 隱藏密碼明文
+      dom.toggleRevealBtn.addEventListener('click', () => {
+        appState.revealSelected = !appState.revealSelected;
+        renderSelectedDetailPanel();
+      });
+
+      // 複製目前選取字串按鈕（頂部與卡片內皆呼叫同一函式）
+      const handleCopySelected = async () => {
+        const item = getSelectedItem();
+        if (!item) {
+          showStatus('目前沒有可複製的字串項目。', 'error');
+          return;
+        }
+        await copyTextToClipboard(item.value, item.label);
+      };
+
+      dom.copySelectedBtn.addEventListener('click', handleCopySelected);
+      dom.quickCopyCardBtn.addEventListener('click', handleCopySelected);
+
+      // Google Sheet 同步與設定按鈕
+      dom.syncSheetBtn.addEventListener('click', syncFromGoogleSheet);
+
+      dom.saveConfigBtn.addEventListener('click', () => {
+        saveConfigToStorage();
+        updateDocumentMetrics();
+      });
+
+      dom.saveAndSyncBtn.addEventListener('click', async () => {
+        saveConfigToStorage();
+        await syncFromGoogleSheet();
+      });
+
+      dom.resetDefaultConfigBtn.addEventListener('click', () => {
+        appState.config = { ...DEFAULT_CONFIG };
+        appState.items = [...DEFAULT_ITEMS];
+        appState.sourceLabel = '內建備援清單';
+        appState.selectedCategory = '__ALL__';
+        appState.selectedId = DEFAULT_ITEMS[0].id;
+
+        dom.sheetSourceInput.value = DEFAULT_CONFIG.sheetSource;
+        dom.sheetNameInput.value = DEFAULT_CONFIG.sheetName;
+        dom.sheetRangeInput.value = DEFAULT_CONFIG.sheetRange;
+
+        try {
+          localStorage.removeItem(STORAGE_KEYS.CONFIG);
+          localStorage.removeItem(STORAGE_KEYS.CACHED_ITEMS);
+        } catch (err) {
+          console.warn('清除 localStorage 失敗:', err);
+        }
+
+        renderAllViews();
+        showStatus('已還原預設設定與內建常用字串清單。', 'info');
+      });
+
+      // 側邊隱藏選單事件
+      dom.openDrawerBtn.addEventListener('click', () => setDrawerOpen(true));
+      dom.closeDrawerBtn.addEventListener('click', () => setDrawerOpen(false));
+      dom.drawerBackdrop.addEventListener('click', () => setDrawerOpen(false));
+
+      dom.drawerSearchInput.addEventListener('input', (e) => {
+        appState.drawerSearch = e.target.value;
+        renderSideDrawerList();
+      });
+
+      dom.drawerMaskToggle.addEventListener('change', (e) => {
+        appState.drawerMask = Boolean(e.target.checked);
+        renderSideDrawerList();
+      });
+
+      dom.drawerReloadBtn.addEventListener('click', syncFromGoogleSheet);
+
+      // ESC 快捷鍵關閉側邊抽屜
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && appState.drawerOpen) {
+          setDrawerOpen(false);
+        }
+      });
+
+      // 下載完整 HTML 按鈕
+      dom.downloadHtmlBtn.addEventListener('click', downloadCompleteHtmlFile);
+    }
+
+    // 頁面載入初始化
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        loadPersistedState();
+        bindEvents();
+        renderAllViews();
+
+        // 若使用者先前已設定 Google Sheet 來源，初始化後嘗試自動同步一次
+        if (appState.config.sheetSource) {
+          await syncFromGoogleSheet();
+        }
+      } catch (err) {
+        console.error('應用程式初始化失敗:', err);
+        showStatus('初始化時發生非預期錯誤，已載入安全備援狀態。', 'error');
+      }
+    });
+  </script>
+
+</body></html>
